@@ -60,6 +60,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
     
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.5")
@@ -71,12 +72,12 @@ dependencies {
     ksp("androidx.room:room-compiler:$roomVersion")
 
     // CameraX & ML Kit
-    val cameraxVersion = "1.3.0"
+    val cameraxVersion = "1.4.1"
     implementation("androidx.camera:camera-core:$cameraxVersion")
     implementation("androidx.camera:camera-camera2:$cameraxVersion")
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
     implementation("androidx.camera:camera-view:$cameraxVersion")
-    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.0")
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
     
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
