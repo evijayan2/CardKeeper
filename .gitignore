@@ -2,3 +2,5 @@
 .gradle/
 build/
 **.hprof
+.DS_Store
+**.log

@@ -40,5 +40,7 @@ data class FinancialAccount(
         val cardNetwork: String? = null, // Visa, Mastercard, RuPay (Auto-detected ideally)
         val notes: String? = null,
         val cardPin: String? = null,
-        val lostCardContactNumber: String? = null
+        val lostCardContactNumber: String? = null,
+        val frontImagePath: String? = null,
+        val backImagePath: String? = null
 )

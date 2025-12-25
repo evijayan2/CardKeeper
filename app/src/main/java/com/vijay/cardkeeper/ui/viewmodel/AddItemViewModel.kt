@@ -16,6 +16,7 @@ class AddItemViewModel(
 ) : ViewModel() {
 
         fun saveFinancialAccount(
+                id: Int = 0,
                 type: AccountType,
                 institution: String,
                 name: String,
@@ -28,22 +29,14 @@ class AddItemViewModel(
                 pin: String?,
                 notes: String?,
                 contact: String?,
-                cardNetwork: String?
+                cardNetwork: String?,
+                frontImagePath: String?,
+                backImagePath: String?
         ) {
                 viewModelScope.launch {
-                        // Simple date parse for Expiry MM/YY to millis if needed, or store
-                        // separate.
-                        // Entity has `expiryDate: Long?`. Let's store a dummy epoch for now or
-                        // prompt user.
-                        // For this quick prototype, we made need to update Entity to support String
-                        // expiry or
-                        // parse it.
-                        // FinancialAccount has `expiryDate: String?`.
-                        // If the user inputs "12/26", we can ballpark it.
-                        // Parsing "MM/yy" to timestamp:
-
                         val account =
                                 FinancialAccount(
+                                        id = id,
                                         type = type,
                                         institutionName = institution,
                                         accountName = name,
@@ -56,29 +49,83 @@ class AddItemViewModel(
                                         notes = notes?.ifBlank { null },
                                         lostCardContactNumber = contact?.ifBlank { null },
                                         expiryDate = expiryDate?.ifBlank { null },
-                                        cardNetwork = cardNetwork?.ifBlank { null }
+                                        cardNetwork = cardNetwork?.ifBlank { null },
+                                        frontImagePath = frontImagePath,
+                                        backImagePath = backImagePath
                                 )
-                        financialRepository.insertAccount(account)
+                        if (id > 0) {
+                                financialRepository.updateAccount(account)
+                        } else {
+                                financialRepository.insertAccount(account)
+                        }
                 }
         }
 
+        fun saveFinancialAccount(account: FinancialAccount) {
+                viewModelScope.launch {
+                        if (account.id > 0) {
+                                financialRepository.updateAccount(account)
+                        } else {
+                                financialRepository.insertAccount(account)
+                        }
+                }
+        }
+
+        suspend fun getFinancialAccount(id: Int) = financialRepository.getAccountById(id)
+
+        suspend fun getIdentityDocument(id: Int) = identityRepository.getDocumentById(id)
+
         fun saveIdentityDocument(
+                id: Int = 0,
                 type: DocumentType,
                 country: String,
                 docNumber: String,
                 holder: String,
-                expiryDate: Long?
+                expiryDate: Long?,
+                frontImagePath: String?,
+                backImagePath: String?,
+                state: String?,
+                address: String?,
+                dob: String?,
+                sex: String?,
+                eyeColor: String?,
+                height: String?,
+                licenseClass: String?,
+                restrictions: String?,
+                endorsements: String?,
+                issuingAuthority: String?
         ) {
                 viewModelScope.launch {
                         val doc =
                                 IdentityDocument(
+                                        id = id,
                                         type = type,
                                         country = country,
                                         docNumber = docNumber,
                                         holderName = holder,
-                                        expiryDate = expiryDate
+                                        expiryDate = expiryDate,
+                                        issuingAuthority = issuingAuthority,
+                                        frontImagePath = frontImagePath,
+                                        backImagePath = backImagePath,
+                                        state = state,
+                                        address = address,
+                                        dob = dob,
+                                        sex = sex,
+                                        eyeColor = eyeColor,
+                                        height = height,
+                                        licenseClass = licenseClass,
+                                        restrictions = restrictions,
+                                        endorsements = endorsements
                                 )
-                        identityRepository.insertDocument(doc)
+                        if (id > 0) {
+                                identityRepository.updateDocument(doc)
+                        } else {
+                                identityRepository.insertDocument(doc)
+                        }
                 }
+        }
+
+        fun deleteIdentityDocument(document: IdentityDocument) {
+                viewModelScope.launch { identityRepository.deleteDocument(document) }
         }
 }

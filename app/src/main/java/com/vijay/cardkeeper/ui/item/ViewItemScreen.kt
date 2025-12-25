@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -14,12 +15,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -32,12 +36,14 @@ import com.vijay.cardkeeper.ui.viewmodel.ViewItemViewModel
 fun ViewItemScreen(
         itemId: Int,
         navigateBack: () -> Unit,
+        onEditClick: (Int) -> Unit,
         viewModel: ViewItemViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     LaunchedEffect(itemId) { viewModel.loadAccount(itemId) }
 
     val account by viewModel.selectedAccount.collectAsState()
     val context = LocalContext.current
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
 
     Scaffold(
             topBar = {
@@ -47,10 +53,37 @@ fun ViewItemScreen(
                             IconButton(onClick = navigateBack) {
                                 Icon(Icons.Filled.ArrowBack, "Back")
                             }
+                        },
+                        actions = {
+                            IconButton(onClick = { account?.let { onEditClick(it.id) } }) {
+                                Icon(Icons.Filled.Edit, contentDescription = "Edit")
+                            }
+                            IconButton(onClick = { showDeleteConfirmation = true }) {
+                                Icon(Icons.Filled.Delete, contentDescription = "Delete")
+                            }
                         }
                 )
             }
     ) { innerPadding ->
+        if (showDeleteConfirmation) {
+            AlertDialog(
+                    onDismissRequest = { showDeleteConfirmation = false },
+                    title = { Text("Delete Account") },
+                    text = { Text("Are you sure you want to delete this account?") },
+                    confirmButton = {
+                        TextButton(
+                                onClick = {
+                                    account?.let { viewModel.deleteAccount(it) }
+                                    showDeleteConfirmation = false
+                                    navigateBack()
+                                }
+                        ) { Text("Delete") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showDeleteConfirmation = false }) { Text("Cancel") }
+                    }
+            )
+        }
         Column(
                 modifier =
                         Modifier.padding(innerPadding)
@@ -71,6 +104,38 @@ fun ViewItemScreen(
                         Text(acc.accountName, style = MaterialTheme.typography.headlineSmall)
                         if (!acc.cardNetwork.isNullOrBlank()) {
                             Text(acc.cardNetwork, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+
+                // Images
+                if (acc.frontImagePath != null || acc.backImagePath != null) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        acc.frontImagePath?.let { path ->
+                            Box(
+                                    modifier =
+                                            Modifier.clickable {
+                                                viewModel.setFullScreenImage(path)
+                                            }
+                            ) {
+                                com.vijay.cardkeeper.ui.home.DashboardImageThumbnail(
+                                        path = path,
+                                        label = "Front"
+                                )
+                            }
+                        }
+                        acc.backImagePath?.let { path ->
+                            Box(
+                                    modifier =
+                                            Modifier.clickable {
+                                                viewModel.setFullScreenImage(path)
+                                            }
+                            ) {
+                                com.vijay.cardkeeper.ui.home.DashboardImageThumbnail(
+                                        path = path,
+                                        label = "Back"
+                                )
+                            }
                         }
                     }
                 }
@@ -112,11 +177,54 @@ fun ViewItemScreen(
                                         }
                                 context.startActivity(intent)
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
                     ) {
                         Icon(Icons.Filled.Call, null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Call Support: $phone")
+                        Text("Call Support")
+                    }
+                }
+
+                // Full Screen Image Dialog
+                val fullScreenImage by viewModel.fullScreenImage.collectAsState()
+                if (fullScreenImage != null) {
+                    androidx.compose.ui.window.Dialog(
+                            onDismissRequest = { viewModel.setFullScreenImage(null) },
+                            properties =
+                                    androidx.compose.ui.window.DialogProperties(
+                                            usePlatformDefaultWidth = false
+                                    )
+                    ) {
+                        Box(
+                                modifier =
+                                        Modifier.fillMaxSize()
+                                                .background(
+                                                        androidx.compose.ui.graphics.Color.Black
+                                                )
+                                                .clickable {
+                                                    viewModel.setFullScreenImage(null)
+                                                }, // Click anywhere to close
+                                contentAlignment = Alignment.Center
+                        ) {
+                            val bitmap =
+                                    remember(fullScreenImage) {
+                                        try {
+                                            android.graphics.BitmapFactory.decodeFile(
+                                                    fullScreenImage
+                                            )
+                                        } catch (e: Exception) {
+                                            null
+                                        }
+                                    }
+                            if (bitmap != null) {
+                                androidx.compose.foundation.Image(
+                                        bitmap = bitmap.asImageBitmap(),
+                                        contentDescription = "Full Screen Image",
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                                )
+                            }
+                        }
                     }
                 }
 

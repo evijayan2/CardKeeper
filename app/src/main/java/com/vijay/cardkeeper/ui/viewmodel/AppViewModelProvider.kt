@@ -10,16 +10,17 @@ object AppViewModelProvider {
     val Factory = viewModelFactory {
         initializer {
             HomeViewModel(
-                cardKeeperApplication().container.financialRepository,
-                cardKeeperApplication().container.identityRepository
+                    cardKeeperApplication().container.financialRepository,
+                    cardKeeperApplication().container.identityRepository
             )
         }
         initializer {
             AddItemViewModel(
-                cardKeeperApplication().container.financialRepository,
-                cardKeeperApplication().container.identityRepository
+                    cardKeeperApplication().container.financialRepository,
+                    cardKeeperApplication().container.identityRepository
             )
         }
+        initializer { ViewItemViewModel(cardKeeperApplication().container.financialRepository) }
     }
 }
 
@@ -28,4 +29,4 @@ object AppViewModelProvider {
  * [CardKeeperApplication].
  */
 fun CreationExtras.cardKeeperApplication(): CardKeeperApplication =
-    (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as CardKeeperApplication)
+        (this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as CardKeeperApplication)
