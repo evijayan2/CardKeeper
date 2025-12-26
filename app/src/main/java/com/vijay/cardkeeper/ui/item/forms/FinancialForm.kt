@@ -169,19 +169,26 @@ fun FinancialForm(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.horizontalScroll(rememberScrollState())
                 ) {
-                        listOf(
-                                        AccountType.CREDIT_CARD,
-                                        AccountType.DEBIT_CARD,
-                                        AccountType.BANK_ACCOUNT,
-                                        AccountType.REWARDS_CARD
-                                )
-                                .forEach { type ->
-                                        FilterChip(
-                                                selected = state.type == type,
-                                                onClick = { state.type = type },
-                                                label = { Text(type.name.replace("_", " ")) }
+                        val displayedTypes =
+                                if (state.type == AccountType.REWARDS_CARD ||
+                                                state.type == AccountType.LIBRARY_CARD
+                                ) {
+                                        listOf(AccountType.REWARDS_CARD, AccountType.LIBRARY_CARD)
+                                } else {
+                                        listOf(
+                                                AccountType.CREDIT_CARD,
+                                                AccountType.DEBIT_CARD,
+                                                AccountType.BANK_ACCOUNT
                                         )
                                 }
+
+                        displayedTypes.forEach { type ->
+                                FilterChip(
+                                        selected = state.type == type,
+                                        onClick = { state.type = type },
+                                        label = { Text(type.name.replace("_", " ")) }
+                                )
+                        }
                 }
 
                 OutlinedTextField(
@@ -189,8 +196,10 @@ fun FinancialForm(
                         onValueChange = { state.institution = it },
                         label = {
                                 Text(
-                                        if (state.type == AccountType.REWARDS_CARD)
-                                                "Shop / Program Name"
+                                        if (state.type == AccountType.REWARDS_CARD ||
+                                                        state.type == AccountType.LIBRARY_CARD
+                                        )
+                                                "Shop / Library Name"
                                         else "Institution (e.g. Chase)"
                                 )
                         },
@@ -198,7 +207,9 @@ fun FinancialForm(
                 )
 
                 // Standard Financial Fields
-                if (state.type != AccountType.REWARDS_CARD && state.type != AccountType.BANK_ACCOUNT
+                if (state.type != AccountType.REWARDS_CARD &&
+                                state.type != AccountType.LIBRARY_CARD &&
+                                state.type != AccountType.BANK_ACCOUNT
                 ) {
                         OutlinedTextField(
                                 value = state.accName,
@@ -207,7 +218,8 @@ fun FinancialForm(
                                 modifier = Modifier.fillMaxWidth()
                         )
                 }
-                if (state.type != AccountType.REWARDS_CARD) {
+                if (state.type != AccountType.REWARDS_CARD && state.type != AccountType.LIBRARY_CARD
+                ) {
                         OutlinedTextField(
                                 value = state.number,
                                 onValueChange = { state.number = it },
@@ -329,7 +341,8 @@ fun FinancialForm(
                 }
 
                 // Rewards / Shop Card Fields
-                if (state.type == AccountType.REWARDS_CARD) {
+                if (state.type == AccountType.REWARDS_CARD || state.type == AccountType.LIBRARY_CARD
+                ) {
                         OutlinedTextField(
                                 value = state.barcode,
                                 onValueChange = { state.barcode = it },

@@ -1,9 +1,11 @@
 package com.vijay.cardkeeper.ui.home
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBox
@@ -20,15 +22,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.data.entity.Passport
 import com.vijay.cardkeeper.ui.viewmodel.AppViewModelProvider
 import com.vijay.cardkeeper.ui.viewmodel.HomeViewModel
+import com.vijay.cardkeeper.util.StateUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,13 +44,16 @@ fun HomeScreen(
         navigateToIdentityView: (Int) -> Unit,
         navigateToPassportView: (Int) -> Unit =
                 {}, // Default empty for now to avoid breaking callers immediately
+        navigateToRewardsView: (Int) -> Unit = {},
         viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
-    val financialState by viewModel.financialAccounts.collectAsState(initial = emptyList())
+    val bankAccounts by viewModel.bankAccounts.collectAsState(initial = emptyList())
+    val rewardsCards by viewModel.rewardsCards.collectAsState(initial = emptyList())
     val identityState by viewModel.identityDocuments.collectAsState(initial = emptyList())
     val passportState by viewModel.passports.collectAsState(initial = emptyList())
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Finance", "Identity", "Passports")
+    // Update tabs list
+    val tabs = listOf("Finance", "Identity", "Passports", "Rewards")
 
     // FAB Menu State
     var showMenu by remember { mutableStateOf(false) }
@@ -102,7 +111,10 @@ fun HomeScreen(
                                 text = { Text("Rewards Card") },
                                 onClick = {
                                     showMenu = false
-                                    navigateToItemEntry(0, "REWARDS_CARD")
+                                    // Use category 3 for Rewards if we separate it top-level,
+                                    // or keep 0 and just set type.
+                                    // Let's use 3 to match the tabs 0,1,2,3
+                                    navigateToItemEntry(3, "REWARDS_CARD")
                                 },
                                 leadingIcon = {
                                     Icon(Icons.Filled.CardGiftcard, contentDescription = null)
@@ -153,7 +165,8 @@ fun HomeScreen(
                                         when (index) {
                                             0 -> Icons.Default.Home
                                             1 -> Icons.Default.Face
-                                            else -> Icons.Default.AccountBox
+                                            2 -> Icons.Default.AccountBox
+                                            else -> Icons.Default.CardGiftcard
                                         },
                                         contentDescription = null
                                 )
@@ -163,9 +176,10 @@ fun HomeScreen(
             }
 
             when (selectedTab) {
-                0 -> FinancialList(financialState, navigateToItemView)
+                0 -> FinancialList(bankAccounts, navigateToItemView)
                 1 -> IdentityList(identityState, navigateToIdentityView)
                 2 -> PassportList(passportState, navigateToPassportView)
+                3 -> RewardsList(rewardsCards, navigateToRewardsView)
             }
         }
     }
@@ -179,12 +193,89 @@ fun FinancialList(list: List<FinancialAccount>, onItemClick: (Int) -> Unit) {
     ) { items(list) { account -> FinancialAccountItem(account, onItemClick) } }
 }
 
+@Composable
+fun RewardsList(list: List<FinancialAccount>, onItemClick: (Int) -> Unit) {
+    LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) { items(list) { account -> RewardsCardItem(account, onItemClick) } }
+}
+
+@Composable
+fun RewardsCardItem(account: FinancialAccount, onItemClick: (Int) -> Unit) {
+    Card(
+            modifier = Modifier.fillMaxWidth().clickable { onItemClick(account.id) },
+            colors =
+                    CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+    ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Document Icon or Image (Front Image or Logo)
+            val imagePath = account.logoImagePath ?: account.frontImagePath
+            if (imagePath != null) {
+                val file = java.io.File(imagePath)
+                if (file.exists()) {
+                    val bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath)
+                    Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = null,
+                            modifier =
+                                    Modifier.size(60.dp)
+                                            .clip(
+                                                    androidx.compose.foundation.shape
+                                                            .RoundedCornerShape(8.dp)
+                                            ),
+                            contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Icon(
+                            imageVector = Icons.Default.CardGiftcard,
+                            contentDescription = null,
+                            modifier = Modifier.size(60.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            } else {
+                Icon(
+                        imageVector = Icons.Default.CardGiftcard,
+                        contentDescription = null,
+                        modifier = Modifier.size(60.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                        text = account.institutionName, // Store Name
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                )
+                if (!account.barcode.isNullOrBlank()) {
+                    Text(
+                            text = account.barcode,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    )
+                }
+                if (!account.linkedPhoneNumber.isNullOrBlank()) {
+                    Text(
+                            text = "Phone: ${account.linkedPhoneNumber}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) {
     val cardColor = getAccountColor(account)
-    // Determine content color based on card color luminance or hardcoded logic
-    // For these specific dark/brand colors, White is usually best.
     val contentColor =
             if (cardColor == MaterialTheme.colorScheme.surface) MaterialTheme.colorScheme.onSurface
             else androidx.compose.ui.graphics.Color.White
@@ -427,58 +518,144 @@ fun IdentityItem(doc: IdentityDocument, onItemClick: (Int) -> Unit) {
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             onClick = { onItemClick(doc.id) }
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                            text = doc.type.name.replace("_", " "),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                            text = doc.country,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                if (doc.docNumber.isNotEmpty()) {
-                    Text(
-                            text = doc.docNumber,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                    )
-                }
-            }
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // Background Full Watermark (State or Country)
+            val countryCode = doc.country.lowercase()
+            val stateCode = doc.state?.let { StateUtils.getStateCode(it) }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            val backgroundUrl =
+                    when {
+                        doc.type == com.vijay.cardkeeper.data.entity.DocumentType.DRIVER_LICENSE &&
+                                stateCode != null ->
+                                "https://flagcdn.com/w320/us-${stateCode.lowercase()}.png"
+                        countryCode == "usa" || countryCode == "us" ->
+                                "https://flagcdn.com/w320/us.png"
+                        countryCode == "ind" || countryCode == "in" || countryCode == "india" ->
+                                "https://flagcdn.com/w320/in.png"
+                        countryCode.length == 2 -> "https://flagcdn.com/w320/$countryCode.png"
+                        else -> null
+                    }
 
-            // Details
-            if (doc.holderName.isNotEmpty()) {
-                Text(text = "Name: ${doc.holderName}", style = MaterialTheme.typography.bodyMedium)
-            }
-            if (!doc.dob.isNullOrEmpty()) {
-                Text(text = "DOB: ${doc.dob}", style = MaterialTheme.typography.bodyMedium)
-            }
-            if (!doc.expiryDate.isNullOrEmpty()) {
-                Text(
-                        text = "Expires: ${doc.expiryDate}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.error
+            if (backgroundUrl != null) {
+                AsyncImage(
+                        model =
+                                ImageRequest.Builder(LocalContext.current)
+                                        .data(backgroundUrl)
+                                        .crossfade(true)
+                                        .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        alpha = 0.15f, // Increased visibility
+                        modifier = Modifier.matchParentSize()
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                                text = doc.type.name.replace("_", " "),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                                text = doc.country,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
 
-            // Images
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                doc.frontImagePath?.let { path ->
-                    DashboardImageThumbnail(path = path, label = "Front")
+                    // Flag / Emblem Row
+                    Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // Country Flag
+                        val countryCode = doc.country.lowercase()
+                        val flagUrl =
+                                when (countryCode) {
+                                    "usa", "us" -> "https://flagcdn.com/w160/us.png"
+                                    "ind", "in", "india" -> "https://flagcdn.com/w160/in.png"
+                                    else ->
+                                            if (countryCode.length == 2)
+                                                    "https://flagcdn.com/w160/$countryCode.png"
+                                            else null
+                                }
+
+                        if (flagUrl != null) {
+                            AsyncImage(
+                                    model =
+                                            ImageRequest.Builder(LocalContext.current)
+                                                    .data(flagUrl)
+                                                    .crossfade(true)
+                                                    .build(),
+                                    contentDescription = "Country Flag",
+                                    modifier = Modifier.size(24.dp).clip(RoundedCornerShape(2.dp))
+                            )
+                        }
+
+                        // State Flag (as emblem placeholder)
+                        if (!doc.state.isNullOrEmpty()) {
+                            val stateCode = StateUtils.getStateCode(doc.state)
+                            if (stateCode != null) {
+                                val stateFlagUrl =
+                                        "https://flagcdn.com/w160/us-${stateCode.lowercase()}.png"
+                                AsyncImage(
+                                        model =
+                                                ImageRequest.Builder(LocalContext.current)
+                                                        .data(stateFlagUrl)
+                                                        .crossfade(true)
+                                                        .build(),
+                                        contentDescription = "State Flag",
+                                        modifier =
+                                                Modifier.size(24.dp).clip(RoundedCornerShape(2.dp))
+                                )
+                            }
+                        }
+                    }
+
+                    if (doc.docNumber.isNotEmpty()) {
+                        Text(
+                                text = doc.docNumber,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    }
                 }
-                doc.backImagePath?.let { path ->
-                    DashboardImageThumbnail(path = path, label = "Back")
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Details
+                if (doc.holderName.isNotEmpty()) {
+                    Text(
+                            text = "Name: ${doc.holderName}",
+                            style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                if (!doc.dob.isNullOrEmpty()) {
+                    Text(text = "DOB: ${doc.dob}", style = MaterialTheme.typography.bodyMedium)
+                }
+                if (!doc.expiryDate.isNullOrEmpty()) {
+                    Text(
+                            text = "Expires: ${doc.expiryDate}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Images
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    doc.frontImagePath?.let { path ->
+                        DashboardImageThumbnail(path = path, label = "Front")
+                    }
+                    doc.backImagePath?.let { path ->
+                        DashboardImageThumbnail(path = path, label = "Back")
+                    }
                 }
             }
         }

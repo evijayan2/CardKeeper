@@ -25,6 +25,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.vijay.cardkeeper.R
 import com.vijay.cardkeeper.data.entity.Passport
 import com.vijay.cardkeeper.ui.viewmodel.AddItemViewModel
@@ -110,21 +112,48 @@ fun ViewPassportScreen(
                             modifier = Modifier.padding(16.dp).fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Flag
-                        val flagRes =
-                                when (pass.countryCode.uppercase()) {
-                                    "USA", "US" -> R.drawable.ic_flag_usa
-                                    "IND", "IN", "INDIA" -> R.drawable.ic_flag_india
-                                    else -> null
+                        // Flag (Online via FlagCDN)
+                        val countryCode = pass.countryCode.lowercase()
+                        val flagUrl =
+                                when (countryCode) {
+                                    "usa", "us" -> "https://flagcdn.com/w160/us.png"
+                                    "ind", "in", "india" -> "https://flagcdn.com/w160/in.png"
+                                    else ->
+                                            if (countryCode.length == 2)
+                                                    "https://flagcdn.com/w160/$countryCode.png"
+                                            else null
                                 }
 
-                        if (flagRes != null) {
-                            Image(
-                                    painter = painterResource(id = flagRes),
+                        if (flagUrl != null) {
+                            AsyncImage(
+                                    model =
+                                            ImageRequest.Builder(LocalContext.current)
+                                                    .data(flagUrl)
+                                                    .crossfade(true)
+                                                    .build(),
                                     contentDescription = "Country Flag",
+                                    placeholder = painterResource(R.drawable.ic_flag_usa),
+                                    error = painterResource(R.drawable.ic_flag_usa),
                                     modifier = Modifier.size(48.dp)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
+                        } else {
+                            // Fallback to local
+                            val flagRes =
+                                    when (pass.countryCode.uppercase()) {
+                                        "USA", "US" -> R.drawable.ic_flag_usa
+                                        "IND", "IN", "INDIA" -> R.drawable.ic_flag_india
+                                        else -> null
+                                    }
+
+                            if (flagRes != null) {
+                                Image(
+                                        painter = painterResource(id = flagRes),
+                                        contentDescription = "Country Flag",
+                                        modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                         }
 
                         Text(

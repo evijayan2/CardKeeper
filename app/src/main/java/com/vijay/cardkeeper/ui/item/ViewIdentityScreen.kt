@@ -18,11 +18,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.vijay.cardkeeper.R
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.ui.viewmodel.AddItemViewModel
 import com.vijay.cardkeeper.ui.viewmodel.AppViewModelProvider
+import com.vijay.cardkeeper.util.StateUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +41,7 @@ fun ViewIdentityScreen(
     var document by remember { mutableStateOf<IdentityDocument?>(null) }
     var fullScreenImage by remember { mutableStateOf<String?>(null) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(documentId) { document = viewModel.getIdentityDocument(documentId) }
 
@@ -97,17 +104,122 @@ fun ViewIdentityScreen(
                                         containerColor = MaterialTheme.colorScheme.primaryContainer
                                 )
                 ) {
-                    Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                        Text(
-                                text = doc.type.name.replace("_", " "),
-                                style = MaterialTheme.typography.headlineSmall
-                        )
-                        Text(text = doc.country, style = MaterialTheme.typography.titleMedium)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                                text = "Doc #: ${doc.docNumber}",
-                                style = MaterialTheme.typography.bodyLarge
-                        )
+                    Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                    text = doc.type.name.replace("_", " "),
+                                    style = MaterialTheme.typography.headlineSmall
+                            )
+                            Text(text = doc.country, style = MaterialTheme.typography.titleMedium)
+                            if (!doc.state.isNullOrEmpty()) {
+                                Text(
+                                        text = doc.state,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                    text = "Doc #: ${doc.docNumber}",
+                                    style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+
+                        // Images Column (Flag & Emblem)
+                        Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            // Country Flag (FlagCDN)
+                            // URL: https://flagcdn.com/w160/{code}.png
+                            // Fallback to local resources for USA/IND if download fails or as
+                            // placeholder?
+                            // Actually, let's prefer online for consistency but we have local
+                            // backup for speed?
+                            // For simplicity, matching user request "download... from online".
+                            val countryCode = doc.country.lowercase()
+                            val flagUrl =
+                                    when (countryCode) {
+                                        "usa", "us" -> "https://flagcdn.com/w160/us.png"
+                                        "ind", "in", "india" -> "https://flagcdn.com/w160/in.png"
+                                        else ->
+                                                if (countryCode.length == 2)
+                                                        "https://flagcdn.com/w160/$countryCode.png"
+                                                else null
+                                    }
+
+                            if (flagUrl != null) {
+                                AsyncImage(
+                                        model =
+                                                ImageRequest.Builder(LocalContext.current)
+                                                        .data(flagUrl)
+                                                        .crossfade(true)
+                                                        .build(),
+                                        contentDescription = "Country Flag",
+                                        placeholder =
+                                                painterResource(
+                                                        R.drawable.ic_flag_usa
+                                                ), // Just a default placeholder
+                                        error = painterResource(R.drawable.ic_flag_usa), // Fallback
+                                        modifier = Modifier.size(40.dp)
+                                )
+                            } else {
+                                // Fallback to local logic if NO url generated (unlikely for
+                                // standard codes)
+                                val localFlag =
+                                        when (doc.country.uppercase()) {
+                                            "USA", "US" -> R.drawable.ic_flag_usa
+                                            "IND", "IN", "INDIA" -> R.drawable.ic_flag_india
+                                            else -> null
+                                        }
+                                if (localFlag != null) {
+                                    Image(
+                                            painter = painterResource(id = localFlag),
+                                            contentDescription = "Country Flag",
+                                            modifier = Modifier.size(40.dp)
+                                    )
+                                }
+                            }
+
+                            // State Emblem / Flag (Online)
+                            if (!doc.state.isNullOrEmpty()) {
+                                val stateCode = StateUtils.getStateCode(doc.state)
+                                if (stateCode != null) {
+                                    val stateFlagUrl =
+                                            "https://flagcdn.com/w160/us-${stateCode.lowercase()}.png"
+                                    AsyncImage(
+                                            model =
+                                                    ImageRequest.Builder(LocalContext.current)
+                                                            .data(stateFlagUrl)
+                                                            .crossfade(true)
+                                                            .build(),
+                                            contentDescription = "State Emblem",
+                                            modifier = Modifier.size(40.dp)
+                                    )
+                                } else {
+                                    // Try local fallback if state code mapping failed but we have a
+                                    // matching resource?
+                                    val inputCode = doc.state.lowercase().replace(" ", "_")
+                                    val emblemResId =
+                                            context.resources.getIdentifier(
+                                                    "ic_emblem_$inputCode",
+                                                    "drawable",
+                                                    context.packageName
+                                            )
+                                    if (emblemResId != 0) {
+                                        Image(
+                                                painter = painterResource(id = emblemResId),
+                                                contentDescription = "State Emblem",
+                                                modifier = Modifier.size(40.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -135,6 +247,9 @@ fun ViewIdentityScreen(
                 DetailRow("Height", doc.height)
                 DetailRow("Eyes", doc.eyeColor)
                 DetailRow("Issued By", doc.issuingAuthority)
+                if (!doc.state.isNullOrEmpty()) {
+                    DetailRow("State", doc.state)
+                }
 
                 if (!doc.address.isNullOrEmpty()) {
                     DetailRow("Address", doc.address)

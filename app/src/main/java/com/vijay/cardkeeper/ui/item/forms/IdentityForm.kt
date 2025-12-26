@@ -12,7 +12,7 @@ import com.vijay.cardkeeper.data.entity.DocumentType
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 
 class IdentityFormState(initialDoc: IdentityDocument?, initialType: DocumentType? = null) {
-        var type by mutableStateOf(initialDoc?.type ?: initialType ?: DocumentType.PASSPORT)
+        var type by mutableStateOf(initialDoc?.type ?: initialType ?: DocumentType.DRIVER_LICENSE)
         var number by mutableStateOf(initialDoc?.docNumber ?: "")
         var expiry by mutableStateOf(initialDoc?.expiryDate ?: "")
         var firstName by mutableStateOf(initialDoc?.holderName?.substringBefore(" ") ?: "")
@@ -57,13 +57,20 @@ fun IdentityForm(
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text("Document Type", style = MaterialTheme.typography.labelLarge)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(DocumentType.PASSPORT, DocumentType.DRIVER_LICENSE).forEach { type ->
-                                FilterChip(
-                                        selected = state.type == type,
-                                        onClick = { state.type = type },
-                                        label = { Text(type.name.replace("_", " ")) }
+                        listOf(
+                                        DocumentType.DRIVER_LICENSE,
+                                        DocumentType.SSN,
+                                        DocumentType.PAN,
+                                        DocumentType.ADHAAR,
+                                        DocumentType.OTHER
                                 )
-                        }
+                                .forEach { type ->
+                                        FilterChip(
+                                                selected = state.type == type,
+                                                onClick = { state.type = type },
+                                                label = { Text(type.name.replace("_", " ")) }
+                                        )
+                                }
                 }
 
                 // Scan Buttons

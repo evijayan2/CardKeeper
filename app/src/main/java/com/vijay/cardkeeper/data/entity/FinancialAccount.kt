@@ -10,7 +10,8 @@ enum class AccountType {
     INVESTMENT,
     INSURANCE,
     LOAN,
-    REWARDS_CARD
+    REWARDS_CARD,
+    LIBRARY_CARD
 }
 
 enum class BankAccountSubType {

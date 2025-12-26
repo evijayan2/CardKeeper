@@ -20,6 +20,7 @@ object CardKeeperDestinations {
     const val VIEW_ITEM_ROUTE = "view_item/{accountId}"
     const val VIEW_IDENTITY_ROUTE = "view_identity/{documentId}"
     const val VIEW_PASSPORT_ROUTE = "view_passport/{passportId}"
+    const val VIEW_REWARDS_ROUTE = "view_rewards/{accountId}"
 }
 
 @Composable
@@ -36,14 +37,15 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                                 "add_item?category=$category&initialType=${type ?: ""}"
                         )
                     },
-                    navigateToItemView = { itemId ->
-                        navController.navigate("add_item?category=0&itemId=$itemId")
-                    },
+                    navigateToItemView = { itemId -> navController.navigate("view_item/$itemId") },
                     navigateToIdentityView = { docId ->
                         navController.navigate("view_identity/$docId")
                     },
                     navigateToPassportView = { passportId ->
                         navController.navigate("view_passport/$passportId")
+                    },
+                    navigateToRewardsView = { accountId ->
+                        navController.navigate("view_rewards/$accountId")
                     }
             )
         }
@@ -109,6 +111,17 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                     passportId = passportId,
                     navigateBack = { navController.popBackStack() },
                     onEditClick = { id -> navController.navigate("add_item?category=2&itemId=$id") }
+            )
+        }
+        composable(
+                route = CardKeeperDestinations.VIEW_REWARDS_ROUTE,
+                arguments = listOf(navArgument("accountId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val accountId = backStackEntry.arguments?.getInt("accountId") ?: 0
+            com.vijay.cardkeeper.ui.item.ViewRewardsScreen(
+                    itemId = accountId,
+                    navigateBack = { navController.popBackStack() },
+                    onEditClick = { id -> navController.navigate("add_item?category=3&itemId=$id") }
             )
         }
     }

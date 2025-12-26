@@ -77,14 +77,20 @@ fun AddItemScreen(
         // Category / Tabs
         // If we are editing, we lock the category to the item type.
         // If adding new, we start at 0 (Financial) but user can switch.
-        val categories = listOf("Financial Account", "Identity Document", "Passport")
+        // Index mapping: 0 -> Financial, 1 -> Identity, 2 -> Passport, 3 -> Rewards
         var selectedCategory by remember { mutableIntStateOf(initialCategory) }
 
         // Sync selectedCategory with loaded item
-        LaunchedEffect(item) {
-                if (item is IdentityDocument) selectedCategory = 1
-                else if (item is FinancialAccount) selectedCategory = 0
-                else if (item is Passport) selectedCategory = 2
+        val currentItem = item
+        LaunchedEffect(currentItem) {
+                if (currentItem is IdentityDocument) selectedCategory = 1
+                else if (currentItem is FinancialAccount) {
+                        if (currentItem.type == AccountType.REWARDS_CARD ||
+                                        currentItem.type == AccountType.LIBRARY_CARD
+                        )
+                                selectedCategory = 3
+                        else selectedCategory = 0
+                } else if (currentItem is Passport) selectedCategory = 2
         }
 
         // Parse initialType from documentType string for financial accounts
@@ -165,8 +171,15 @@ fun AddItemScreen(
                                                         )
 
                                                 scope.launch {
-                                                        if (selectedCategory == 0) {
-                                                                // Financial
+                                                        if (selectedCategory == 0 ||
+                                                                        selectedCategory == 3
+                                                        ) {
+                                                                // Financial (0) or Rewards (3)
+                                                                // If category is 3, force type to
+                                                                // REWARDS_CARD for logic if needed,
+                                                                // though state.type should be set
+                                                                // by UI selection or default.
+
                                                                 if (scanningBack) {
                                                                         financialState.backBitmap =
                                                                                 bitmap
@@ -175,7 +188,9 @@ fun AddItemScreen(
                                                                         // Back Scan Logic
                                                                         if (financialState.type ==
                                                                                         AccountType
-                                                                                                .REWARDS_CARD
+                                                                                                .REWARDS_CARD ||
+                                                                                        selectedCategory ==
+                                                                                                3
                                                                         ) {
                                                                                 val res =
                                                                                         rewardsScanner
@@ -854,14 +869,21 @@ fun AddItemScreen(
                                         AccountType.CREDIT_CARD, AccountType.DEBIT_CARD ->
                                                 "Update Credit/Debit Card"
                                         AccountType.BANK_ACCOUNT -> "Update Bank Account"
-                                        AccountType.REWARDS_CARD -> "Update Rewards Card"
                                         else -> "Update Financial Account"
+                                }
+                        } else if (selectedCategory == 3) {
+                                when (financialState.type) {
+                                        AccountType.LIBRARY_CARD -> "Update Library Card"
+                                        else -> "Update Rewards Card"
                                 }
                         } else if (selectedCategory == 2) {
                                 "Update Passport"
                         } else {
                                 when (identityState.type) {
                                         DocumentType.DRIVER_LICENSE -> "Update Driver License"
+                                        DocumentType.SSN -> "Update SSN"
+                                        DocumentType.PAN -> "Update PAN"
+                                        DocumentType.ADHAAR -> "Update Aadhar"
                                         else -> "Update Identity Document"
                                 }
                         }
@@ -872,14 +894,21 @@ fun AddItemScreen(
                                         AccountType.CREDIT_CARD, AccountType.DEBIT_CARD ->
                                                 "Add Credit/Debit Card"
                                         AccountType.BANK_ACCOUNT -> "Add Bank Account"
-                                        AccountType.REWARDS_CARD -> "Add Rewards Card"
                                         else -> "Add Financial Account"
+                                }
+                        } else if (selectedCategory == 3) {
+                                when (financialState.type) {
+                                        AccountType.LIBRARY_CARD -> "Add Library Card"
+                                        else -> "Add Rewards Card"
                                 }
                         } else if (selectedCategory == 2) {
                                 "Add Passport"
                         } else {
                                 when (identityState.type) {
                                         DocumentType.DRIVER_LICENSE -> "Add Driver License"
+                                        DocumentType.SSN -> "Add SSN"
+                                        DocumentType.PAN -> "Add PAN"
+                                        DocumentType.ADHAAR -> "Add Aadhar"
                                         else -> "Add Identity Document"
                                 }
                         }
@@ -993,18 +1022,20 @@ fun AddItemScreen(
                                                 .verticalScroll(rememberScrollState()),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                                // Category Switcher
-                                PrimaryTabRow(selectedTabIndex = selectedCategory) {
-                                        categories.forEachIndexed { index, title ->
-                                                Tab(
-                                                        selected = selectedCategory == index,
-                                                        onClick = { selectedCategory = index },
-                                                        text = { Text(title) }
-                                                )
-                                        }
-                                }
+                                // Category Switcher Removed per user request
 
-                                if (selectedCategory == 0) {
+                                if (selectedCategory == 0 || selectedCategory == 3) {
+                                        // If Rewards category is selected, ensure type is
+                                        // REWARDS_CARD or LIBRARY_CARD
+                                        if (selectedCategory == 3 &&
+                                                        financialState.type !=
+                                                                AccountType.REWARDS_CARD &&
+                                                        financialState.type !=
+                                                                AccountType.LIBRARY_CARD
+                                        ) {
+                                                financialState.type = AccountType.REWARDS_CARD
+                                        }
+
                                         FinancialForm(
                                                 state = financialState,
                                                 onScanFront = { scanDocument(false) },

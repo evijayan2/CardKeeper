@@ -102,12 +102,43 @@ fun ViewItemScreen(
         ) {
             account?.let { acc ->
                 // Header Card
-                ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+                val cardColor = getAccountColor(acc)
+                val isDark = cardColor != MaterialTheme.colorScheme.surface
+                val contentColor =
+                        if (isDark) androidx.compose.ui.graphics.Color.White
+                        else MaterialTheme.colorScheme.onSurface
+
+                ElevatedCard(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors =
+                                CardDefaults.elevatedCardColors(
+                                        containerColor = cardColor,
+                                        contentColor = contentColor
+                                )
+                ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                                acc.type.name.replace("_", " "),
-                                style = MaterialTheme.typography.labelMedium
-                        )
+                        Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                    acc.type.name.replace("_", " "),
+                                    style = MaterialTheme.typography.labelMedium
+                            )
+                            val logoResId = getCardLogoResId(acc.cardNetwork)
+                            if (logoResId != null) {
+                                androidx.compose.foundation.Image(
+                                        painter =
+                                                androidx.compose.ui.res.painterResource(
+                                                        id = logoResId
+                                                ),
+                                        contentDescription = null,
+                                        modifier = Modifier.height(32.dp),
+                                        contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                                )
+                            }
+                        }
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(acc.accountName, style = MaterialTheme.typography.headlineSmall)
                         if (!acc.cardNetwork.isNullOrBlank()) {
@@ -571,5 +602,58 @@ fun mapToZXingFormat(format: Int): BarcodeFormat {
         Barcode.FORMAT_PDF417 -> BarcodeFormat.PDF_417
         Barcode.FORMAT_AZTEC -> BarcodeFormat.AZTEC
         else -> BarcodeFormat.CODE_128
+    }
+}
+
+@Composable
+fun getCardLogoResId(network: String?): Int? {
+    if (network == null) return null
+    return when {
+        network.contains("Visa", ignoreCase = true) -> com.vijay.cardkeeper.R.drawable.ic_brand_visa
+        network.contains("Master", ignoreCase = true) ->
+                com.vijay.cardkeeper.R.drawable.ic_brand_mastercard
+        network.contains("Amex", ignoreCase = true) -> com.vijay.cardkeeper.R.drawable.ic_brand_amex
+        network.contains("Discover", ignoreCase = true) ->
+                com.vijay.cardkeeper.R.drawable.ic_brand_discover
+        network.contains("Capital", ignoreCase = true) ->
+                com.vijay.cardkeeper.R.drawable.ic_brand_capitolone
+        network.contains("Rupay", ignoreCase = true) ->
+                com.vijay.cardkeeper.R.drawable.ic_brand_rupay
+        else -> null
+    }
+}
+
+@Composable
+fun getAccountColor(
+        account: com.vijay.cardkeeper.data.entity.FinancialAccount
+): androidx.compose.ui.graphics.Color {
+    if (account.colorTheme != null) {
+        return androidx.compose.ui.graphics.Color(account.colorTheme)
+    }
+    if (account.bankBrandColor != null) {
+        return androidx.compose.ui.graphics.Color(account.bankBrandColor)
+    }
+    val network = account.cardNetwork
+    return when {
+        network?.contains("Visa", ignoreCase = true) == true ->
+                androidx.compose.ui.graphics.Color(0xFF1A1F71)
+        network?.contains("Master", ignoreCase = true) == true ->
+                androidx.compose.ui.graphics.Color(0xFF222222)
+        network?.contains("Amex", ignoreCase = true) == true ->
+                androidx.compose.ui.graphics.Color(0xFF006FCF)
+        network?.contains("Discover", ignoreCase = true) == true ->
+                androidx.compose.ui.graphics.Color(0xFFE55C20)
+        network?.contains("Rupay", ignoreCase = true) == true ->
+                androidx.compose.ui.graphics.Color(0xFF1B3F6B)
+        account.institutionName.contains("Chase", ignoreCase = true) ->
+                androidx.compose.ui.graphics.Color(0xFF117ACA)
+        account.institutionName.contains("Citi", ignoreCase = true) ->
+                androidx.compose.ui.graphics.Color(0xFF003B70)
+        account.institutionName.contains("Wells", ignoreCase = true) ->
+                androidx.compose.ui.graphics.Color(0xFFCD1409)
+        account.institutionName.contains("Boa", ignoreCase = true) ||
+                account.institutionName.contains("Bank of America", ignoreCase = true) ->
+                androidx.compose.ui.graphics.Color(0xFFDC1431)
+        else -> MaterialTheme.colorScheme.surface
     }
 }

@@ -10,6 +10,7 @@ import com.vijay.cardkeeper.data.repository.IdentityRepository
 import com.vijay.cardkeeper.data.repository.PassportRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class HomeViewModel(
@@ -18,12 +19,35 @@ class HomeViewModel(
         passportRepository: PassportRepository
 ) : ViewModel() {
 
-        val financialAccounts: StateFlow<List<FinancialAccount>> =
-                financialRepository.allAccounts.stateIn(
-                        viewModelScope,
-                        SharingStarted.WhileSubscribed(5000),
-                        emptyList()
-                )
+        val bankAccounts: StateFlow<List<FinancialAccount>> =
+                financialRepository
+                        .allAccounts
+                        .map { list ->
+                                list.filter {
+                                        it.type !=
+                                                com.vijay.cardkeeper.data.entity.AccountType
+                                                        .REWARDS_CARD &&
+                                                it.type !=
+                                                        com.vijay.cardkeeper.data.entity.AccountType
+                                                                .LIBRARY_CARD
+                                }
+                        }
+                        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+        val rewardsCards: StateFlow<List<FinancialAccount>> =
+                financialRepository
+                        .allAccounts
+                        .map { list ->
+                                list.filter {
+                                        it.type ==
+                                                com.vijay.cardkeeper.data.entity.AccountType
+                                                        .REWARDS_CARD ||
+                                                it.type ==
+                                                        com.vijay.cardkeeper.data.entity.AccountType
+                                                                .LIBRARY_CARD
+                                }
+                        }
+                        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
         val identityDocuments: StateFlow<List<IdentityDocument>> =
                 identityRepository.allDocuments.stateIn(
