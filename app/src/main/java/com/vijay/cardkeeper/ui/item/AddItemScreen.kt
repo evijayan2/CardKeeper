@@ -630,7 +630,18 @@ fun AddItemScreen(
                 rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
                         isGranted ->
                         if (isGranted) {
-                                scannerLauncher.launch(null)
+                                scanner.getStartScanIntent(activity)
+                                    .addOnSuccessListener { intentSender ->
+                                        scannerLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
+                                    }
+                                    .addOnFailureListener { e ->
+                                        Toast.makeText(
+                                                        context,
+                                                        "Scanner error: ${e.message}",
+                                                        Toast.LENGTH_SHORT
+                                                )
+                                                .show()
+                                    }
                         } else {
                                 Toast.makeText(
                                                 context,

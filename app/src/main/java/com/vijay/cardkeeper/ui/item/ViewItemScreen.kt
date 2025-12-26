@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,7 +59,7 @@ fun ViewItemScreen(
                         title = { Text(account?.institutionName ?: "Details") },
                         navigationIcon = {
                             IconButton(onClick = navigateBack) {
-                                Icon(Icons.Filled.ArrowBack, "Back")
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                             }
                         },
                         actions = {
@@ -502,7 +503,7 @@ fun DetailRow(
                 Icon(Icons.Filled.ContentCopy, "Copy", modifier = Modifier.size(16.dp))
             }
         }
-        Divider(modifier = Modifier.padding(top = 8.dp))
+        HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
     }
 }
 
@@ -527,7 +528,7 @@ fun SecureDetailRow(label: String, value: String) {
                 Icon(if (visible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff, "Toggle")
             }
         }
-        Divider(modifier = Modifier.padding(top = 8.dp))
+        HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
     }
 }
 
