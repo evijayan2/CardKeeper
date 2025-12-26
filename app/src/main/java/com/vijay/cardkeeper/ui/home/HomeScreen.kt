@@ -462,6 +462,13 @@ fun IdentityItem(doc: IdentityDocument, onItemClick: (Int) -> Unit) {
             if (!doc.dob.isNullOrEmpty()) {
                 Text(text = "DOB: ${doc.dob}", style = MaterialTheme.typography.bodyMedium)
             }
+            if (!doc.expiryDate.isNullOrEmpty()) {
+                Text(
+                        text = "Expires: ${doc.expiryDate}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.error
+                )
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 

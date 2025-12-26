@@ -112,7 +112,7 @@ class AddItemViewModel(
                 country: String,
                 docNumber: String,
                 holder: String,
-                expiryDate: Long?,
+                expiryDate: String?,
                 frontImagePath: String?,
                 backImagePath: String?,
                 state: String?,

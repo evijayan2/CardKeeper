@@ -15,7 +15,7 @@ import com.vijay.cardkeeper.data.entity.IdentityDocument
                         FinancialAccount::class,
                         IdentityDocument::class,
                         com.vijay.cardkeeper.data.entity.Passport::class],
-        version = 10,
+        version = 11,
         exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -35,7 +35,7 @@ abstract class AppDatabase : RoomDatabase() {
                                                 AppDatabase::class.java,
                                                 "cardkeeper_database"
                                         )
-                                        .fallbackToDestructiveMigration()
+                                        .fallbackToDestructiveMigration(false)
                                         .build()
                         INSTANCE = instance
                         instance

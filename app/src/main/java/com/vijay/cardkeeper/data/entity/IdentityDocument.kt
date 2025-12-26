@@ -23,8 +23,8 @@ data class IdentityDocument(
         val holderName: String,
 
         // Dates
-        val issueDate: Long? = null,
-        val expiryDate: Long? = null,
+        val issueDate: String? = null,
+        val expiryDate: String? = null,
 
         // Metadata
         val issuingAuthority: String? = null, // "Dept of State", "RTO Bangalore"

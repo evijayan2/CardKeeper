@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBox
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.DirectionsCar
@@ -794,35 +794,6 @@ fun AddItemScreen(
                         } // closes if (result.resultCode == RESULT_OK)
                 } // closes rememberLauncherForActivityResult
 
-        val permissionLauncher =
-                rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-                        isGranted ->
-                        if (isGranted) {
-                                scanner.getStartScanIntent(activity)
-                                        .addOnSuccessListener { intentSender ->
-                                                scannerLauncher.launch(
-                                                        IntentSenderRequest.Builder(intentSender)
-                                                                .build()
-                                                )
-                                        }
-                                        .addOnFailureListener { e ->
-                                                Toast.makeText(
-                                                                context,
-                                                                "Scanner error: ${e.message}",
-                                                                Toast.LENGTH_SHORT
-                                                        )
-                                                        .show()
-                                        }
-                        } else {
-                                Toast.makeText(
-                                                context,
-                                                "Camera permission required",
-                                                Toast.LENGTH_SHORT
-                                        )
-                                        .show()
-                        }
-                }
-
         val scanDocument = { isBack: Boolean ->
                 scanningBack = isBack
 
@@ -1005,7 +976,10 @@ fun AddItemScreen(
                                         },
                                         navigationIcon = {
                                                 IconButton(onClick = navigateBack) {
-                                                        Icon(Icons.Filled.ArrowBack, "Back")
+                                                        Icon(
+                                                                Icons.AutoMirrored.Filled.ArrowBack,
+                                                                "Back"
+                                                        )
                                                 }
                                         }
                                 )
@@ -1020,7 +994,7 @@ fun AddItemScreen(
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                                 // Category Switcher
-                                TabRow(selectedTabIndex = selectedCategory) {
+                                PrimaryTabRow(selectedTabIndex = selectedCategory) {
                                         categories.forEachIndexed { index, title ->
                                                 Tab(
                                                         selected = selectedCategory == index,
@@ -1189,8 +1163,7 @@ fun AddItemScreen(
                                                                 docNumber = identityState.number,
                                                                 holder =
                                                                         "${identityState.firstName} ${identityState.lastName}".trim(),
-                                                                expiryDate =
-                                                                        null, // TODO: Parse logic
+                                                                expiryDate = identityState.expiry,
                                                                 frontImagePath =
                                                                         identityState.frontPath,
                                                                 backImagePath =

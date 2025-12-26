@@ -40,7 +40,7 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                         navController.navigate("add_item?category=0&itemId=$itemId")
                     },
                     navigateToIdentityView = { docId ->
-                        navController.navigate("add_item?category=1&itemId=$docId")
+                        navController.navigate("view_identity/$docId")
                     },
                     navigateToPassportView = { passportId ->
                         navController.navigate("view_passport/$passportId")

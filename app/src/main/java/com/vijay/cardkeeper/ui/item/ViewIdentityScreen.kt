@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
@@ -44,7 +44,10 @@ fun ViewIdentityScreen(
                         title = { Text("Identity Details") },
                         navigationIcon = {
                             IconButton(onClick = navigateBack) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                                Icon(
+                                        Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back"
+                                )
                             }
                         },
                         actions = {
@@ -124,9 +127,9 @@ fun ViewIdentityScreen(
                 // Details List
                 DetailRow("Name", doc.holderName)
                 DetailRow("DOB", doc.dob)
-                DetailRow("Expiry", doc.expiryDate?.toString()) // Simplistic view
+                DetailRow("Expiry", doc.expiryDate)
 
-                Divider()
+                HorizontalDivider()
 
                 DetailRow("Sex", doc.sex)
                 DetailRow("Height", doc.height)
@@ -137,7 +140,7 @@ fun ViewIdentityScreen(
                     DetailRow("Address", doc.address)
                 }
 
-                Divider()
+                HorizontalDivider()
 
                 DetailRow("Class", doc.licenseClass)
                 DetailRow("Restrictions", doc.restrictions)

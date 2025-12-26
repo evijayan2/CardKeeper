@@ -14,7 +14,7 @@ import com.vijay.cardkeeper.data.entity.IdentityDocument
 class IdentityFormState(initialDoc: IdentityDocument?, initialType: DocumentType? = null) {
         var type by mutableStateOf(initialDoc?.type ?: initialType ?: DocumentType.PASSPORT)
         var number by mutableStateOf(initialDoc?.docNumber ?: "")
-        var expiry by mutableStateOf(initialDoc?.expiryDate?.toString() ?: "") // TODO: Format date
+        var expiry by mutableStateOf(initialDoc?.expiryDate ?: "")
         var firstName by mutableStateOf(initialDoc?.holderName?.substringBefore(" ") ?: "")
         var lastName by mutableStateOf(initialDoc?.holderName?.substringAfter(" ", "") ?: "")
         var address by mutableStateOf(initialDoc?.address ?: "")
