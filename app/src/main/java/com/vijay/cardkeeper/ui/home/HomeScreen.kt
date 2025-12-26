@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.IdentityDocument
+import com.vijay.cardkeeper.data.entity.Passport
 import com.vijay.cardkeeper.ui.viewmodel.AppViewModelProvider
 import com.vijay.cardkeeper.ui.viewmodel.HomeViewModel
 
@@ -35,12 +36,15 @@ fun HomeScreen(
         navigateToItemEntry: (Int, String?) -> Unit,
         navigateToItemView: (Int) -> Unit,
         navigateToIdentityView: (Int) -> Unit,
+        navigateToPassportView: (Int) -> Unit =
+                {}, // Default empty for now to avoid breaking callers immediately
         viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val financialState by viewModel.financialAccounts.collectAsState(initial = emptyList())
     val identityState by viewModel.identityDocuments.collectAsState(initial = emptyList())
+    val passportState by viewModel.passports.collectAsState(initial = emptyList())
     var selectedTab by remember { mutableStateOf(0) }
-    val tabs = listOf("Finance", "Identity")
+    val tabs = listOf("Finance", "Identity", "Passports")
 
     // FAB Menu State
     var showMenu by remember { mutableStateOf(false) }
@@ -119,7 +123,7 @@ fun HomeScreen(
                                 text = { Text("Passport") },
                                 onClick = {
                                     showMenu = false
-                                    navigateToItemEntry(1, "PASSPORT")
+                                    navigateToItemEntry(2, "PASSPORT") // Category 2 for Passport
                                 },
                                 leadingIcon = {
                                     Icon(Icons.Filled.AccountBox, contentDescription = null)
@@ -146,7 +150,11 @@ fun HomeScreen(
                             text = { Text(title) },
                             icon = {
                                 Icon(
-                                        if (index == 0) Icons.Default.Home else Icons.Default.Face,
+                                        when (index) {
+                                            0 -> Icons.Default.Home
+                                            1 -> Icons.Default.Face
+                                            else -> Icons.Default.AccountBox
+                                        },
                                         contentDescription = null
                                 )
                             }
@@ -157,6 +165,7 @@ fun HomeScreen(
             when (selectedTab) {
                 0 -> FinancialList(financialState, navigateToItemView)
                 1 -> IdentityList(identityState, navigateToIdentityView)
+                2 -> PassportList(passportState, navigateToPassportView)
             }
         }
     }
@@ -392,6 +401,14 @@ fun getCardLogoResId(network: String?): Int? {
                 com.vijay.cardkeeper.R.drawable.ic_brand_rupay
         else -> null
     }
+}
+
+@Composable
+fun PassportList(list: List<Passport>, onItemClick: (Int) -> Unit) {
+    LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) { items(list) { passport -> PassportItem(passport, { onItemClick(passport.id) }) } }
 }
 
 @Composable

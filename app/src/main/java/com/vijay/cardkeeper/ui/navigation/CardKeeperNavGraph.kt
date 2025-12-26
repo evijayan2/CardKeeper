@@ -35,9 +35,14 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                                 "add_item?category=$category&initialType=${type ?: ""}"
                         )
                     },
-                    navigateToItemView = { itemId -> navController.navigate("view_item/$itemId") },
+                    navigateToItemView = { itemId ->
+                        navController.navigate("add_item?category=0&itemId=$itemId")
+                    },
                     navigateToIdentityView = { docId ->
-                        navController.navigate("view_identity/$docId")
+                        navController.navigate("add_item?category=1&itemId=$docId")
+                    },
+                    navigateToPassportView = { passportId ->
+                        navController.navigate("add_item?category=2&itemId=$passportId")
                     }
             )
         }

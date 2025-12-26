@@ -13,7 +13,8 @@ import kotlinx.coroutines.launch
 
 class AddItemViewModel(
         private val financialRepository: FinancialRepository,
-        private val identityRepository: IdentityRepository
+        private val identityRepository: IdentityRepository,
+        private val passportRepository: com.vijay.cardkeeper.data.repository.PassportRepository
 ) : ViewModel() {
 
         fun saveFinancialAccount(
@@ -102,6 +103,8 @@ class AddItemViewModel(
 
         suspend fun getIdentityDocument(id: Int) = identityRepository.getDocumentById(id)
 
+        suspend fun getPassport(id: Int) = passportRepository.getPassport(id)
+
         fun saveIdentityDocument(
                 id: Int = 0,
                 type: DocumentType,
@@ -152,6 +155,16 @@ class AddItemViewModel(
                 }
         }
 
+        fun savePassport(passport: com.vijay.cardkeeper.data.entity.Passport) {
+                viewModelScope.launch {
+                        if (passport.id > 0) {
+                                passportRepository.update(passport)
+                        } else {
+                                passportRepository.insert(passport)
+                        }
+                }
+        }
+
         fun deleteIdentityDocument(document: IdentityDocument) {
                 viewModelScope.launch { identityRepository.deleteDocument(document) }
         }
@@ -165,6 +178,8 @@ class AddItemViewModel(
                                         emit(financialRepository.getAccountById(id))
                                 } else if (type == "identity") {
                                         emit(identityRepository.getDocumentById(id))
+                                } else if (type == "passport") {
+                                        emit(passportRepository.getPassport(id))
                                 }
                         }
                 }

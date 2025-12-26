@@ -5,19 +5,16 @@ import com.vijay.cardkeeper.data.AppDatabase
 import com.vijay.cardkeeper.data.repository.FinancialRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
 
-/**
- * AppContainer for manual dependency injection.
- */
+/** AppContainer for manual dependency injection. */
 interface AppContainer {
     val financialRepository: FinancialRepository
     val identityRepository: IdentityRepository
+    val passportRepository: com.vijay.cardkeeper.data.repository.PassportRepository
 }
 
 class DefaultAppContainer(private val context: Context) : AppContainer {
-    
-    private val database: AppDatabase by lazy {
-        AppDatabase.getDatabase(context)
-    }
+
+    private val database: AppDatabase by lazy { AppDatabase.getDatabase(context) }
 
     override val financialRepository: FinancialRepository by lazy {
         FinancialRepository(database.financialAccountDao())
@@ -25,5 +22,10 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val identityRepository: IdentityRepository by lazy {
         IdentityRepository(database.identityDocumentDao())
+    }
+
+    override val passportRepository:
+            com.vijay.cardkeeper.data.repository.PassportRepository by lazy {
+        com.vijay.cardkeeper.data.repository.PassportRepository(database.passportDao())
     }
 }

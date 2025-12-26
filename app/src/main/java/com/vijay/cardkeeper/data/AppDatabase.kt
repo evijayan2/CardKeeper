@@ -10,13 +10,18 @@ import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 
 @Database(
-        entities = [FinancialAccount::class, IdentityDocument::class],
-        version = 9,
+        entities =
+                [
+                        FinancialAccount::class,
+                        IdentityDocument::class,
+                        com.vijay.cardkeeper.data.entity.Passport::class],
+        version = 10,
         exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun financialAccountDao(): FinancialAccountDao
     abstract fun identityDocumentDao(): IdentityDocumentDao
+    abstract fun passportDao(): com.vijay.cardkeeper.data.dao.PassportDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null

@@ -31,15 +31,19 @@ import com.vijay.cardkeeper.data.entity.AccountType
 import com.vijay.cardkeeper.data.entity.DocumentType
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.IdentityDocument
+import com.vijay.cardkeeper.data.entity.Passport
 import com.vijay.cardkeeper.scanning.ChequeScanner
 import com.vijay.cardkeeper.scanning.DriverLicenseScanner
 import com.vijay.cardkeeper.scanning.IdentityScanner
+import com.vijay.cardkeeper.scanning.PassportScanner
 import com.vijay.cardkeeper.scanning.PaymentCardScanner
 import com.vijay.cardkeeper.scanning.RewardsScanner
 import com.vijay.cardkeeper.ui.item.forms.FinancialForm
 import com.vijay.cardkeeper.ui.item.forms.IdentityForm
+import com.vijay.cardkeeper.ui.item.forms.PassportForm
 import com.vijay.cardkeeper.ui.item.forms.rememberFinancialFormState
 import com.vijay.cardkeeper.ui.item.forms.rememberIdentityFormState
+import com.vijay.cardkeeper.ui.item.forms.rememberPassportFormState
 import com.vijay.cardkeeper.ui.scanner.BarcodeScannerScreen
 import com.vijay.cardkeeper.ui.viewmodel.AddItemViewModel
 import com.vijay.cardkeeper.ui.viewmodel.AppViewModelProvider
@@ -68,13 +72,14 @@ fun AddItemScreen(
         // Category / Tabs
         // If we are editing, we lock the category to the item type.
         // If adding new, we start at 0 (Financial) but user can switch.
-        val categories = listOf("Financial Account", "Identity Document")
+        val categories = listOf("Financial Account", "Identity Document", "Passport")
         var selectedCategory by remember { mutableIntStateOf(initialCategory) }
 
         // Sync selectedCategory with loaded item
         LaunchedEffect(item) {
                 if (item is IdentityDocument) selectedCategory = 1
                 else if (item is FinancialAccount) selectedCategory = 0
+                else if (item is Passport) selectedCategory = 2
         }
 
         // Parse initialType from documentType string for financial accounts
@@ -94,7 +99,7 @@ fun AddItemScreen(
                 remember(documentType) {
                         when (documentType?.uppercase()) {
                                 "DRIVER_LICENSE" -> DocumentType.DRIVER_LICENSE
-                                "PASSPORT" -> DocumentType.PASSPORT
+                                // "PASSPORT" -> DocumentType.PASSPORT // Passport is now separate
                                 else -> null
                         }
                 }
@@ -104,6 +109,7 @@ fun AddItemScreen(
                 rememberFinancialFormState(item as? FinancialAccount, initialAccountType)
         val identityState =
                 rememberIdentityFormState(item as? IdentityDocument, initialDocumentType)
+        val passportState = rememberPassportFormState(item as? Passport)
 
         // Scanners
         val paymentScanner = remember { PaymentCardScanner() }
@@ -111,6 +117,7 @@ fun AddItemScreen(
         val identityScanner = remember { IdentityScanner() }
         val driverLicenseScanner = remember { DriverLicenseScanner() }
         val chequeScanner = remember { ChequeScanner() }
+        val passportScanner = remember { PassportScanner() }
 
         // Constants for Camera Logic
         var scanningBack by remember { mutableStateOf(false) }
@@ -419,6 +426,162 @@ fun AddItemScreen(
                                                                                 }
                                                                         }
                                                                 }
+                                                        } else if (selectedCategory == 2) {
+                                                                // Passport
+                                                                if (scanningBack) {
+                                                                        passportState.backBitmap =
+                                                                                bitmap
+                                                                        passportState.backPath =
+                                                                                savedPath
+                                                                        val details =
+                                                                                passportScanner
+                                                                                        .scanBack(
+                                                                                                bitmap
+                                                                                        )
+                                                                        // Update back-side fields
+                                                                        if (details.fatherName
+                                                                                        ?.isNotEmpty() ==
+                                                                                        true
+                                                                        )
+                                                                                passportState
+                                                                                        .fatherName =
+                                                                                        details.fatherName
+                                                                        if (details.motherName
+                                                                                        ?.isNotEmpty() ==
+                                                                                        true
+                                                                        )
+                                                                                passportState
+                                                                                        .motherName =
+                                                                                        details.motherName
+                                                                        if (details.spouseName
+                                                                                        ?.isNotEmpty() ==
+                                                                                        true
+                                                                        )
+                                                                                passportState
+                                                                                        .spouseName =
+                                                                                        details.spouseName
+                                                                        if (details.address
+                                                                                        ?.isNotEmpty() ==
+                                                                                        true
+                                                                        )
+                                                                                passportState
+                                                                                        .address =
+                                                                                        details.address
+                                                                        if (details.fileNumber
+                                                                                        ?.isNotEmpty() ==
+                                                                                        true
+                                                                        )
+                                                                                passportState
+                                                                                        .fileNumber =
+                                                                                        details.fileNumber
+                                                                } else {
+                                                                        passportState.frontBitmap =
+                                                                                bitmap
+                                                                        passportState.frontPath =
+                                                                                savedPath
+                                                                        val details =
+                                                                                passportScanner
+                                                                                        .scanFront(
+                                                                                                bitmap
+                                                                                        )
+                                                                        // Update front-side fields
+                                                                        // (MRZ)
+
+                                                                        // Helper to safely set
+                                                                        // string fields
+                                                                        fun setIfNotNull(
+                                                                                value: String?,
+                                                                                setter:
+                                                                                        (
+                                                                                                String) -> Unit
+                                                                        ) {
+                                                                                if (!value.isNullOrEmpty()
+                                                                                ) {
+                                                                                        setter(
+                                                                                                value
+                                                                                        )
+                                                                                }
+                                                                        }
+
+                                                                        setIfNotNull(
+                                                                                details.passportNumber
+                                                                        ) {
+                                                                                passportState
+                                                                                        .passportNumber =
+                                                                                        it
+                                                                        }
+                                                                        setIfNotNull(
+                                                                                details.countryCode
+                                                                        ) {
+                                                                                passportState
+                                                                                        .countryCode =
+                                                                                        it
+                                                                        }
+                                                                        setIfNotNull(
+                                                                                details.surname
+                                                                        ) {
+                                                                                passportState
+                                                                                        .surname =
+                                                                                        it
+                                                                        }
+                                                                        setIfNotNull(
+                                                                                details.givenNames
+                                                                        ) {
+                                                                                passportState
+                                                                                        .givenNames =
+                                                                                        it
+                                                                        }
+                                                                        setIfNotNull(
+                                                                                details.nationality
+                                                                        ) {
+                                                                                passportState
+                                                                                        .nationality =
+                                                                                        it
+                                                                        }
+                                                                        setIfNotNull(details.dob) {
+                                                                                passportState.dob =
+                                                                                        it
+                                                                        }
+                                                                        setIfNotNull(details.sex) {
+                                                                                passportState.sex =
+                                                                                        it
+                                                                        }
+                                                                        setIfNotNull(
+                                                                                details.dateOfExpiry
+                                                                        ) {
+                                                                                passportState
+                                                                                        .dateOfExpiry =
+                                                                                        it
+                                                                        }
+                                                                        setIfNotNull(
+                                                                                details.dateOfIssue
+                                                                        ) {
+                                                                                passportState
+                                                                                        .dateOfIssue =
+                                                                                        it
+                                                                        }
+                                                                        setIfNotNull(
+                                                                                details.placeOfBirth
+                                                                        ) {
+                                                                                passportState
+                                                                                        .placeOfBirth =
+                                                                                        it
+                                                                        }
+                                                                        setIfNotNull(
+                                                                                details.placeOfIssue
+                                                                        ) {
+                                                                                passportState
+                                                                                        .placeOfIssue =
+                                                                                        it
+                                                                        }
+                                                                        setIfNotNull(
+                                                                                details.authority
+                                                                        ) {
+                                                                                passportState
+                                                                                        .authority =
+                                                                                        it
+                                                                        }
+                                                                }
                                                         } else {
                                                                 // Identity
                                                                 if (scanningBack) {
@@ -631,17 +794,20 @@ fun AddItemScreen(
                         isGranted ->
                         if (isGranted) {
                                 scanner.getStartScanIntent(activity)
-                                    .addOnSuccessListener { intentSender ->
-                                        scannerLauncher.launch(IntentSenderRequest.Builder(intentSender).build())
-                                    }
-                                    .addOnFailureListener { e ->
-                                        Toast.makeText(
-                                                        context,
-                                                        "Scanner error: ${e.message}",
-                                                        Toast.LENGTH_SHORT
+                                        .addOnSuccessListener { intentSender ->
+                                                scannerLauncher.launch(
+                                                        IntentSenderRequest.Builder(intentSender)
+                                                                .build()
                                                 )
-                                                .show()
-                                    }
+                                        }
+                                        .addOnFailureListener { e ->
+                                                Toast.makeText(
+                                                                context,
+                                                                "Scanner error: ${e.message}",
+                                                                Toast.LENGTH_SHORT
+                                                        )
+                                                        .show()
+                                        }
                         } else {
                                 Toast.makeText(
                                                 context,
@@ -715,10 +881,11 @@ fun AddItemScreen(
                                         AccountType.REWARDS_CARD -> "Update Rewards Card"
                                         else -> "Update Financial Account"
                                 }
+                        } else if (selectedCategory == 2) {
+                                "Update Passport"
                         } else {
                                 when (identityState.type) {
                                         DocumentType.DRIVER_LICENSE -> "Update Driver License"
-                                        DocumentType.PASSPORT -> "Update Passport"
                                         else -> "Update Identity Document"
                                 }
                         }
@@ -732,10 +899,11 @@ fun AddItemScreen(
                                         AccountType.REWARDS_CARD -> "Add Rewards Card"
                                         else -> "Add Financial Account"
                                 }
+                        } else if (selectedCategory == 2) {
+                                "Add Passport"
                         } else {
                                 when (identityState.type) {
                                         DocumentType.DRIVER_LICENSE -> "Add Driver License"
-                                        DocumentType.PASSPORT -> "Add Passport"
                                         else -> "Add Identity Document"
                                 }
                         }
@@ -750,10 +918,11 @@ fun AddItemScreen(
                                 AccountType.REWARDS_CARD -> Icons.Filled.CardGiftcard
                                 else -> Icons.Filled.AccountBalance
                         }
+                } else if (selectedCategory == 2) {
+                        Icons.Filled.AccountBox
                 } else {
                         when (identityState.type) {
                                 DocumentType.DRIVER_LICENSE -> Icons.Filled.DirectionsCar
-                                DocumentType.PASSPORT -> Icons.Filled.AccountBox
                                 else -> Icons.Filled.Face
                         }
                 }
@@ -885,15 +1054,26 @@ fun AddItemScreen(
                                                                         financialState.frontPath,
                                                                 backImagePath =
                                                                         financialState.backPath,
-                                                                barcode = financialState.barcode,
+                                                                barcode =
+                                                                        if (financialState.type ==
+                                                                                        AccountType
+                                                                                                .REWARDS_CARD
+                                                                        )
+                                                                                financialState
+                                                                                        .barcode
+                                                                        else null,
                                                                 barcodeFormat =
-                                                                        financialState
-                                                                                .barcodeFormat,
+                                                                        if (financialState.type ==
+                                                                                        AccountType
+                                                                                                .REWARDS_CARD
+                                                                        )
+                                                                                financialState
+                                                                                        .barcodeFormat
+                                                                        else null,
                                                                 linkedPhoneNumber =
                                                                         financialState.linkedPhone,
                                                                 logoImagePath =
                                                                         financialState.logoPath,
-                                                                // Bank account fields
                                                                 accountSubType =
                                                                         financialState
                                                                                 .accountSubType,
@@ -916,7 +1096,82 @@ fun AddItemScreen(
                                                 },
                                                 onNavigateBack = navigateBack
                                         )
+                                } else if (selectedCategory == 2) {
+                                        // Passport Form
+                                        PassportForm(
+                                                state = passportState,
+                                                onScanFront = { scanDocument(false) },
+                                                onScanBack = { scanDocument(true) },
+                                                onSave = {
+                                                        viewModel.savePassport(
+                                                                Passport(
+                                                                        id =
+                                                                                if (item is Passport
+                                                                                )
+                                                                                        (item as
+                                                                                                        Passport)
+                                                                                                .id
+                                                                                else 0,
+                                                                        passportNumber =
+                                                                                passportState
+                                                                                        .passportNumber,
+                                                                        countryCode =
+                                                                                passportState
+                                                                                        .countryCode,
+                                                                        surname =
+                                                                                passportState
+                                                                                        .surname,
+                                                                        givenNames =
+                                                                                passportState
+                                                                                        .givenNames,
+                                                                        nationality =
+                                                                                passportState
+                                                                                        .nationality,
+                                                                        dob = passportState.dob,
+                                                                        sex = passportState.sex,
+                                                                        placeOfBirth =
+                                                                                passportState
+                                                                                        .placeOfBirth,
+                                                                        dateOfIssue =
+                                                                                passportState
+                                                                                        .dateOfIssue,
+                                                                        placeOfIssue =
+                                                                                passportState
+                                                                                        .placeOfIssue,
+                                                                        dateOfExpiry =
+                                                                                passportState
+                                                                                        .dateOfExpiry,
+                                                                        authority =
+                                                                                passportState
+                                                                                        .authority,
+                                                                        fatherName =
+                                                                                passportState
+                                                                                        .fatherName,
+                                                                        motherName =
+                                                                                passportState
+                                                                                        .motherName,
+                                                                        spouseName =
+                                                                                passportState
+                                                                                        .spouseName,
+                                                                        address =
+                                                                                passportState
+                                                                                        .address,
+                                                                        fileNumber =
+                                                                                passportState
+                                                                                        .fileNumber,
+                                                                        frontImagePath =
+                                                                                passportState
+                                                                                        .frontPath,
+                                                                        backImagePath =
+                                                                                passportState
+                                                                                        .backPath
+                                                                )
+                                                        )
+                                                },
+                                                onNavigateBack = navigateBack
+                                        )
                                 } else {
+                                        // Identity
                                         IdentityForm(
                                                 state = identityState,
                                                 onScanFront = { scanDocument(false) },
@@ -928,13 +1183,9 @@ fun AddItemScreen(
                                                                 country = identityState.country,
                                                                 docNumber = identityState.number,
                                                                 holder =
-                                                                        identityState.firstName +
-                                                                                " " +
-                                                                                identityState
-                                                                                        .lastName,
-                                                                expiryDate = null, // TODO: Parse
-                                                                // identityState.expiry
-                                                                // (String) to Long
+                                                                        "${identityState.firstName} ${identityState.lastName}".trim(),
+                                                                expiryDate =
+                                                                        null, // TODO: Parse logic
                                                                 frontImagePath =
                                                                         identityState.frontPath,
                                                                 backImagePath =
