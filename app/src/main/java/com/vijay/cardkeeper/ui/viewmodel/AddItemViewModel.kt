@@ -9,6 +9,7 @@ import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.data.repository.FinancialRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.launch
 
 class AddItemViewModel(
@@ -169,6 +170,10 @@ class AddItemViewModel(
                 viewModelScope.launch { identityRepository.deleteDocument(document) }
         }
 
+        fun deletePassport(passport: com.vijay.cardkeeper.data.entity.Passport) {
+                viewModelScope.launch { passportRepository.delete(passport) }
+        }
+
         fun getItem(id: Int?, type: String?): kotlinx.coroutines.flow.Flow<Any?> =
                 kotlinx.coroutines.flow.flow {
                         if (id == null || id == 0) {
@@ -179,7 +184,7 @@ class AddItemViewModel(
                                 } else if (type == "identity") {
                                         emit(identityRepository.getDocumentById(id))
                                 } else if (type == "passport") {
-                                        emit(passportRepository.getPassport(id))
+                                        emitAll(passportRepository.getPassport(id))
                                 }
                         }
                 }

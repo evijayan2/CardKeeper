@@ -19,6 +19,7 @@ object CardKeeperDestinations {
     // params
     const val VIEW_ITEM_ROUTE = "view_item/{accountId}"
     const val VIEW_IDENTITY_ROUTE = "view_identity/{documentId}"
+    const val VIEW_PASSPORT_ROUTE = "view_passport/{passportId}"
 }
 
 @Composable
@@ -42,7 +43,7 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                         navController.navigate("add_item?category=1&itemId=$docId")
                     },
                     navigateToPassportView = { passportId ->
-                        navController.navigate("add_item?category=2&itemId=$passportId")
+                        navController.navigate("view_passport/$passportId")
                     }
             )
         }
@@ -97,6 +98,17 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                     itemId = itemId,
                     navigateBack = { navController.popBackStack() },
                     onEditClick = { id -> navController.navigate("add_item?category=0&itemId=$id") }
+            )
+        }
+        composable(
+                route = CardKeeperDestinations.VIEW_PASSPORT_ROUTE,
+                arguments = listOf(navArgument("passportId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val passportId = backStackEntry.arguments?.getInt("passportId") ?: 0
+            com.vijay.cardkeeper.ui.item.ViewPassportScreen(
+                    passportId = passportId,
+                    navigateBack = { navController.popBackStack() },
+                    onEditClick = { id -> navController.navigate("add_item?category=2&itemId=$id") }
             )
         }
     }

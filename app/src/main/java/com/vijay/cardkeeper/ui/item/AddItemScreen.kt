@@ -65,7 +65,12 @@ fun AddItemScreen(
         // Determine type for lookup: explicit type OR fallback to category
         val typeForLookup =
                 documentType.takeIf { !it.isNullOrEmpty() }
-                        ?: if (initialCategory == 0) "financial" else "identity"
+                        ?: when (initialCategory) {
+                                0 -> "financial"
+                                1 -> "identity"
+                                2 -> "passport"
+                                else -> "financial"
+                        }
         // Load existing item if editing
         val item by viewModel.getItem(documentId, typeForLookup).collectAsState(initial = null)
 
