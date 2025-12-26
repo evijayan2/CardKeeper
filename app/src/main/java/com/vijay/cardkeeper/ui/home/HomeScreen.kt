@@ -104,7 +104,7 @@ fun HomeScreen(
                                     Icon(Icons.Filled.CardGiftcard, contentDescription = null)
                                 }
                         )
-                        Divider()
+                        HorizontalDivider()
                         DropdownMenuItem(
                                 text = { Text("Driver License") },
                                 onClick = {
@@ -138,7 +138,7 @@ fun HomeScreen(
             }
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-            TabRow(selectedTabIndex = selectedTab) {
+            PrimaryTabRow(selectedTabIndex = selectedTab) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
                             selected = selectedTab == index,
@@ -173,9 +173,20 @@ fun FinancialList(list: List<FinancialAccount>, onItemClick: (Int) -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) {
+    val cardColor = getAccountColor(account)
+    // Determine content color based on card color luminance or hardcoded logic
+    // For these specific dark/brand colors, White is usually best.
+    val contentColor =
+            if (cardColor == MaterialTheme.colorScheme.surface) MaterialTheme.colorScheme.onSurface
+            else androidx.compose.ui.graphics.Color.White
+
     Card(
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            colors =
+                    CardDefaults.cardColors(
+                            containerColor = cardColor,
+                            contentColor = contentColor
+                    ),
             onClick = { onItemClick(account.id) }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -189,12 +200,16 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
                         Text(
                                 text = account.institutionName,
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = contentColor
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Surface(
                                 shape = MaterialTheme.shapes.extraSmall,
-                                color = MaterialTheme.colorScheme.tertiaryContainer,
+                                color =
+                                        MaterialTheme.colorScheme.tertiaryContainer.copy(
+                                                alpha = 0.8f
+                                        ), // Slight transparency to blend
                         ) {
                             val typeText =
                                     if (account.type ==
@@ -223,12 +238,12 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
                     Text(
                             text = account.holderName,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface
+                            color = contentColor.copy(alpha = 0.8f)
                     )
                     Text(
                             text = account.accountName,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = contentColor.copy(alpha = 0.7f)
                     )
                 }
 
@@ -246,7 +261,7 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
                             text = account.cardNetwork,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = contentColor
                     )
                 }
             }
@@ -265,13 +280,15 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
                             Text(
                                     text = "Barcode: ${account.barcode}",
                                     style = MaterialTheme.typography.bodyMedium,
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                    color = contentColor
                             )
                         }
                         if (!account.linkedPhoneNumber.isNullOrBlank()) {
                             Text(
                                     text = "Phone: ${account.linkedPhoneNumber}",
-                                    style = MaterialTheme.typography.bodySmall
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = contentColor.copy(alpha = 0.8f)
                             )
                         }
                     }
@@ -280,14 +297,16 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
                             text = "•••• ${account.number.takeLast(4)}",
                             style = MaterialTheme.typography.bodyLarge,
                             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                            fontWeight = FontWeight.SemiBold
+                            fontWeight = FontWeight.SemiBold,
+                            color = contentColor
                     )
 
                     if (account.expiryDate != null) {
                         Text(
                                 text = "Exp: ${account.expiryDate}",
                                 style = MaterialTheme.typography.bodyMedium,
-                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                                color = contentColor.copy(alpha = 0.8f)
                         )
                     }
                 }
@@ -298,13 +317,53 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
             // Images
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 account.frontImagePath?.let { path ->
-                    DashboardImageThumbnail(path = path, label = "Front")
+                    DashboardImageThumbnail(path = path, label = "Front", textColor = contentColor)
                 }
                 account.backImagePath?.let { path ->
-                    DashboardImageThumbnail(path = path, label = "Back")
+                    DashboardImageThumbnail(path = path, label = "Back", textColor = contentColor)
                 }
             }
         }
+    }
+}
+
+@Composable
+fun getAccountColor(account: FinancialAccount): androidx.compose.ui.graphics.Color {
+    // 1. Check for manual color override (if we add this feature later, using colorTheme)
+    if (account.colorTheme != null) {
+        return androidx.compose.ui.graphics.Color(account.colorTheme)
+    }
+
+    // 2. Check for Bank Brand Color
+    if (account.bankBrandColor != null) {
+        return androidx.compose.ui.graphics.Color(account.bankBrandColor)
+    }
+
+    // 3. Derive from Network / Institution
+    val network = account.cardNetwork
+    return when {
+        network?.contains("Visa", ignoreCase = true) == true ->
+                androidx.compose.ui.graphics.Color(0xFF1A1F71) // Visa Blue
+        network?.contains("Master", ignoreCase = true) == true ->
+                androidx.compose.ui.graphics.Color(0xFF222222) // Master (Dark)
+        network?.contains("Amex", ignoreCase = true) == true ->
+                androidx.compose.ui.graphics.Color(0xFF006FCF) // Amex Blue
+        network?.contains("Discover", ignoreCase = true) == true ->
+                androidx.compose.ui.graphics.Color(0xFFE55C20) // Discover Orange
+        network?.contains("Rupay", ignoreCase = true) == true ->
+                androidx.compose.ui.graphics.Color(0xFF1B3F6B) // Rupay Dark Blue
+
+        // Brand based colors (Simple heuristics)
+        account.institutionName.contains("Chase", ignoreCase = true) ->
+                androidx.compose.ui.graphics.Color(0xFF117ACA) // Chase Blue
+        account.institutionName.contains("Citi", ignoreCase = true) ->
+                androidx.compose.ui.graphics.Color(0xFF003B70) // Citi Blue
+        account.institutionName.contains("Wells", ignoreCase = true) ->
+                androidx.compose.ui.graphics.Color(0xFFCD1409) // Wells Fargo Red
+        account.institutionName.contains("Boa", ignoreCase = true) ||
+                account.institutionName.contains("Bank of America", ignoreCase = true) ->
+                androidx.compose.ui.graphics.Color(0xFFDC1431) // BoA Red
+        else -> MaterialTheme.colorScheme.surface
     }
 }
 
@@ -403,7 +462,11 @@ fun IdentityItem(doc: IdentityDocument, onItemClick: (Int) -> Unit) {
 }
 
 @Composable
-fun DashboardImageThumbnail(path: String, label: String) {
+fun DashboardImageThumbnail(
+        path: String,
+        label: String,
+        textColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
+) {
     val bitmap =
             remember(path) {
                 try {
@@ -428,7 +491,7 @@ fun DashboardImageThumbnail(path: String, label: String) {
                                     ),
                     contentScale = ContentScale.Crop
             )
-            Text(text = label, style = MaterialTheme.typography.labelSmall)
+            Text(text = label, style = MaterialTheme.typography.labelSmall, color = textColor)
         }
     }
 }
