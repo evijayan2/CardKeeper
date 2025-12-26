@@ -8,10 +8,12 @@ import android.graphics.Bitmap
 import android.graphics.Color as AndroidColor
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -26,18 +28,28 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
 import com.vijay.cardkeeper.data.entity.AccountType
+import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.ui.viewmodel.AppViewModelProvider
 import com.vijay.cardkeeper.ui.viewmodel.ViewItemViewModel
+import com.vijay.cardkeeper.util.LogoUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,32 +129,138 @@ fun ViewItemScreen(
                                 )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
+                        // Top Row: Institution + Type
                         Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                    acc.type.name.replace("_", " "),
-                                    style = MaterialTheme.typography.labelMedium
-                            )
-                            val logoResId = getCardLogoResId(acc.cardNetwork)
-                            if (logoResId != null) {
-                                androidx.compose.foundation.Image(
-                                        painter =
-                                                androidx.compose.ui.res.painterResource(
-                                                        id = logoResId
-                                                ),
-                                        contentDescription = null,
-                                        modifier = Modifier.height(32.dp),
-                                        contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                            // Institution Logo
+                            val instLogoUrl = LogoUtils.getInstitutionLogoUrl(acc.institutionName)
+                            if (instLogoUrl != null) {
+                                AsyncImage(
+                                        model =
+                                                ImageRequest.Builder(LocalContext.current)
+                                                        .data(instLogoUrl)
+                                                        .crossfade(true)
+                                                        .build(),
+                                        contentDescription = acc.institutionName,
+                                        modifier =
+                                                Modifier.size(40.dp).clip(RoundedCornerShape(6.dp)),
+                                        contentScale = ContentScale.Fit
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                            }
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                            acc.institutionName,
+                                            style = MaterialTheme.typography.titleLarge,
+                                            fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    // Card Network Logo
+                                    val dynamicLogoUrl =
+                                            LogoUtils.getCardNetworkLogoUrl(acc.cardNetwork)
+                                    if (dynamicLogoUrl != null) {
+                                        AsyncImage(
+                                                model =
+                                                        ImageRequest.Builder(LocalContext.current)
+                                                                .data(dynamicLogoUrl)
+                                                                .crossfade(true)
+                                                                .build(),
+                                                contentDescription = acc.cardNetwork,
+                                                modifier = Modifier.width(40.dp).height(24.dp),
+                                                contentScale = ContentScale.Fit
+                                        )
+                                    } else {
+                                        val logoResId = getCardLogoResId(acc.cardNetwork)
+                                        if (logoResId != null) {
+                                            Image(
+                                                    painter = painterResource(id = logoResId),
+                                                    contentDescription = acc.cardNetwork,
+                                                    modifier = Modifier.width(40.dp).height(24.dp),
+                                                    contentScale = ContentScale.Fit
+                                            )
+                                        }
+                                    }
+                                }
+                                Text(
+                                        acc.type.name.replace("_", " "),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = contentColor.copy(alpha = 0.8f)
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(acc.accountName, style = MaterialTheme.typography.headlineSmall)
-                        if (!acc.cardNetwork.isNullOrBlank()) {
-                            Text(acc.cardNetwork, style = MaterialTheme.typography.bodyMedium)
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // Middle: Account Number + Copy Button
+                        Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                    text =
+                                            acc.number.chunked(4).joinToString(" ").let {
+                                                if (acc.type == AccountType.BANK_ACCOUNT) it else it
+                                            },
+                                    style = MaterialTheme.typography.headlineMedium,
+                                    fontFamily = FontFamily.Monospace,
+                                    letterSpacing = 2.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.weight(1f)
+                            )
+                            IconButton(
+                                    onClick = {
+                                        val clipboard =
+                                                context.getSystemService(
+                                                        Context.CLIPBOARD_SERVICE
+                                                ) as
+                                                        ClipboardManager
+                                        val clip =
+                                                ClipData.newPlainText("Account Number", acc.number)
+                                        clipboard.setPrimaryClip(clip)
+                                        Toast.makeText(
+                                                        context,
+                                                        "Copied to clipboard",
+                                                        Toast.LENGTH_SHORT
+                                                )
+                                                .show()
+                                    }
+                            ) {
+                                Icon(
+                                        imageVector = Icons.Default.ContentCopy,
+                                        contentDescription = "Copy",
+                                        tint = contentColor
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        // Bottom Row: Holder
+                        Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Bottom
+                        ) {
+                            Column {
+                                Text(
+                                        acc.holderName.uppercase(),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold
+                                )
+                                if (!acc.expiryDate.isNullOrBlank()) {
+                                    Text(
+                                            text = "VALID THRU ${acc.expiryDate}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = contentColor.copy(alpha = 0.8f)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -624,36 +742,23 @@ fun getCardLogoResId(network: String?): Int? {
 }
 
 @Composable
-fun getAccountColor(
-        account: com.vijay.cardkeeper.data.entity.FinancialAccount
-): androidx.compose.ui.graphics.Color {
+fun getAccountColor(account: FinancialAccount): androidx.compose.ui.graphics.Color {
+    // 1. Check for manual color override
     if (account.colorTheme != null) {
         return androidx.compose.ui.graphics.Color(account.colorTheme)
     }
-    if (account.bankBrandColor != null) {
-        return androidx.compose.ui.graphics.Color(account.bankBrandColor)
+
+    // 2. Check for Bank/Network Brand Color via LogoUtils
+    val brandColor = LogoUtils.getBrandColor(account.institutionName, account.cardNetwork)
+    if (brandColor != null) {
+        return androidx.compose.ui.graphics.Color(brandColor)
     }
-    val network = account.cardNetwork
-    return when {
-        network?.contains("Visa", ignoreCase = true) == true ->
-                androidx.compose.ui.graphics.Color(0xFF1A1F71)
-        network?.contains("Master", ignoreCase = true) == true ->
-                androidx.compose.ui.graphics.Color(0xFF222222)
-        network?.contains("Amex", ignoreCase = true) == true ->
-                androidx.compose.ui.graphics.Color(0xFF006FCF)
-        network?.contains("Discover", ignoreCase = true) == true ->
-                androidx.compose.ui.graphics.Color(0xFFE55C20)
-        network?.contains("Rupay", ignoreCase = true) == true ->
-                androidx.compose.ui.graphics.Color(0xFF1B3F6B)
-        account.institutionName.contains("Chase", ignoreCase = true) ->
-                androidx.compose.ui.graphics.Color(0xFF117ACA)
-        account.institutionName.contains("Citi", ignoreCase = true) ->
-                androidx.compose.ui.graphics.Color(0xFF003B70)
-        account.institutionName.contains("Wells", ignoreCase = true) ->
-                androidx.compose.ui.graphics.Color(0xFFCD1409)
-        account.institutionName.contains("Boa", ignoreCase = true) ||
-                account.institutionName.contains("Bank of America", ignoreCase = true) ->
-                androidx.compose.ui.graphics.Color(0xFFDC1431)
+
+    // 3. Default fallback based on type
+    return when (account.type) {
+        AccountType.CREDIT_CARD, AccountType.DEBIT_CARD ->
+                androidx.compose.ui.graphics.Color(0xFF2C3E50) // Default dark
+        AccountType.BANK_ACCOUNT -> androidx.compose.ui.graphics.Color(0xFFF8F9FA) // Default light
         else -> MaterialTheme.colorScheme.surface
     }
 }

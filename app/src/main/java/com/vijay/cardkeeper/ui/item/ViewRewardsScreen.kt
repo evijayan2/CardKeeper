@@ -26,8 +26,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.vijay.cardkeeper.ui.viewmodel.AppViewModelProvider
 import com.vijay.cardkeeper.ui.viewmodel.ViewItemViewModel
+import com.vijay.cardkeeper.util.LogoUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -111,6 +114,23 @@ fun ViewRewardsScreen(
                             if (bitmap != null) {
                                 androidx.compose.foundation.Image(
                                         bitmap = bitmap.asImageBitmap(),
+                                        contentDescription = "Logo",
+                                        modifier = Modifier.height(80.dp).fillMaxWidth(),
+                                        contentScale = ContentScale.Fit
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                            }
+                        } else {
+                            // Dynamic Logo Fallback
+                            val dynamicLogoUrl =
+                                    LogoUtils.getInstitutionLogoUrl(acc.institutionName)
+                            if (dynamicLogoUrl != null) {
+                                AsyncImage(
+                                        model =
+                                                ImageRequest.Builder(LocalContext.current)
+                                                        .data(dynamicLogoUrl)
+                                                        .crossfade(true)
+                                                        .build(),
                                         contentDescription = "Logo",
                                         modifier = Modifier.height(80.dp).fillMaxWidth(),
                                         contentScale = ContentScale.Fit

@@ -1,5 +1,9 @@
 package com.vijay.cardkeeper.ui.home
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,6 +15,7 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Face
@@ -20,20 +25,24 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.vijay.cardkeeper.data.entity.AccountType
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.data.entity.Passport
 import com.vijay.cardkeeper.ui.viewmodel.AppViewModelProvider
 import com.vijay.cardkeeper.ui.viewmodel.HomeViewModel
+import com.vijay.cardkeeper.util.LogoUtils
 import com.vijay.cardkeeper.util.StateUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -279,6 +288,7 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
     val contentColor =
             if (cardColor == MaterialTheme.colorScheme.surface) MaterialTheme.colorScheme.onSurface
             else androidx.compose.ui.graphics.Color.White
+    val context = LocalContext.current
 
     Card(
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -292,9 +302,24 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.CenterVertically
             ) {
+                // 1. Institution Logo (Clearbit) - Top Left
+                val instLogoUrl = LogoUtils.getInstitutionLogoUrl(account.institutionName)
+                if (instLogoUrl != null) {
+                    AsyncImage(
+                            model =
+                                    ImageRequest.Builder(LocalContext.current)
+                                            .data(instLogoUrl)
+                                            .crossfade(true)
+                                            .build(),
+                            contentDescription = account.institutionName,
+                            modifier = Modifier.size(32.dp).clip(RoundedCornerShape(4.dp)),
+                            contentScale = ContentScale.Fit
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                }
+
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
@@ -304,17 +329,42 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
                                 color = contentColor
                         )
                         Spacer(modifier = Modifier.width(8.dp))
+
+                        val dynamicLogoUrl = LogoUtils.getCardNetworkLogoUrl(account.cardNetwork)
+                        if (dynamicLogoUrl != null) {
+                            AsyncImage(
+                                    model =
+                                            ImageRequest.Builder(LocalContext.current)
+                                                    .data(dynamicLogoUrl)
+                                                    .crossfade(true)
+                                                    .build(),
+                                    contentDescription = account.cardNetwork,
+                                    modifier = Modifier.width(40.dp).height(24.dp),
+                                    contentScale = ContentScale.Fit
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        } else {
+                            val logoResId = getCardLogoResId(account.cardNetwork)
+                            if (logoResId != null) {
+                                Image(
+                                        painter = painterResource(id = logoResId),
+                                        contentDescription = account.cardNetwork,
+                                        modifier = Modifier.width(40.dp).height(24.dp),
+                                        contentScale = ContentScale.Fit
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                        }
+
                         Surface(
                                 shape = MaterialTheme.shapes.extraSmall,
                                 color =
                                         MaterialTheme.colorScheme.tertiaryContainer.copy(
                                                 alpha = 0.8f
-                                        ), // Slight transparency to blend
+                                        ),
                         ) {
                             val typeText =
-                                    if (account.type ==
-                                                    com.vijay.cardkeeper.data.entity.AccountType
-                                                            .BANK_ACCOUNT &&
+                                    if (account.type == AccountType.BANK_ACCOUNT &&
                                                     account.accountSubType != null
                                     ) {
                                         account.accountSubType.name
@@ -336,75 +386,70 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
                         }
                     }
                     Text(
-                            text = account.holderName,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = contentColor.copy(alpha = 0.8f)
-                    )
-                    Text(
                             text = account.accountName,
                             style = MaterialTheme.typography.bodySmall,
                             color = contentColor.copy(alpha = 0.7f)
                     )
                 }
+            }
 
-                // Card Network Logo
-                val logoResId = getCardLogoResId(account.cardNetwork)
-                if (logoResId != null) {
-                    androidx.compose.foundation.Image(
-                            painter = painterResource(id = logoResId),
-                            contentDescription = account.cardNetwork,
-                            modifier = Modifier.width(40.dp).height(24.dp),
-                            contentScale = ContentScale.Fit
-                    )
-                } else if (!account.cardNetwork.isNullOrBlank()) {
-                    Text(
-                            text = account.cardNetwork,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = contentColor
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Middle: Masked Account Number + Copy
+            Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                        text = "•••• •••• •••• ${account.number.takeLast(4)}",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                        letterSpacing = 2.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = contentColor,
+                        modifier = Modifier.weight(1f)
+                )
+
+                IconButton(
+                        onClick = {
+                            val clipboard =
+                                    context.getSystemService(Context.CLIPBOARD_SERVICE) as
+                                            ClipboardManager
+                            val clip = ClipData.newPlainText("Account Number", account.number)
+                            clipboard.setPrimaryClip(clip)
+                            Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "Copy",
+                            tint = contentColor.copy(alpha = 0.8f),
+                            modifier = Modifier.size(16.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Account Details
+            // Bottom Row: Holder Name
             Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Bottom
             ) {
-                if (account.type == com.vijay.cardkeeper.data.entity.AccountType.REWARDS_CARD) {
-                    Column {
-                        if (!account.barcode.isNullOrBlank()) {
-                            Text(
-                                    text = "Barcode: ${account.barcode}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                                    color = contentColor
-                            )
-                        }
-                        if (!account.linkedPhoneNumber.isNullOrBlank()) {
-                            Text(
-                                    text = "Phone: ${account.linkedPhoneNumber}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = contentColor.copy(alpha = 0.8f)
-                            )
-                        }
-                    }
-                } else {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                            text = "•••• ${account.number.takeLast(4)}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                            fontWeight = FontWeight.SemiBold,
-                            color = contentColor
+                            text = account.holderName.uppercase(),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = contentColor.copy(alpha = 0.9f)
                     )
-
                     if (account.expiryDate != null) {
                         Text(
-                                text = "Exp: ${account.expiryDate}",
-                                style = MaterialTheme.typography.bodyMedium,
+                                text = "EXP ${account.expiryDate}",
+                                style = MaterialTheme.typography.labelSmall,
                                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                                 color = contentColor.copy(alpha = 0.8f)
                         )
@@ -429,40 +474,23 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
 
 @Composable
 fun getAccountColor(account: FinancialAccount): androidx.compose.ui.graphics.Color {
-    // 1. Check for manual color override (if we add this feature later, using colorTheme)
+    // 1. Check for manual color override
     if (account.colorTheme != null) {
         return androidx.compose.ui.graphics.Color(account.colorTheme)
     }
 
-    // 2. Check for Bank Brand Color
-    if (account.bankBrandColor != null) {
-        return androidx.compose.ui.graphics.Color(account.bankBrandColor)
+    // 2. Check for Bank/Network Brand Color via LogoUtils
+    val brandColor = LogoUtils.getBrandColor(account.institutionName, account.cardNetwork)
+    if (brandColor != null) {
+        return androidx.compose.ui.graphics.Color(brandColor)
     }
 
-    // 3. Derive from Network / Institution
-    val network = account.cardNetwork
-    return when {
-        network?.contains("Visa", ignoreCase = true) == true ->
-                androidx.compose.ui.graphics.Color(0xFF1A1F71) // Visa Blue
-        network?.contains("Master", ignoreCase = true) == true ->
-                androidx.compose.ui.graphics.Color(0xFF222222) // Master (Dark)
-        network?.contains("Amex", ignoreCase = true) == true ->
-                androidx.compose.ui.graphics.Color(0xFF006FCF) // Amex Blue
-        network?.contains("Discover", ignoreCase = true) == true ->
-                androidx.compose.ui.graphics.Color(0xFFE55C20) // Discover Orange
-        network?.contains("Rupay", ignoreCase = true) == true ->
-                androidx.compose.ui.graphics.Color(0xFF1B3F6B) // Rupay Dark Blue
-
-        // Brand based colors (Simple heuristics)
-        account.institutionName.contains("Chase", ignoreCase = true) ->
-                androidx.compose.ui.graphics.Color(0xFF117ACA) // Chase Blue
-        account.institutionName.contains("Citi", ignoreCase = true) ->
-                androidx.compose.ui.graphics.Color(0xFF003B70) // Citi Blue
-        account.institutionName.contains("Wells", ignoreCase = true) ->
-                androidx.compose.ui.graphics.Color(0xFFCD1409) // Wells Fargo Red
-        account.institutionName.contains("Boa", ignoreCase = true) ||
-                account.institutionName.contains("Bank of America", ignoreCase = true) ->
-                androidx.compose.ui.graphics.Color(0xFFDC1431) // BoA Red
+    // 3. Default fallback based on type
+    return when (account.type) {
+        AccountType.CREDIT_CARD, AccountType.DEBIT_CARD ->
+                androidx.compose.ui.graphics.Color(0xFF2C3E50) // Default dark for cards
+        AccountType.BANK_ACCOUNT ->
+                androidx.compose.ui.graphics.Color(0xFFF8F9FA) // Default light for bank accounts
         else -> MaterialTheme.colorScheme.surface
     }
 }
