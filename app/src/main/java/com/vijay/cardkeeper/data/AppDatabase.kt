@@ -11,7 +11,7 @@ import com.vijay.cardkeeper.data.entity.IdentityDocument
 
 @Database(
         entities = [FinancialAccount::class, IdentityDocument::class],
-        version = 5,
+        version = 9,
         exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

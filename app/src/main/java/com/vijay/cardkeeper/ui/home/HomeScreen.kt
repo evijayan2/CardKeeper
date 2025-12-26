@@ -1,10 +1,16 @@
 package com.vijay.cardkeeper.ui.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.*
@@ -26,7 +32,7 @@ import com.vijay.cardkeeper.ui.viewmodel.HomeViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-        navigateToItemEntry: () -> Unit,
+        navigateToItemEntry: (Int, String?) -> Unit,
         navigateToItemView: (Int) -> Unit,
         navigateToIdentityView: (Int) -> Unit,
         viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
@@ -36,11 +42,98 @@ fun HomeScreen(
     var selectedTab by remember { mutableStateOf(0) }
     val tabs = listOf("Finance", "Identity")
 
+    // FAB Menu State
+    var showMenu by remember { mutableStateOf(false) }
+
     Scaffold(
-            topBar = { TopAppBar(title = { Text("Kards") }) },
+            topBar = {
+                TopAppBar(
+                        title = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Image(
+                                        painter =
+                                                painterResource(
+                                                        id =
+                                                                com.vijay
+                                                                        .cardkeeper
+                                                                        .R
+                                                                        .mipmap
+                                                                        .ic_app_logo_1
+                                                ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(32.dp).padding(end = 8.dp)
+                                )
+                                Text("Kards")
+                            }
+                        }
+                )
+            },
             floatingActionButton = {
-                FloatingActionButton(onClick = navigateToItemEntry) {
-                    Icon(Icons.Filled.Add, "Add Item")
+                Box {
+                    FloatingActionButton(onClick = { showMenu = true }) {
+                        Icon(Icons.Filled.Add, "Add Item")
+                    }
+                    DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                        DropdownMenuItem(
+                                text = { Text("Add Credit/Debit Card") },
+                                onClick = {
+                                    showMenu = false
+                                    navigateToItemEntry(0, "CREDIT_CARD")
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.CreditCard, contentDescription = null)
+                                }
+                        )
+                        DropdownMenuItem(
+                                text = { Text("Bank Account") },
+                                onClick = {
+                                    showMenu = false
+                                    navigateToItemEntry(0, "BANK_ACCOUNT")
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.AccountBalance, contentDescription = null)
+                                }
+                        )
+                        DropdownMenuItem(
+                                text = { Text("Rewards Card") },
+                                onClick = {
+                                    showMenu = false
+                                    navigateToItemEntry(0, "REWARDS_CARD")
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.CardGiftcard, contentDescription = null)
+                                }
+                        )
+                        Divider()
+                        DropdownMenuItem(
+                                text = { Text("Driver License") },
+                                onClick = {
+                                    showMenu = false
+                                    navigateToItemEntry(1, "DRIVER_LICENSE")
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.DirectionsCar, contentDescription = null)
+                                }
+                        )
+                        DropdownMenuItem(
+                                text = { Text("Passport") },
+                                onClick = {
+                                    showMenu = false
+                                    navigateToItemEntry(1, "PASSPORT")
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.AccountBox, contentDescription = null)
+                                }
+                        )
+                        DropdownMenuItem(
+                                text = { Text("Other Identity") },
+                                onClick = {
+                                    showMenu = false
+                                    navigateToItemEntry(1, null)
+                                },
+                                leadingIcon = { Icon(Icons.Filled.Face, contentDescription = null) }
+                        )
+                    }
                 }
             }
     ) { innerPadding ->
@@ -92,10 +185,45 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
                     verticalAlignment = Alignment.Top
             ) {
                 Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                                text = account.institutionName,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Surface(
+                                shape = MaterialTheme.shapes.extraSmall,
+                                color = MaterialTheme.colorScheme.tertiaryContainer,
+                        ) {
+                            val typeText =
+                                    if (account.type ==
+                                                    com.vijay.cardkeeper.data.entity.AccountType
+                                                            .BANK_ACCOUNT &&
+                                                    account.accountSubType != null
+                                    ) {
+                                        account.accountSubType.name
+                                    } else {
+                                        account.type.name
+                                    }
+
+                            Text(
+                                    text =
+                                            typeText.split("_").joinToString(" ") {
+                                                it.lowercase().replaceFirstChar { char ->
+                                                    char.uppercase()
+                                                }
+                                            },
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
                     Text(
-                            text = account.institutionName,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            text = account.holderName,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                             text = account.accountName,
@@ -131,19 +259,37 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                        text = "•••• ${account.number.takeLast(4)}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                        fontWeight = FontWeight.SemiBold
-                )
-
-                if (account.expiryDate != null) {
+                if (account.type == com.vijay.cardkeeper.data.entity.AccountType.REWARDS_CARD) {
+                    Column {
+                        if (!account.barcode.isNullOrBlank()) {
+                            Text(
+                                    text = "Barcode: ${account.barcode}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            )
+                        }
+                        if (!account.linkedPhoneNumber.isNullOrBlank()) {
+                            Text(
+                                    text = "Phone: ${account.linkedPhoneNumber}",
+                                    style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                } else {
                     Text(
-                            text = "Exp: ${account.expiryDate}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                            text = "•••• ${account.number.takeLast(4)}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                            fontWeight = FontWeight.SemiBold
                     )
+
+                    if (account.expiryDate != null) {
+                        Text(
+                                text = "Exp: ${account.expiryDate}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    }
                 }
             }
 

@@ -4,6 +4,8 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Color as AndroidColor
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
@@ -28,6 +30,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.MultiFormatWriter
+import com.google.zxing.common.BitMatrix
+import com.vijay.cardkeeper.data.entity.AccountType
 import com.vijay.cardkeeper.ui.viewmodel.AppViewModelProvider
 import com.vijay.cardkeeper.ui.viewmodel.ViewItemViewModel
 
@@ -140,17 +147,117 @@ fun ViewItemScreen(
                     }
                 }
 
+                // Shop Logo
+                acc.logoImagePath?.let {
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        val bitmap =
+                                remember(it) {
+                                    try {
+                                        android.graphics.BitmapFactory.decodeFile(it)
+                                    } catch (e: Exception) {
+                                        null
+                                    }
+                                }
+                        if (bitmap != null) {
+                            androidx.compose.foundation.Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = "Shop Logo",
+                                    modifier =
+                                            Modifier.height(100.dp)
+                                                    .fillMaxWidth()
+                                                    .padding(bottom = 16.dp),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                            )
+                        }
+                    }
+                }
+
+                // Barcode Section
+                acc.barcode?.takeIf { it.isNotEmpty() }?.let { barcodeVal ->
+                    Card(
+                            modifier =
+                                    Modifier.fillMaxWidth().clickable {
+                                        viewModel.setFullScreenImage("BARCODE:$barcodeVal")
+                                    }
+                    ) {
+                        Column(
+                                modifier = Modifier.padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text("Barcode", style = MaterialTheme.typography.labelSmall)
+                            val barcodeBitmap =
+                                    remember(barcodeVal, acc.barcodeFormat) {
+                                        generateBarcodeBitmap(barcodeVal, acc.barcodeFormat)
+                                    }
+                            if (barcodeBitmap != null) {
+                                androidx.compose.foundation.Image(
+                                        bitmap = barcodeBitmap.asImageBitmap(),
+                                        contentDescription = "Barcode",
+                                        modifier = Modifier.fillMaxWidth().height(100.dp),
+                                        contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                                )
+                                Text(
+                                        "Tap to view full screen",
+                                        style = MaterialTheme.typography.bodySmall
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier =
+                                                Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                            text = barcodeVal,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontFamily = FontFamily.Monospace,
+                                            modifier = Modifier.weight(1f)
+                                    )
+                                    IconButton(
+                                            onClick = {
+                                                val clipboard =
+                                                        context.getSystemService(
+                                                                Context.CLIPBOARD_SERVICE
+                                                        ) as
+                                                                ClipboardManager
+                                                val clip =
+                                                        ClipData.newPlainText("Barcode", barcodeVal)
+                                                clipboard.setPrimaryClip(clip)
+                                                Toast.makeText(
+                                                                context,
+                                                                "Barcode copied",
+                                                                Toast.LENGTH_SHORT
+                                                        )
+                                                        .show()
+                                            }
+                                    ) {
+                                        Icon(
+                                                Icons.Filled.ContentCopy,
+                                                "Copy",
+                                                modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // Details Section
-                Text("Account Details", style = MaterialTheme.typography.titleMedium)
+                if (acc.type != AccountType.REWARDS_CARD) {
+                    Text("Account Details", style = MaterialTheme.typography.titleMedium)
+                }
 
                 // Number (Copyable)
-                DetailRow(
-                        label = "Number",
-                        value = acc.number,
-                        isCopyable = true,
-                        context = context,
-                        fontFamily = FontFamily.Monospace
-                )
+                if (acc.type != AccountType.REWARDS_CARD) {
+                    DetailRow(
+                            label = "Number",
+                            value = acc.number,
+                            isCopyable = true,
+                            context = context,
+                            fontFamily = FontFamily.Monospace
+                    )
+                }
 
                 acc.cvv?.let { cvv -> SecureDetailRow(label = "CVV", value = cvv) }
 
@@ -165,6 +272,62 @@ fun ViewItemScreen(
 
                 acc.holderName.takeIf { it.isNotEmpty() }?.let {
                     DetailRow(label = "Holder Name", value = it)
+                }
+
+                acc.linkedPhoneNumber?.takeIf { it.isNotEmpty() }?.let {
+                    DetailRow(
+                            label = "Linked Phone",
+                            value = it,
+                            isCopyable = true,
+                            context = context
+                    )
+                }
+
+                if (acc.type == AccountType.BANK_ACCOUNT) {
+                    acc.routingNumber?.takeIf { it.isNotEmpty() }?.let {
+                        DetailRow(
+                                label = "Routing Number",
+                                value = it,
+                                isCopyable = true,
+                                context = context,
+                                fontFamily = FontFamily.Monospace
+                        )
+                    }
+                    acc.ifscCode?.takeIf { it.isNotEmpty() }?.let {
+                        DetailRow(
+                                label = "IFSC Code",
+                                value = it,
+                                isCopyable = true,
+                                context = context,
+                                fontFamily = FontFamily.Monospace
+                        )
+                    }
+                    acc.swiftCode?.takeIf { it.isNotEmpty() }?.let {
+                        DetailRow(
+                                label = "SWIFT Code",
+                                value = it,
+                                isCopyable = true,
+                                context = context,
+                                fontFamily = FontFamily.Monospace
+                        )
+                    }
+                    acc.wireNumber?.takeIf { it.isNotEmpty() }?.let {
+                        DetailRow(
+                                label = "Wire Number",
+                                value = it,
+                                isCopyable = true,
+                                context = context,
+                                fontFamily = FontFamily.Monospace
+                        )
+                    }
+                    acc.branchAddress?.takeIf { it.isNotEmpty() }?.let {
+                        DetailRow(
+                                label = "Branch Address",
+                                value = it,
+                                isCopyable = true,
+                                context = context
+                        )
+                    }
                 }
 
                 // Actions
@@ -182,6 +345,48 @@ fun ViewItemScreen(
                         Icon(Icons.Filled.Call, null)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Call Support")
+                    }
+                }
+
+                if (acc.type == AccountType.BANK_ACCOUNT) {
+                    acc.branchContactNumber?.takeIf { it.isNotEmpty() }?.let { phone ->
+                        Button(
+                                onClick = {
+                                    val intent =
+                                            Intent(Intent.ACTION_DIAL).apply {
+                                                data = Uri.parse("tel:$phone")
+                                            }
+                                    context.startActivity(intent)
+                                },
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                        ) {
+                            Icon(Icons.Filled.Call, null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Call Bank")
+                        }
+                    }
+                    acc.bankWebUrl?.takeIf { it.isNotEmpty() }?.let { url ->
+                        val finalUrl = if (!url.startsWith("http")) "https://$url" else url
+                        Button(
+                                onClick = {
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(finalUrl))
+                                    context.startActivity(intent)
+                                },
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                colors =
+                                        ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.secondary
+                                        )
+                        ) {
+                            // Using a generic world icon or similar if available, else just text or
+                            // existing icon
+                            Icon(
+                                    Icons.Filled.Visibility,
+                                    null
+                            ) // Using Visibility as placeholder or just Text
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Visit Website")
+                        }
                     }
                 }
 
@@ -208,14 +413,35 @@ fun ViewItemScreen(
                         ) {
                             val bitmap =
                                     remember(fullScreenImage) {
-                                        try {
-                                            android.graphics.BitmapFactory.decodeFile(
-                                                    fullScreenImage
-                                            )
-                                        } catch (e: Exception) {
-                                            null
+                                        if (fullScreenImage?.startsWith("BARCODE:") == true) {
+                                            val code = fullScreenImage!!.substring(8)
+                                            generateBarcodeBitmap(code, acc.barcodeFormat)
+                                        } else {
+                                            try {
+                                                android.graphics.BitmapFactory.decodeFile(
+                                                        fullScreenImage
+                                                )
+                                            } catch (e: Exception) {
+                                                null
+                                            }
                                         }
                                     }
+
+                            // Brightness Control for Barcode
+                            if (fullScreenImage?.startsWith("BARCODE:") == true) {
+                                DisposableEffect(Unit) {
+                                    val activity = context as? android.app.Activity
+                                    val window = activity?.window
+                                    val originalBrightness = window?.attributes?.screenBrightness
+                                    val lp = window?.attributes
+                                    lp?.screenBrightness = 1f
+                                    window?.attributes = lp
+                                    onDispose {
+                                        lp?.screenBrightness = originalBrightness ?: -1f
+                                        window?.attributes = lp
+                                    }
+                                }
+                            }
                             if (bitmap != null) {
                                 androidx.compose.foundation.Image(
                                         bitmap = bitmap.asImageBitmap(),
@@ -302,5 +528,47 @@ fun SecureDetailRow(label: String, value: String) {
             }
         }
         Divider(modifier = Modifier.padding(top = 8.dp))
+    }
+}
+
+fun generateBarcodeBitmap(content: String, format: Int?): Bitmap? {
+    return try {
+        val zxingFormat = if (format != null) mapToZXingFormat(format) else BarcodeFormat.CODE_128
+        val writer = MultiFormatWriter()
+        val bitMatrix: BitMatrix = writer.encode(content, zxingFormat, 600, 300)
+        val width = bitMatrix.width
+        val height = bitMatrix.height
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+        for (x in 0 until width) {
+            for (y in 0 until height) {
+                bitmap.setPixel(
+                        x,
+                        y,
+                        if (bitMatrix[x, y]) AndroidColor.BLACK else AndroidColor.WHITE
+                )
+            }
+        }
+        bitmap
+    } catch (e: Exception) {
+        null
+    }
+}
+
+fun mapToZXingFormat(format: Int): BarcodeFormat {
+    return when (format) {
+        Barcode.FORMAT_QR_CODE -> BarcodeFormat.QR_CODE
+        Barcode.FORMAT_UPC_A -> BarcodeFormat.UPC_A
+        Barcode.FORMAT_UPC_E -> BarcodeFormat.UPC_E
+        Barcode.FORMAT_EAN_13 -> BarcodeFormat.EAN_13
+        Barcode.FORMAT_EAN_8 -> BarcodeFormat.EAN_8
+        Barcode.FORMAT_CODE_128 -> BarcodeFormat.CODE_128
+        Barcode.FORMAT_CODE_39 -> BarcodeFormat.CODE_39
+        Barcode.FORMAT_CODE_93 -> BarcodeFormat.CODE_93
+        Barcode.FORMAT_CODABAR -> BarcodeFormat.CODABAR
+        Barcode.FORMAT_DATA_MATRIX -> BarcodeFormat.DATA_MATRIX
+        Barcode.FORMAT_ITF -> BarcodeFormat.ITF
+        Barcode.FORMAT_PDF417 -> BarcodeFormat.PDF_417
+        Barcode.FORMAT_AZTEC -> BarcodeFormat.AZTEC
+        else -> BarcodeFormat.CODE_128
     }
 }

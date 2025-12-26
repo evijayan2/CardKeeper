@@ -14,7 +14,9 @@ import com.vijay.cardkeeper.ui.item.ViewItemScreen
 
 object CardKeeperDestinations {
     const val HOME_ROUTE = "home"
-    const val ADD_ITEM_ROUTE = "add_item?category={category}&itemId={itemId}" // Support params
+    const val ADD_ITEM_ROUTE =
+            "add_item?category={category}&itemId={itemId}&initialType={initialType}" // Support
+    // params
     const val VIEW_ITEM_ROUTE = "view_item/{accountId}"
     const val VIEW_IDENTITY_ROUTE = "view_identity/{documentId}"
 }
@@ -28,8 +30,10 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
     ) {
         composable(route = CardKeeperDestinations.HOME_ROUTE) {
             HomeScreen(
-                    navigateToItemEntry = {
-                        navController.navigate(CardKeeperDestinations.ADD_ITEM_ROUTE)
+                    navigateToItemEntry = { category, type ->
+                        navController.navigate(
+                                "add_item?category=$category&initialType=${type ?: ""}"
+                        )
                     },
                     navigateToItemView = { itemId -> navController.navigate("view_item/$itemId") },
                     navigateToIdentityView = { docId ->
@@ -48,21 +52,23 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                                 navArgument("itemId") {
                                     type = NavType.IntType
                                     defaultValue = 0
+                                },
+                                navArgument("initialType") {
+                                    type = NavType.StringType
+                                    defaultValue = ""
+                                    nullable = true
                                 }
                         )
         ) { backStackEntry ->
             val category = backStackEntry.arguments?.getInt("category") ?: 0
             val itemId = backStackEntry.arguments?.getInt("itemId") ?: 0
-
-            // If itemId is passed (and > 0), we treat it as an ID for the selected category.
-            // Currently only supporting editing Identity (category 1) logic explicitly in UI props
-            // if needed,
-            // but the screen handles it via `documentId` param.
+            val initialType = backStackEntry.arguments?.getString("initialType")
 
             AddItemScreen(
                     navigateBack = { navController.popBackStack() },
                     initialCategory = category,
-                    documentId = if (itemId > 0) itemId else null
+                    documentId = if (itemId > 0) itemId else null,
+                    documentType = initialType
             )
         }
 

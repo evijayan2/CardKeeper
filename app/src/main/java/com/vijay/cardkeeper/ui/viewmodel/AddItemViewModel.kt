@@ -3,6 +3,7 @@ package com.vijay.cardkeeper.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vijay.cardkeeper.data.entity.AccountType
+import com.vijay.cardkeeper.data.entity.BankAccountSubType
 import com.vijay.cardkeeper.data.entity.DocumentType
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.IdentityDocument
@@ -24,14 +25,27 @@ class AddItemViewModel(
                 number: String,
                 routing: String,
                 ifsc: String,
-                expiryDate: String?, // UI passes String, we might parse or store
+                swift: String = "",
+                expiryDate: String?,
                 cvv: String?,
                 pin: String?,
                 notes: String?,
                 contact: String?,
                 cardNetwork: String?,
                 frontImagePath: String?,
-                backImagePath: String?
+                backImagePath: String?,
+                barcode: String? = null,
+                barcodeFormat: Int? = null,
+                linkedPhoneNumber: String? = null,
+                logoImagePath: String? = null,
+                // New bank account fields
+                accountSubType: BankAccountSubType? = null,
+                wireNumber: String? = null,
+                branchAddress: String? = null,
+                branchContactNumber: String? = null,
+                bankWebUrl: String? = null,
+                bankBrandColor: Long? = null,
+                holderAddress: String? = null
         ) {
                 viewModelScope.launch {
                         val account =
@@ -44,6 +58,7 @@ class AddItemViewModel(
                                         number = number,
                                         routingNumber = routing.ifBlank { null },
                                         ifscCode = ifsc.ifBlank { null },
+                                        swiftCode = swift.ifBlank { null },
                                         cvv = cvv?.ifBlank { null },
                                         cardPin = pin?.ifBlank { null },
                                         notes = notes?.ifBlank { null },
@@ -51,7 +66,19 @@ class AddItemViewModel(
                                         expiryDate = expiryDate?.ifBlank { null },
                                         cardNetwork = cardNetwork?.ifBlank { null },
                                         frontImagePath = frontImagePath,
-                                        backImagePath = backImagePath
+                                        backImagePath = backImagePath,
+                                        barcode = barcode?.ifBlank { null },
+                                        barcodeFormat = barcodeFormat,
+                                        linkedPhoneNumber = linkedPhoneNumber?.ifBlank { null },
+                                        logoImagePath = logoImagePath,
+                                        // New bank account fields
+                                        accountSubType = accountSubType,
+                                        wireNumber = wireNumber?.ifBlank { null },
+                                        branchAddress = branchAddress?.ifBlank { null },
+                                        branchContactNumber = branchContactNumber?.ifBlank { null },
+                                        bankWebUrl = bankWebUrl?.ifBlank { null },
+                                        bankBrandColor = bankBrandColor,
+                                        holderAddress = holderAddress?.ifBlank { null }
                                 )
                         if (id > 0) {
                                 financialRepository.updateAccount(account)
@@ -128,4 +155,17 @@ class AddItemViewModel(
         fun deleteIdentityDocument(document: IdentityDocument) {
                 viewModelScope.launch { identityRepository.deleteDocument(document) }
         }
+
+        fun getItem(id: Int?, type: String?): kotlinx.coroutines.flow.Flow<Any?> =
+                kotlinx.coroutines.flow.flow {
+                        if (id == null || id == 0) {
+                                emit(null)
+                        } else {
+                                if (type == "financial") {
+                                        emit(financialRepository.getAccountById(id))
+                                } else if (type == "identity") {
+                                        emit(identityRepository.getDocumentById(id))
+                                }
+                        }
+                }
 }

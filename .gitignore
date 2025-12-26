@@ -1,5 +1,7 @@
 **.txt
 .gradle/
+.vscode/
+.idea/
 build/
 **.hprof
 .DS_Store

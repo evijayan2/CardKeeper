@@ -103,17 +103,55 @@ class CardTextAnalyzer(private val onCardFound: (CardDetails) -> Unit) : ImageAn
                                 }
                             }
 
-                            // Potential Name Detection (Heuristic: All caps, 2 words, no
-                            // numbers, distinct from bank)
-                            if (foundOwner.isEmpty() && foundNumber.isNotEmpty()) {
-                                // Usually name is below number or near bottom.
-                                // Very simple check:
-                                if (lineText.matches(Regex("^[A-Z ]+$")) &&
+                            // Potential Name Detection
+                            // Heuristic: Matches name pattern, not a bank, not a keyword.
+                            // Removed strict foundNumber dependency to allow name capture even if
+                            // number fails/is elsewhere,
+                            // though we prioritize lines that look like names.
+                            if (foundOwner.isEmpty()) {
+                                val upperText = lineText.uppercase()
+                                val isKeyword =
+                                        listOf(
+                                                        "VALID",
+                                                        "THRU",
+                                                        "FROM",
+                                                        "UNTIL",
+                                                        "SINCE",
+                                                        "MEMBER",
+                                                        "AUTHORIZED",
+                                                        "SIGNATURE",
+                                                        "CARD",
+                                                        "DEBIT",
+                                                        "CREDIT",
+                                                        "ELECTRONIC",
+                                                        "USE",
+                                                        "ONLY",
+                                                        "TELLER",
+                                                        "GOOD"
+                                                )
+                                                .any { upperText.contains(it) }
+
+                                val isBank = knownBanks.any { upperText.contains(it) }
+
+                                // Regex: Allow letters, spaces, dots, hyphens, apostrophes. Min
+                                // length 5.
+                                if (!isKeyword &&
+                                                !isBank &&
+                                                lineText.matches(Regex("^[a-zA-Z\\s\\.\\-']+$")) &&
                                                 lineText.length > 5 &&
-                                                !knownBanks.any {
-                                                    lineText.uppercase().contains(it)
-                                                }
+                                                lineText.split(" ").size > 1
                                 ) {
+                                    // If we found a number, assume name is AFTER number?
+                                    // Or just capture the first candidate that fits well.
+                                    // For now, capture first valid candidate, but if we found
+                                    // number, ensure this line is arguably "below" or
+                                    // separate.
+                                    // MLKit blocks usually flow top-down.
+                                    // Warning: This might capture "PLATINUM" or "REWARDS" if not in
+                                    // keywords.
+                                    // Let's add "PLATINUM", "BUSINESS", "REWARDS", "WORLD" to
+                                    // keywords/exclusions if needed.
+                                    // Checking if it seems to be a name (2+ words).
                                     foundOwner = lineText
                                 }
                             }

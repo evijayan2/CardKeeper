@@ -1,185 +1,150 @@
 package com.vijay.cardkeeper.ui.item
 
-import android.content.Context
-import android.graphics.Bitmap
+import android.app.Activity
+import android.graphics.BitmapFactory
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Face
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanner
+import com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanning
+import com.google.mlkit.vision.documentscanner.GmsDocumentScanningResult
 import com.vijay.cardkeeper.data.entity.AccountType
 import com.vijay.cardkeeper.data.entity.DocumentType
+import com.vijay.cardkeeper.data.entity.FinancialAccount
+import com.vijay.cardkeeper.data.entity.IdentityDocument
+import com.vijay.cardkeeper.scanning.ChequeScanner
+import com.vijay.cardkeeper.scanning.DriverLicenseScanner
+import com.vijay.cardkeeper.scanning.IdentityScanner
+import com.vijay.cardkeeper.scanning.PaymentCardScanner
+import com.vijay.cardkeeper.scanning.RewardsScanner
+import com.vijay.cardkeeper.ui.item.forms.FinancialForm
+import com.vijay.cardkeeper.ui.item.forms.IdentityForm
+import com.vijay.cardkeeper.ui.item.forms.rememberFinancialFormState
+import com.vijay.cardkeeper.ui.item.forms.rememberIdentityFormState
+import com.vijay.cardkeeper.ui.scanner.BarcodeScannerScreen
 import com.vijay.cardkeeper.ui.viewmodel.AddItemViewModel
 import com.vijay.cardkeeper.ui.viewmodel.AppViewModelProvider
-import com.vijay.cardkeeper.util.CardTextAnalyzer
-import com.vijay.cardkeeper.util.IdentityTextAnalyzer
-import java.io.File
-import java.io.FileOutputStream
+import com.vijay.cardkeeper.util.saveImageToInternalStorage
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddItemScreen(
+        documentId: Int?,
+        documentType: String?, // "financial" or "identity"
+        initialCategory: Int = 0,
         navigateBack: () -> Unit,
-        initialCategory: Int = 0, // 0 for financial, 1 for identity
-        documentId: Int? = null,
         viewModel: AddItemViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
         val context = LocalContext.current
-        var selectedCategory by remember {
-                mutableIntStateOf(initialCategory)
-        } // 0 = Financial, 1 = Identity
-        val categories = listOf("Financial", "Identity")
+        val scope = rememberCoroutineScope()
 
-        // Financial State
-        var finType by remember { mutableStateOf(AccountType.CREDIT_CARD) }
-        var institution by remember { mutableStateOf("") }
-        var accName by remember { mutableStateOf("") }
-        var accHolder by remember { mutableStateOf("") }
-        var accNumber by remember { mutableStateOf("") }
-        var routing by remember { mutableStateOf("") }
-        var ifsc by remember { mutableStateOf("") }
+        // Determine type for lookup: explicit type OR fallback to category
+        val typeForLookup =
+                documentType.takeIf { !it.isNullOrEmpty() }
+                        ?: if (initialCategory == 0) "financial" else "identity"
+        // Load existing item if editing
+        val item by viewModel.getItem(documentId, typeForLookup).collectAsState(initial = null)
 
-        // New Fields
-        var expiry by remember { mutableStateOf("") }
-        var cvv by remember { mutableStateOf("") }
-        var cardPin by remember { mutableStateOf("") }
-        var notes by remember { mutableStateOf("") }
-        var contactNumber by remember { mutableStateOf("") }
-        var cardNetwork by remember { mutableStateOf("") }
+        // Category / Tabs
+        // If we are editing, we lock the category to the item type.
+        // If adding new, we start at 0 (Financial) but user can switch.
+        val categories = listOf("Financial Account", "Identity Document")
+        var selectedCategory by remember { mutableIntStateOf(initialCategory) }
 
-        // UI State
-        var cvvVisible by remember { mutableStateOf(false) }
-
-        // Identity State
-        var docType by remember { mutableStateOf(DocumentType.PASSPORT) }
-        var country by remember { mutableStateOf("USA") }
-        var docNumber by remember { mutableStateOf("") }
-        var docHolder by remember { mutableStateOf("") }
-        var expiryStr by remember { mutableStateOf("") } // Simplify date input for now
-
-        // Detailed Identity Fields
-        var state by remember { mutableStateOf("") }
-        var address by remember { mutableStateOf("") }
-        var dob by remember { mutableStateOf("") }
-        var sex by remember { mutableStateOf("") }
-        var eyeColor by remember { mutableStateOf("") }
-        var height by remember { mutableStateOf("") }
-        var licenseClass by remember { mutableStateOf("") }
-        var restrictions by remember { mutableStateOf("") }
-        var endorsements by remember { mutableStateOf("") }
-        var issuingAuthority by remember { mutableStateOf("") }
-
-        // Identity Images
-        var frontImage by remember { mutableStateOf<Bitmap?>(null) }
-        var backImage by remember { mutableStateOf<Bitmap?>(null) }
-        var frontPath by remember { mutableStateOf<String?>(null) }
-        var backPath by remember { mutableStateOf<String?>(null) }
-        var scanningBack by remember { mutableStateOf(false) } // true if scanning back side
-
-        // Load existing document if editing
-        LaunchedEffect(documentId) {
-                if (documentId != null && documentId > 0) {
-                        if (selectedCategory == 1) { // Identity
-                                val doc = viewModel.getIdentityDocument(documentId)
-                                if (doc != null) {
-                                        docType = doc.type
-                                        country = doc.country
-                                        docNumber = doc.docNumber
-                                        docHolder = doc.holderName
-                                        expiryStr = doc.expiryDate?.toString() ?: ""
-                                        state = doc.state ?: ""
-                                        address = doc.address ?: ""
-                                        dob = doc.dob ?: ""
-                                        sex = doc.sex ?: ""
-                                        eyeColor = doc.eyeColor ?: ""
-                                        height = doc.height ?: ""
-                                        licenseClass = doc.licenseClass ?: ""
-                                        restrictions = doc.restrictions ?: ""
-                                        endorsements = doc.endorsements ?: ""
-                                        issuingAuthority = doc.issuingAuthority ?: ""
-                                        frontPath = doc.frontImagePath
-                                        backPath = doc.backImagePath
-                                }
-                        } else { // Financial (Using documentId as accountId here for simplicity)
-                                val acc = viewModel.getFinancialAccount(documentId)
-                                if (acc != null) {
-                                        finType = acc.type
-                                        institution = acc.institutionName
-                                        accName = acc.accountName
-                                        accHolder = acc.holderName
-                                        accNumber = acc.number
-                                        routing = acc.routingNumber ?: ""
-                                        ifsc = acc.ifscCode ?: ""
-                                        expiry = acc.expiryDate ?: ""
-                                        cvv = acc.cvv ?: ""
-                                        cardPin = acc.cardPin ?: ""
-                                        notes = acc.notes ?: ""
-                                        contactNumber = acc.lostCardContactNumber ?: ""
-                                        cardNetwork = acc.cardNetwork ?: ""
-                                        frontPath = acc.frontImagePath
-                                        backPath = acc.backImagePath
-                                }
-                        }
-                }
+        // Sync selectedCategory with loaded item
+        LaunchedEffect(item) {
+                if (item is IdentityDocument) selectedCategory = 1
+                else if (item is FinancialAccount) selectedCategory = 0
         }
 
-        // Scanner callback with OCR
-        val cardAnalyzer = remember { CardTextAnalyzer { /* No-op */} }
-        val identityAnalyzer = remember { IdentityTextAnalyzer(false) { /* No-op */} }
+        // Parse initialType from documentType string for financial accounts
+        val initialAccountType: AccountType? =
+                remember(documentType) {
+                        when (documentType?.uppercase()) {
+                                "CREDIT_CARD" -> AccountType.CREDIT_CARD
+                                "DEBIT_CARD" -> AccountType.DEBIT_CARD
+                                "BANK_ACCOUNT" -> AccountType.BANK_ACCOUNT
+                                "REWARDS_CARD" -> AccountType.REWARDS_CARD
+                                else -> null
+                        }
+                }
 
+        // Parse initialType from documentType string for identity documents
+        val initialDocumentType: DocumentType? =
+                remember(documentType) {
+                        when (documentType?.uppercase()) {
+                                "DRIVER_LICENSE" -> DocumentType.DRIVER_LICENSE
+                                "PASSPORT" -> DocumentType.PASSPORT
+                                else -> null
+                        }
+                }
+
+        // Form States
+        val financialState =
+                rememberFinancialFormState(item as? FinancialAccount, initialAccountType)
+        val identityState =
+                rememberIdentityFormState(item as? IdentityDocument, initialDocumentType)
+
+        // Scanners
+        val paymentScanner = remember { PaymentCardScanner() }
+        val rewardsScanner = remember { RewardsScanner() }
+        val identityScanner = remember { IdentityScanner() }
+        val driverLicenseScanner = remember { DriverLicenseScanner() }
+        val chequeScanner = remember { ChequeScanner() }
+
+        // Constants for Camera Logic
+        var scanningBack by remember { mutableStateOf(false) }
+        var showBarcodeScanner by remember { mutableStateOf(false) }
+
+        // GmsDocumentScanner Options
+        val scannerOptions = remember {
+                GmsDocumentScannerOptions.Builder()
+                        .setGalleryImportAllowed(true)
+                        .setPageLimit(1)
+                        .setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG)
+                        .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
+                        .build()
+        }
+        val scanner: GmsDocumentScanner = remember { GmsDocumentScanning.getClient(scannerOptions) }
+        val activity = context as Activity
+
+        // Document Scanner Launcher
         val scannerLauncher =
                 rememberLauncherForActivityResult(
-                        contract =
-                                androidx.activity.result.contract.ActivityResultContracts
-                                        .StartIntentSenderForResult()
+                        contract = ActivityResultContracts.StartIntentSenderForResult()
                 ) { result ->
-                        if (result.resultCode == android.app.Activity.RESULT_OK) {
-                                val resultData =
-                                        com.google.mlkit.vision.documentscanner
-                                                .GmsDocumentScanningResult.fromActivityResultIntent(
+                        if (result.resultCode == Activity.RESULT_OK) {
+                                val scanningResult =
+                                        GmsDocumentScanningResult.fromActivityResultIntent(
                                                 result.data
                                         )
-                                resultData?.pages?.let { pages ->
-                                        if (pages.isNotEmpty()) {
-                                                val page = pages[0]
-                                                val imageUri = page.imageUri
+                                scanningResult?.pages?.firstOrNull()?.imageUri?.let { uri ->
+                                        val inputStream =
+                                                context.contentResolver.openInputStream(uri)
+                                        val bitmap = BitmapFactory.decodeStream(inputStream)
+                                        inputStream?.close()
 
-                                                // Load Bitmap
-                                                val bitmap =
-                                                        if (android.os.Build.VERSION.SDK_INT < 28) {
-                                                                @Suppress("DEPRECATION")
-                                                                android.provider.MediaStore.Images
-                                                                        .Media.getBitmap(
-                                                                        context.contentResolver,
-                                                                        imageUri
-                                                                )
-                                                        } else {
-                                                                val source =
-                                                                        android.graphics
-                                                                                .ImageDecoder
-                                                                                .createSource(
-                                                                                        context.contentResolver,
-                                                                                        imageUri
-                                                                                )
-                                                                android.graphics.ImageDecoder
-                                                                        .decodeBitmap(source)
-                                                        }
-
-                                                // Save Image
+                                        if (bitmap != null) {
                                                 val savedPath =
                                                         saveImageToInternalStorage(
                                                                 context,
@@ -187,760 +152,811 @@ fun AddItemScreen(
                                                                 "scan_${System.currentTimeMillis()}"
                                                         )
 
-                                                if (selectedCategory == 0) { // Financial
-                                                        if (scanningBack) {
-                                                                backImage = bitmap
-                                                                backPath = savedPath
-                                                        } else {
-                                                                frontImage = bitmap
-                                                                frontPath = savedPath
-
-                                                                // Run OCR on Front Image for
+                                                scope.launch {
+                                                        if (selectedCategory == 0) {
                                                                 // Financial
-                                                                val inputImage =
-                                                                        com.google.mlkit.vision
-                                                                                .common.InputImage
-                                                                                .fromBitmap(
-                                                                                        bitmap,
-                                                                                        0
-                                                                                )
-                                                                cardAnalyzer.analyze(inputImage) {
-                                                                        details ->
-                                                                        // Populate Fields if empty
-                                                                        if (accNumber.isEmpty())
-                                                                                accNumber =
-                                                                                        details.number
-                                                                        if (expiry.isEmpty() &&
-                                                                                        details.expiryDate
-                                                                                                .isNotEmpty()
-                                                                        )
-                                                                                expiry =
-                                                                                        details.expiryDate
-                                                                        if (accHolder.isEmpty() &&
-                                                                                        details.ownerName
-                                                                                                .isNotEmpty()
-                                                                        )
-                                                                                accHolder =
-                                                                                        details.ownerName
-                                                                        if (institution.isEmpty() &&
-                                                                                        details.bankName
-                                                                                                .isNotEmpty()
-                                                                        )
-                                                                                institution =
-                                                                                        details.bankName
-                                                                        if (cardNetwork.isEmpty() &&
-                                                                                        details.scheme
-                                                                                                .isNotEmpty()
-                                                                        )
-                                                                                cardNetwork =
-                                                                                        details.scheme
-                                                                        if (details.cardType.equals(
-                                                                                        "Debit",
-                                                                                        ignoreCase =
-                                                                                                true
-                                                                                )
-                                                                        )
-                                                                                finType =
+                                                                if (scanningBack) {
+                                                                        financialState.backBitmap =
+                                                                                bitmap
+                                                                        financialState.backPath =
+                                                                                savedPath
+                                                                        // Back Scan Logic
+                                                                        if (financialState.type ==
                                                                                         AccountType
-                                                                                                .DEBIT_CARD
-                                                                }
-                                                        }
-                                                } else { // Identity
-                                                        if (scanningBack) {
-                                                                backImage = bitmap
-                                                                backPath = savedPath
-                                                                // Run Back OCR
-                                                                val identityAnalyzerBack =
-                                                                        IdentityTextAnalyzer(
-                                                                                true
-                                                                        ) { /* no-op */}
-                                                                val inputImage =
-                                                                        com.google.mlkit.vision
-                                                                                .common.InputImage
-                                                                                .fromBitmap(
-                                                                                        bitmap,
-                                                                                        0
+                                                                                                .REWARDS_CARD
+                                                                        ) {
+                                                                                val res =
+                                                                                        rewardsScanner
+                                                                                                .scan(
+                                                                                                        bitmap
+                                                                                                )
+                                                                                res.barcode?.let {
+                                                                                        financialState
+                                                                                                .barcode =
+                                                                                                it
+                                                                                }
+                                                                                res.barcodeFormat
+                                                                                        ?.let {
+                                                                                                financialState
+                                                                                                        .barcodeFormat =
+                                                                                                        it
+                                                                                        }
+                                                                                res.shopName?.let {
+                                                                                        financialState
+                                                                                                .institution =
+                                                                                                it
+                                                                                }
+                                                                        } else {
+                                                                                // Payment Card Back
+                                                                                // logic
+                                                                                val details =
+                                                                                        paymentScanner
+                                                                                                .scan(
+                                                                                                        bitmap
+                                                                                                )
+                                                                                // Only update if
+                                                                                // empty
+                                                                                if (financialState
+                                                                                                .number
+                                                                                                .isEmpty() &&
+                                                                                                details.number
+                                                                                                        .isNotEmpty()
                                                                                 )
-                                                                identityAnalyzerBack.analyze(
-                                                                        inputImage
-                                                                ) { details ->
-                                                                        // Append
-                                                                        // raw text
-                                                                        // or
-                                                                        // specific
-                                                                        // back-side
-                                                                        // fields
-                                                                        // if any
-                                                                        // (currently raw
-                                                                        // text)
-                                                                        if (notes.isEmpty() &&
-                                                                                        details.rawText
+                                                                                        financialState
+                                                                                                .number =
+                                                                                                details.number
+                                                                                if (financialState
+                                                                                                .expiry
+                                                                                                .isEmpty() &&
+                                                                                                details.expiryDate
+                                                                                                        .isNotEmpty()
+                                                                                )
+                                                                                        financialState
+                                                                                                .expiry =
+                                                                                                details.expiryDate
+                                                                                // CVV is rarely
+                                                                                // extracted by
+                                                                                // MLKit
+                                                                                // text but possible
+                                                                        }
+                                                                } else {
+                                                                        financialState.frontBitmap =
+                                                                                bitmap
+                                                                        financialState.frontPath =
+                                                                                savedPath
+                                                                        // Front Scan Logic
+                                                                        if (financialState.type ==
+                                                                                        AccountType
+                                                                                                .REWARDS_CARD
+                                                                        ) {
+                                                                                val res =
+                                                                                        rewardsScanner
+                                                                                                .scan(
+                                                                                                        bitmap
+                                                                                                )
+                                                                                res.barcode?.let {
+                                                                                        financialState
+                                                                                                .barcode =
+                                                                                                it
+                                                                                }
+                                                                                res.barcodeFormat
+                                                                                        ?.let {
+                                                                                                financialState
+                                                                                                        .barcodeFormat =
+                                                                                                        it
+                                                                                        }
+                                                                                res.shopName?.let {
+                                                                                        financialState
+                                                                                                .institution =
+                                                                                                it
+                                                                                }
+                                                                                // Logo logic?
+                                                                                // (Simplified:
+                                                                                // prefer
+                                                                                // front scan for
+                                                                                // logo if not
+                                                                                // explicitly
+                                                                                // picked)
+                                                                                if (financialState
+                                                                                                .logoPath ==
+                                                                                                null
+                                                                                ) {
+                                                                                        financialState
+                                                                                                .logoPath =
+                                                                                                savedPath
+                                                                                        financialState
+                                                                                                .logoBitmap =
+                                                                                                bitmap
+                                                                                }
+                                                                        } else if (financialState
+                                                                                        .type ==
+                                                                                        AccountType
+                                                                                                .BANK_ACCOUNT
+                                                                        ) {
+                                                                                // Bank Account -
+                                                                                // Cheque Scan
+                                                                                val chequeDetails =
+                                                                                        chequeScanner
+                                                                                                .scan(
+                                                                                                        bitmap
+                                                                                                )
+
+                                                                                // Update fields
+                                                                                // from scan only if
+                                                                                // they were found
+                                                                                if (chequeDetails
+                                                                                                .accountNumber
                                                                                                 .isNotEmpty()
-                                                                        )
-                                                                                notes =
-                                                                                        details.rawText
+                                                                                )
+                                                                                        financialState
+                                                                                                .number =
+                                                                                                chequeDetails
+                                                                                                        .accountNumber
+                                                                                if (chequeDetails
+                                                                                                .routingNumber
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        financialState
+                                                                                                .routing =
+                                                                                                chequeDetails
+                                                                                                        .routingNumber
+                                                                                if (chequeDetails
+                                                                                                .bankName
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        financialState
+                                                                                                .institution =
+                                                                                                chequeDetails
+                                                                                                        .bankName
+                                                                                if (chequeDetails
+                                                                                                .ifscCode
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        financialState
+                                                                                                .ifsc =
+                                                                                                chequeDetails
+                                                                                                        .ifscCode
+                                                                                if (chequeDetails
+                                                                                                .holderName
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        financialState
+                                                                                                .holder =
+                                                                                                chequeDetails
+                                                                                                        .holderName
+                                                                                if (chequeDetails
+                                                                                                .holderAddress
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        financialState
+                                                                                                .holderAddress =
+                                                                                                chequeDetails
+                                                                                                        .holderAddress
+
+                                                                                // Show toast with
+                                                                                // extraction
+                                                                                // summary from
+                                                                                // scanner for user
+                                                                                // verification
+                                                                                android.widget.Toast
+                                                                                        .makeText(
+                                                                                                context,
+                                                                                                chequeDetails
+                                                                                                        .extractionSummary,
+                                                                                                android.widget
+                                                                                                        .Toast
+                                                                                                        .LENGTH_LONG
+                                                                                        )
+                                                                                        .show()
+                                                                        } else {
+                                                                                val details =
+                                                                                        paymentScanner
+                                                                                                .scan(
+                                                                                                        bitmap
+                                                                                                )
+                                                                                if (financialState
+                                                                                                .number
+                                                                                                .isEmpty()
+                                                                                )
+                                                                                        financialState
+                                                                                                .number =
+                                                                                                details.number
+                                                                                if (financialState
+                                                                                                .expiry
+                                                                                                .isEmpty()
+                                                                                )
+                                                                                        financialState
+                                                                                                .expiry =
+                                                                                                details.expiryDate
+                                                                                if (financialState
+                                                                                                .holder
+                                                                                                .isEmpty()
+                                                                                )
+                                                                                        financialState
+                                                                                                .holder =
+                                                                                                details.ownerName
+                                                                                if (financialState
+                                                                                                .institution
+                                                                                                .isEmpty()
+                                                                                )
+                                                                                        financialState
+                                                                                                .institution =
+                                                                                                details.bankName
+                                                                                // Map Scheme to
+                                                                                // Network
+                                                                                if (financialState
+                                                                                                .network
+                                                                                                .isEmpty() &&
+                                                                                                details.scheme
+                                                                                                        .isNotEmpty() &&
+                                                                                                details.scheme !=
+                                                                                                        "Unknown"
+                                                                                ) {
+                                                                                        financialState
+                                                                                                .network =
+                                                                                                details.scheme
+                                                                                }
+                                                                                if (details.cardType ==
+                                                                                                "Debit"
+                                                                                ) {
+                                                                                        // logic to
+                                                                                        // switch
+                                                                                        // type?
+                                                                                        // User
+                                                                                        // picks
+                                                                                        // type
+                                                                                        // first
+                                                                                        // usually.
+                                                                                        if (financialState
+                                                                                                        .type ==
+                                                                                                        AccountType
+                                                                                                                .CREDIT_CARD
+                                                                                        )
+                                                                                                financialState
+                                                                                                        .type =
+                                                                                                        AccountType
+                                                                                                                .DEBIT_CARD
+                                                                                }
+                                                                        }
                                                                 }
                                                         } else {
-                                                                frontImage = bitmap
-                                                                frontPath = savedPath
+                                                                // Identity
+                                                                if (scanningBack) {
+                                                                        identityState.backBitmap =
+                                                                                bitmap
+                                                                        identityState.backPath =
+                                                                                savedPath
 
-                                                                // Run Front OCR
-                                                                val inputImage =
-                                                                        com.google.mlkit.vision
-                                                                                .common.InputImage
-                                                                                .fromBitmap(
-                                                                                        bitmap,
-                                                                                        0
+                                                                        // Use barcode scanner for
+                                                                        // Driver License back
+                                                                        // (PDF417)
+                                                                        // Barcode data is MORE
+                                                                        // ACCURATE than OCR, so we
+                                                                        // overwrite fields
+                                                                        if (identityState.type ==
+                                                                                        DocumentType
+                                                                                                .DRIVER_LICENSE
+                                                                        ) {
+                                                                                val details =
+                                                                                        driverLicenseScanner
+                                                                                                .scan(
+                                                                                                        bitmap
+                                                                                                )
+
+                                                                                // Always use
+                                                                                // barcode data if
+                                                                                // available (more
+                                                                                // reliable than
+                                                                                // OCR)
+                                                                                if (details.docNumber
+                                                                                                .isNotEmpty()
                                                                                 )
-                                                                identityAnalyzer.analyze(
-                                                                        inputImage
-                                                                ) { details ->
-                                                                        if (docNumber.isEmpty())
-                                                                                docNumber =
-                                                                                        details.docNumber
-                                                                        if (docHolder.isEmpty())
-                                                                                docHolder =
-                                                                                        details.name
-                                                                        if (expiryStr.isEmpty())
-                                                                                expiryStr =
-                                                                                        details.expiryDate
-                                                                        if (dob.isEmpty())
-                                                                                dob = details.dob
-                                                                        if (state.isEmpty())
-                                                                                state =
-                                                                                        details.state
-                                                                        if (address.isEmpty())
-                                                                                address =
-                                                                                        details.address
-                                                                                                ?: ""
-                                                                        if (sex.isEmpty())
-                                                                                sex = details.sex
-                                                                        if (height.isEmpty())
-                                                                                height =
-                                                                                        details.height
-                                                                        if (licenseClass.isEmpty())
-                                                                                licenseClass =
-                                                                                        details.licenseClass
-                                                                        if (restrictions.isEmpty())
-                                                                                restrictions =
-                                                                                        details.restrictions
-                                                                        if (endorsements.isEmpty())
-                                                                                endorsements =
-                                                                                        details.endorsements
-                                                                        if (issuingAuthority
+                                                                                        identityState
+                                                                                                .number =
+                                                                                                details.docNumber
+                                                                                if (details.name
+                                                                                                .isNotEmpty()
+                                                                                ) {
+                                                                                        identityState
+                                                                                                .firstName =
+                                                                                                details.name
+                                                                                                        .substringBefore(
+                                                                                                                " "
+                                                                                                        )
+                                                                                        identityState
+                                                                                                .lastName =
+                                                                                                details.name
+                                                                                                        .substringAfterLast(
+                                                                                                                " ",
+                                                                                                                ""
+                                                                                                        )
+                                                                                }
+                                                                                if (details.dob
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .dob =
+                                                                                                details.dob
+                                                                                if (details.expiryDate
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .expiry =
+                                                                                                details.expiryDate
+                                                                                if (details.address
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .address =
+                                                                                                details.address
+                                                                                if (details.sex
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .sex =
+                                                                                                details.sex
+                                                                                if (details.eyeColor
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .eyeColor =
+                                                                                                details.eyeColor
+                                                                                if (details.height
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .height =
+                                                                                                details.height
+                                                                                if (details.licenseClass
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .licenseClass =
+                                                                                                details.licenseClass
+                                                                                if (details.restrictions
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .restrictions =
+                                                                                                details.restrictions
+                                                                                if (details.endorsements
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .endorsements =
+                                                                                                details.endorsements
+                                                                                if (details.state
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .region =
+                                                                                                details.state
+                                                                                if (details.issuingAuthority
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .issuingAuthority =
+                                                                                                details.issuingAuthority
+                                                                                if (details.country
+                                                                                                .isNotEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .country =
+                                                                                                details.country
+                                                                        } else {
+                                                                                // Use text
+                                                                                // recognition for
+                                                                                // Passport back
+                                                                                val details =
+                                                                                        identityScanner
+                                                                                                .scan(
+                                                                                                        bitmap,
+                                                                                                        scanningBack
+                                                                                                )
+                                                                                if (identityState
+                                                                                                .dob
+                                                                                                .isEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .dob =
+                                                                                                details.dob
+                                                                                if (identityState
+                                                                                                .sex
+                                                                                                .isEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .sex =
+                                                                                                details.sex
+                                                                        }
+                                                                        // update other
+                                                                        // back-specific fields if
+                                                                        // needed
+                                                                } else {
+                                                                        identityState.frontBitmap =
+                                                                                bitmap
+                                                                        identityState.frontPath =
+                                                                                savedPath
+                                                                        val details =
+                                                                                identityScanner
+                                                                                        .scan(
+                                                                                                bitmap,
+                                                                                                scanningBack
+                                                                                        )
+                                                                        if (identityState.number
                                                                                         .isEmpty()
                                                                         )
-                                                                                issuingAuthority =
-                                                                                        details.issuingAuthority
+                                                                                identityState
+                                                                                        .number =
+                                                                                        details.docNumber
+                                                                        if (identityState.firstName
+                                                                                        .isEmpty()
+                                                                        )
+                                                                                identityState
+                                                                                        .firstName =
+                                                                                        details.name
+                                                                                                .substringBefore(
+                                                                                                        " "
+                                                                                                )
+                                                                        if (identityState.lastName
+                                                                                        .isEmpty()
+                                                                        )
+                                                                                identityState
+                                                                                        .lastName =
+                                                                                        details.name
+                                                                                                .substringAfter(
+                                                                                                        " ",
+                                                                                                        ""
+                                                                                                )
+                                                                        if (identityState.dob
+                                                                                        .isEmpty()
+                                                                        )
+                                                                                identityState.dob =
+                                                                                        details.dob
+                                                                        if (identityState.address
+                                                                                        .isEmpty()
+                                                                        )
+                                                                                identityState
+                                                                                        .address =
+                                                                                        details.address
                                                                 }
                                                         }
                                                 }
-                                        }
-                                }
-                        }
-                }
+                                        } // closes if (bitmap != null)
+                                } // closes let
+                        } // closes if (result.resultCode == RESULT_OK)
+                } // closes rememberLauncherForActivityResult
 
-        fun scanDocument(isBack: Boolean) {
-                scanningBack = isBack
-                val options =
-                        com.google.mlkit.vision.documentscanner.GmsDocumentScannerOptions.Builder()
-                                .setGalleryImportAllowed(true)
-                                .setPageLimit(1)
-                                .setResultFormats(
-                                        com.google.mlkit.vision.documentscanner
-                                                .GmsDocumentScannerOptions.RESULT_FORMAT_JPEG
-                                )
-                                .setScannerMode(
-                                        com.google.mlkit.vision.documentscanner
-                                                .GmsDocumentScannerOptions.SCANNER_MODE_FULL
-                                )
-                                .build()
-
-                val scanner =
-                        com.google.mlkit.vision.documentscanner.GmsDocumentScanning.getClient(
-                                options
-                        )
-                scanner.getStartScanIntent(context as android.app.Activity)
-                        .addOnSuccessListener { intentSender ->
-                                scannerLauncher.launch(
-                                        androidx.activity.result.IntentSenderRequest.Builder(
-                                                        intentSender
-                                                )
-                                                .build()
-                                )
-                        }
-                        .addOnFailureListener {
-                                // Handle error
-                        }
-        }
-
-        val screenTitle =
-                if (documentId != null && documentId > 0) {
-                        val typeName =
-                                if (selectedCategory == 0) {
-                                        finType.name.replace("_", " ")
-                                } else {
-                                        docType.name.replace("_", " ")
-                                }
-                        "Update $typeName"
-                } else {
-                        "Add New Item"
-                }
-
-        Scaffold(
-                topBar = {
-                        TopAppBar(
-                                title = { Text(screenTitle) },
-                                navigationIcon = {
-                                        IconButton(onClick = navigateBack) {
-                                                Icon(Icons.Filled.ArrowBack, "Back")
-                                        }
-                                }
-                        )
-                }
-        ) { innerPadding ->
-                Column(
-                        modifier =
-                                Modifier.padding(innerPadding)
-                                        .fillMaxSize()
-                                        .padding(16.dp)
-                                        .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                        // Category Switcher
-                        TabRow(selectedTabIndex = selectedCategory) {
-                                categories.forEachIndexed { index, title ->
-                                        Tab(
-                                                selected = selectedCategory == index,
-                                                onClick = { selectedCategory = index },
-                                                text = { Text(title) }
-                                        )
-                                }
-                        }
-
-                        if (selectedCategory == 0) {
-                                // FINANCIAL FORM
-
-                                // Scan Buttons
-                                Row(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        modifier = Modifier.fillMaxWidth()
-                                ) {
-                                        Button(
-                                                onClick = { scanDocument(false) },
-                                                modifier = Modifier.weight(1f),
-                                                colors =
-                                                        if (frontImage != null)
-                                                                ButtonDefaults.buttonColors(
-                                                                        containerColor =
-                                                                                MaterialTheme
-                                                                                        .colorScheme
-                                                                                        .primaryContainer,
-                                                                        contentColor =
-                                                                                MaterialTheme
-                                                                                        .colorScheme
-                                                                                        .onPrimaryContainer
-                                                                )
-                                                        else ButtonDefaults.buttonColors()
-                                        ) {
-                                                Column(
-                                                        horizontalAlignment =
-                                                                androidx.compose.ui.Alignment
-                                                                        .CenterHorizontally
-                                                ) {
-                                                        Icon(Icons.Filled.PhotoCamera, "Front")
-                                                        Text(
-                                                                if (frontImage != null)
-                                                                        "Front Captured"
-                                                                else "Scan Front"
-                                                        )
-                                                }
-                                        }
-                                        Button(
-                                                onClick = { scanDocument(true) },
-                                                modifier = Modifier.weight(1f),
-                                                colors =
-                                                        if (backImage != null)
-                                                                ButtonDefaults.buttonColors(
-                                                                        containerColor =
-                                                                                MaterialTheme
-                                                                                        .colorScheme
-                                                                                        .primaryContainer,
-                                                                        contentColor =
-                                                                                MaterialTheme
-                                                                                        .colorScheme
-                                                                                        .onPrimaryContainer
-                                                                )
-                                                        else ButtonDefaults.buttonColors()
-                                        ) {
-                                                Column(
-                                                        horizontalAlignment =
-                                                                androidx.compose.ui.Alignment
-                                                                        .CenterHorizontally
-                                                ) {
-                                                        Icon(Icons.Filled.PhotoCamera, "Back")
-                                                        Text(
-                                                                if (backImage != null)
-                                                                        "Back Captured"
-                                                                else "Scan Back"
-                                                        )
-                                                }
-                                        }
-                                }
-
-                                Text("Account Type", style = MaterialTheme.typography.labelLarge)
-
-                                // Card vs Bank Selection
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        // Added DEBIT_CARD to the list
-                                        listOf(
-                                                        AccountType.CREDIT_CARD,
-                                                        AccountType.DEBIT_CARD,
-                                                        AccountType.BANK_ACCOUNT
-                                                )
-                                                .forEach { type ->
-                                                        FilterChip(
-                                                                selected = finType == type,
-                                                                onClick = { finType = type },
-                                                                label = {
-                                                                        Text(
-                                                                                type.name.replace(
-                                                                                        "_",
-                                                                                        " "
-                                                                                )
-                                                                        )
-                                                                }
-                                                        )
-                                                }
-                                }
-
-                                OutlinedTextField(
-                                        value = institution,
-                                        onValueChange = { institution = it },
-                                        label = { Text("Institution (e.g. Chase)") },
-                                        modifier = Modifier.fillMaxWidth()
-                                )
-                                OutlinedTextField(
-                                        value = accName,
-                                        onValueChange = { accName = it },
-                                        label = { Text("Account Name (e.g. Sapphire)") },
-                                        modifier = Modifier.fillMaxWidth()
-                                )
-                                OutlinedTextField(
-                                        value = accNumber,
-                                        onValueChange = { accNumber = it },
-                                        label = { Text("Account / Card Number") },
-                                        keyboardOptions =
-                                                KeyboardOptions(keyboardType = KeyboardType.Number),
-                                        modifier = Modifier.fillMaxWidth()
-                                )
-
-                                // Conditional Fields based on Type
-                                val isCard =
-                                        finType == AccountType.CREDIT_CARD ||
-                                                finType == AccountType.DEBIT_CARD
-
-                                if (isCard) {
-                                        // Expiry, CVV, and Network Row
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                OutlinedTextField(
-                                                        value = expiry,
-                                                        onValueChange = { expiry = it },
-                                                        label = { Text("Expiry (MM/YY)") },
-                                                        modifier = Modifier.weight(1f),
-                                                        keyboardOptions =
-                                                                KeyboardOptions(
-                                                                        keyboardType =
-                                                                                KeyboardType.Number
-                                                                )
-                                                )
-                                                OutlinedTextField(
-                                                        value = cvv,
-                                                        onValueChange = {
-                                                                if (it.length <= 4) cvv = it
-                                                        },
-                                                        label = { Text("CVV/CVC") },
-                                                        modifier = Modifier.weight(1f),
-                                                        visualTransformation =
-                                                                if (cvvVisible)
-                                                                        VisualTransformation.None
-                                                                else PasswordVisualTransformation(),
-                                                        keyboardOptions =
-                                                                KeyboardOptions(
-                                                                        keyboardType =
-                                                                                KeyboardType.Number
-                                                                ),
-                                                        trailingIcon = {
-                                                                val image =
-                                                                        if (cvvVisible)
-                                                                                Icons.Filled
-                                                                                        .Visibility
-                                                                        else
-                                                                                Icons.Filled
-                                                                                        .VisibilityOff
-                                                                IconButton(
-                                                                        onClick = {
-                                                                                cvvVisible =
-                                                                                        !cvvVisible
-                                                                        }
-                                                                ) {
-                                                                        Icon(
-                                                                                imageVector = image,
-                                                                                contentDescription =
-                                                                                        "Toggle CVV"
-                                                                        )
-                                                                }
-                                                        }
-                                                )
-                                        }
-
-                                        // Card PIN and Network
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                // Network (Auto-filled but editable)
-                                                OutlinedTextField(
-                                                        value = cardNetwork, // Need to add
-                                                        // this
-                                                        // state
-                                                        onValueChange = { cardNetwork = it },
-                                                        label = { Text("Network (e.g. Visa)") },
-                                                        modifier = Modifier.weight(1f)
-                                                )
-
-                                                // PIN with Toggle
-                                                // better hoist
-                                                var showPin by remember { mutableStateOf(false) }
-
-                                                OutlinedTextField(
-                                                        value = cardPin,
-                                                        onValueChange = { cardPin = it },
-                                                        label = { Text("Card PIN") },
-                                                        modifier = Modifier.weight(1f),
-                                                        visualTransformation =
-                                                                if (showPin)
-                                                                        VisualTransformation.None
-                                                                else PasswordVisualTransformation(),
-                                                        keyboardOptions =
-                                                                KeyboardOptions(
-                                                                        keyboardType =
-                                                                                KeyboardType
-                                                                                        .NumberPassword
-                                                                ),
-                                                        trailingIcon = {
-                                                                val image =
-                                                                        if (showPin)
-                                                                                Icons.Filled
-                                                                                        .Visibility
-                                                                        else
-                                                                                Icons.Filled
-                                                                                        .VisibilityOff
-                                                                IconButton(
-                                                                        onClick = {
-                                                                                showPin = !showPin
-                                                                        }
-                                                                ) {
-                                                                        Icon(
-                                                                                imageVector = image,
-                                                                                contentDescription =
-                                                                                        "Toggle PIN"
-                                                                        )
-                                                                }
-                                                        }
-                                                )
-                                        }
-                                } else {
-                                        // Bank Specifics
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                                OutlinedTextField(
-                                                        value = routing,
-                                                        onValueChange = { routing = it },
-                                                        label = { Text("Routing (Optional)") },
-                                                        modifier = Modifier.weight(1f),
-                                                        keyboardOptions =
-                                                                KeyboardOptions(
-                                                                        keyboardType =
-                                                                                KeyboardType.Number
-                                                                )
-                                                )
-                                                OutlinedTextField(
-                                                        value = ifsc,
-                                                        onValueChange = { ifsc = it },
-                                                        label = { Text("IFSC (Optional)") },
-                                                        modifier = Modifier.weight(1f)
-                                                )
-                                        }
-                                }
-
-                                OutlinedTextField(
-                                        value = accHolder,
-                                        onValueChange = { accHolder = it },
-                                        label = { Text("Holder Name") },
-                                        modifier = Modifier.fillMaxWidth()
-                                )
-
-                                OutlinedTextField(
-                                        value = contactNumber,
-                                        onValueChange = { contactNumber = it },
-                                        label = { Text("Lost Card Contact Number") },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        keyboardOptions =
-                                                KeyboardOptions(keyboardType = KeyboardType.Phone)
-                                )
-
-                                OutlinedTextField(
-                                        value = notes,
-                                        onValueChange = { notes = it },
-                                        label = { Text("Notes") },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        minLines = 3,
-                                        maxLines = 5
-                                )
-
-                                // Scanner callback with OCR
-
-                                Button(
-                                        onClick = {
-                                                viewModel.saveFinancialAccount(
-                                                        id = documentId ?: 0,
-                                                        type = finType,
-                                                        institution = institution,
-                                                        name = accName,
-                                                        holder = accHolder,
-                                                        number = accNumber,
-                                                        routing = routing,
-                                                        ifsc = ifsc,
-                                                        expiryDate = expiry,
-                                                        cvv = cvv,
-                                                        pin = cardPin,
-                                                        notes = notes,
-                                                        contact = contactNumber,
-                                                        cardNetwork = cardNetwork,
-                                                        frontImagePath = frontPath,
-                                                        backImagePath = backPath
-                                                )
-                                                navigateBack()
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                ) { Text("Save Financial Account") }
+        val permissionLauncher =
+                rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+                        isGranted ->
+                        if (isGranted) {
+                                scannerLauncher.launch(null)
                         } else {
-                                // IDENTITY FORM (Unchanged)
-                                Text("Document Type", style = MaterialTheme.typography.labelLarge)
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        listOf(DocumentType.PASSPORT, DocumentType.DRIVER_LICENSE)
-                                                .forEach { type ->
-                                                        FilterChip(
-                                                                selected = docType == type,
-                                                                onClick = { docType = type },
-                                                                label = {
-                                                                        Text(
-                                                                                type.name.replace(
-                                                                                        "_",
-                                                                                        " "
-                                                                                )
-                                                                        )
-                                                                }
-                                                        )
-                                                }
-                                }
-
-                                // Scan Buttons
-                                Row(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        modifier = Modifier.fillMaxWidth()
-                                ) {
-                                        Button(
-                                                onClick = { scanDocument(false) },
-                                                modifier = Modifier.weight(1f),
-                                                colors =
-                                                        if (frontImage != null)
-                                                                ButtonDefaults.buttonColors(
-                                                                        containerColor =
-                                                                                MaterialTheme
-                                                                                        .colorScheme
-                                                                                        .primaryContainer,
-                                                                        contentColor =
-                                                                                MaterialTheme
-                                                                                        .colorScheme
-                                                                                        .onPrimaryContainer
-                                                                )
-                                                        else ButtonDefaults.buttonColors()
-                                        ) {
-                                                Column(
-                                                        horizontalAlignment =
-                                                                androidx.compose.ui.Alignment
-                                                                        .CenterHorizontally
-                                                ) {
-                                                        Icon(Icons.Filled.PhotoCamera, "Front")
-                                                        Text(
-                                                                if (frontImage != null)
-                                                                        "Front Captured"
-                                                                else "Scan Front"
-                                                        )
-                                                }
-                                        }
-                                        Button(
-                                                onClick = { scanDocument(true) },
-                                                modifier = Modifier.weight(1f),
-                                                colors =
-                                                        if (backImage != null)
-                                                                ButtonDefaults.buttonColors(
-                                                                        containerColor =
-                                                                                MaterialTheme
-                                                                                        .colorScheme
-                                                                                        .primaryContainer,
-                                                                        contentColor =
-                                                                                MaterialTheme
-                                                                                        .colorScheme
-                                                                                        .onPrimaryContainer
-                                                                )
-                                                        else ButtonDefaults.buttonColors()
-                                        ) {
-                                                Column(
-                                                        horizontalAlignment =
-                                                                androidx.compose.ui.Alignment
-                                                                        .CenterHorizontally
-                                                ) {
-                                                        Icon(Icons.Filled.PhotoCamera, "Back")
-                                                        Text(
-                                                                if (backImage != null)
-                                                                        "Back Captured"
-                                                                else "Scan Back"
-                                                        )
-                                                }
-                                        }
-                                }
-
-                                OutlinedTextField(
-                                        value = country,
-                                        onValueChange = { country = it },
-                                        label = { Text("Issuing Country") },
-                                        modifier = Modifier.fillMaxWidth()
-                                )
-                                OutlinedTextField(
-                                        value = docNumber,
-                                        onValueChange = { docNumber = it },
-                                        label = { Text("Document Number") },
-                                        modifier = Modifier.fillMaxWidth()
-                                )
-                                OutlinedTextField(
-                                        value = docHolder,
-                                        onValueChange = { docHolder = it },
-                                        label = { Text("Holder Name") },
-                                        modifier = Modifier.fillMaxWidth()
-                                )
-                                OutlinedTextField(
-                                        value = expiryStr,
-                                        onValueChange = { expiryStr = it },
-                                        label = { Text("Expiry (YYYY-MM-DD)") },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        supportingText = { Text("Leave empty if none") }
-                                )
-
-                                // Detailed Fields
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        OutlinedTextField(
-                                                value = state,
-                                                onValueChange = { state = it },
-                                                label = { Text("State") },
-                                                modifier = Modifier.weight(1f)
+                                Toast.makeText(
+                                                context,
+                                                "Camera permission required",
+                                                Toast.LENGTH_SHORT
                                         )
-                                        OutlinedTextField(
-                                                value = dob,
-                                                onValueChange = { dob = it },
-                                                label = { Text("DOB") },
-                                                modifier = Modifier.weight(1f)
-                                        )
-                                }
-                                OutlinedTextField(
-                                        value = address,
-                                        onValueChange = { address = it },
-                                        label = { Text("Address") },
-                                        modifier = Modifier.fillMaxWidth()
-                                )
-
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        OutlinedTextField(
-                                                value = sex,
-                                                onValueChange = { sex = it },
-                                                label = { Text("Sex") },
-                                                modifier = Modifier.weight(1f)
-                                        )
-                                        OutlinedTextField(
-                                                value = height,
-                                                onValueChange = { height = it },
-                                                label = { Text("Height") },
-                                                modifier = Modifier.weight(1f)
-                                        )
-                                        OutlinedTextField(
-                                                value = eyeColor,
-                                                onValueChange = { eyeColor = it },
-                                                label = { Text("Eyes") },
-                                                modifier = Modifier.weight(1f)
-                                        )
-                                }
-
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        OutlinedTextField(
-                                                value = licenseClass,
-                                                onValueChange = { licenseClass = it },
-                                                label = { Text("Class") },
-                                                modifier = Modifier.weight(1f)
-                                        )
-                                        OutlinedTextField(
-                                                value = restrictions,
-                                                onValueChange = { restrictions = it },
-                                                label = { Text("Restr") },
-                                                modifier = Modifier.weight(1f)
-                                        )
-                                        OutlinedTextField(
-                                                value = endorsements,
-                                                onValueChange = { endorsements = it },
-                                                label = { Text("Endorse") },
-                                                modifier = Modifier.weight(1f)
-                                        )
-                                }
-                                OutlinedTextField(
-                                        value = issuingAuthority,
-                                        onValueChange = { issuingAuthority = it },
-                                        label = { Text("Issued By (ISS)") },
-                                        modifier = Modifier.fillMaxWidth()
-                                )
-
-                                Button(
-                                        onClick = {
-                                                viewModel.saveIdentityDocument(
-                                                        id = documentId ?: 0,
-                                                        type = docType,
-                                                        country = country,
-                                                        docNumber,
-                                                        docHolder,
-                                                        null,
-                                                        frontPath,
-                                                        backPath,
-                                                        state,
-                                                        address,
-                                                        dob,
-                                                        sex,
-                                                        eyeColor,
-                                                        height,
-                                                        licenseClass,
-                                                        restrictions,
-                                                        endorsements,
-                                                        issuingAuthority
-                                                )
-                                                navigateBack()
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                ) { Text("Save Identity Document") }
+                                        .show()
                         }
                 }
-        }
-}
 
-fun saveImageToInternalStorage(context: Context, bitmap: Bitmap, name: String): String {
-        val directory = context.getDir("card_images", Context.MODE_PRIVATE)
-        val file = File(directory, "$name.jpg")
-        FileOutputStream(file).use { stream ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
+        val scanDocument = { isBack: Boolean ->
+                scanningBack = isBack
+
+                // Use barcode scanner for Driver License back scans
+                if (isBack &&
+                                selectedCategory == 1 &&
+                                identityState.type == DocumentType.DRIVER_LICENSE
+                ) {
+                        showBarcodeScanner = true
+                } else {
+                        // Use document scanner for everything else
+                        scanner.getStartScanIntent(activity)
+                                .addOnSuccessListener { intentSender ->
+                                        scannerLauncher.launch(
+                                                IntentSenderRequest.Builder(intentSender).build()
+                                        )
+                                }
+                                .addOnFailureListener { e ->
+                                        Toast.makeText(
+                                                        context,
+                                                        "Scanner error: ${e.message}",
+                                                        Toast.LENGTH_SHORT
+                                                )
+                                                .show()
+                                }
+                }
         }
-        return file.absolutePath
+
+        // Logo Picker for Financial Form (Specific)
+        val logoLauncher =
+                rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.GetContent()
+                ) { uri ->
+                        uri?.let {
+                                val source =
+                                        android.graphics.ImageDecoder.createSource(
+                                                context.contentResolver,
+                                                it
+                                        )
+                                val bitmap = android.graphics.ImageDecoder.decodeBitmap(source)
+                                val savedPath =
+                                        saveImageToInternalStorage(
+                                                context,
+                                                bitmap,
+                                                "logo_${System.currentTimeMillis()}"
+                                        )
+                                financialState.logoPath = savedPath
+                                financialState.logoBitmap = bitmap
+                        }
+                }
+
+        // Dynamic Title Logic
+        val screenTitle =
+                if (documentId != null && documentId != 0) {
+                        // Editing existing item
+                        if (selectedCategory == 0) {
+                                when (financialState.type) {
+                                        AccountType.CREDIT_CARD, AccountType.DEBIT_CARD ->
+                                                "Update Credit/Debit Card"
+                                        AccountType.BANK_ACCOUNT -> "Update Bank Account"
+                                        AccountType.REWARDS_CARD -> "Update Rewards Card"
+                                        else -> "Update Financial Account"
+                                }
+                        } else {
+                                when (identityState.type) {
+                                        DocumentType.DRIVER_LICENSE -> "Update Driver License"
+                                        DocumentType.PASSPORT -> "Update Passport"
+                                        else -> "Update Identity Document"
+                                }
+                        }
+                } else {
+                        // Adding new item
+                        if (selectedCategory == 0) {
+                                when (financialState.type) {
+                                        AccountType.CREDIT_CARD, AccountType.DEBIT_CARD ->
+                                                "Add Credit/Debit Card"
+                                        AccountType.BANK_ACCOUNT -> "Add Bank Account"
+                                        AccountType.REWARDS_CARD -> "Add Rewards Card"
+                                        else -> "Add Financial Account"
+                                }
+                        } else {
+                                when (identityState.type) {
+                                        DocumentType.DRIVER_LICENSE -> "Add Driver License"
+                                        DocumentType.PASSPORT -> "Add Passport"
+                                        else -> "Add Identity Document"
+                                }
+                        }
+                }
+
+        val typeIcon =
+                if (selectedCategory == 0) {
+                        when (financialState.type) {
+                                AccountType.CREDIT_CARD, AccountType.DEBIT_CARD ->
+                                        Icons.Filled.CreditCard
+                                AccountType.BANK_ACCOUNT -> Icons.Filled.AccountBalance
+                                AccountType.REWARDS_CARD -> Icons.Filled.CardGiftcard
+                                else -> Icons.Filled.AccountBalance
+                        }
+                } else {
+                        when (identityState.type) {
+                                DocumentType.DRIVER_LICENSE -> Icons.Filled.DirectionsCar
+                                DocumentType.PASSPORT -> Icons.Filled.AccountBox
+                                else -> Icons.Filled.Face
+                        }
+                }
+
+        // Barcode result handler - also captures and saves the back image
+        val handleBarcodeResult: (String, android.graphics.Bitmap?) -> Unit =
+                { rawData, capturedBitmap ->
+                        showBarcodeScanner = false
+
+                        // Save the captured back image
+                        capturedBitmap?.let { bitmap ->
+                                val savedPath =
+                                        saveImageToInternalStorage(
+                                                context,
+                                                bitmap,
+                                                "dl_back_${System.currentTimeMillis()}"
+                                        )
+                                identityState.backBitmap = bitmap
+                                identityState.backPath = savedPath
+                        }
+
+                        scope.launch {
+                                val details = driverLicenseScanner.parseAAMVAData(rawData)
+
+                                // Populate form fields from barcode data
+                                if (details.docNumber.isNotEmpty())
+                                        identityState.number = details.docNumber
+                                if (details.name.isNotEmpty()) {
+                                        identityState.firstName = details.name.substringBefore(" ")
+                                        identityState.lastName =
+                                                details.name.substringAfterLast(" ", "")
+                                }
+                                if (details.dob.isNotEmpty()) identityState.dob = details.dob
+                                if (details.expiryDate.isNotEmpty())
+                                        identityState.expiry = details.expiryDate
+                                if (details.address.isNotEmpty())
+                                        identityState.address = details.address
+                                if (details.sex.isNotEmpty()) identityState.sex = details.sex
+                                if (details.eyeColor.isNotEmpty())
+                                        identityState.eyeColor = details.eyeColor
+                                if (details.height.isNotEmpty())
+                                        identityState.height = details.height
+                                if (details.licenseClass.isNotEmpty())
+                                        identityState.licenseClass = details.licenseClass
+                                if (details.restrictions.isNotEmpty())
+                                        identityState.restrictions = details.restrictions
+                                if (details.endorsements.isNotEmpty())
+                                        identityState.endorsements = details.endorsements
+                                if (details.state.isNotEmpty()) identityState.region = details.state
+                                if (details.issuingAuthority.isNotEmpty())
+                                        identityState.issuingAuthority = details.issuingAuthority
+                                if (details.country.isNotEmpty())
+                                        identityState.country = details.country
+                        }
+                }
+
+        Box(modifier = Modifier.fillMaxSize()) {
+                Scaffold(
+                        topBar = {
+                                TopAppBar(
+                                        title = {
+                                                Row(
+                                                        verticalAlignment =
+                                                                androidx.compose.ui.Alignment
+                                                                        .CenterVertically
+                                                ) {
+                                                        Icon(
+                                                                imageVector = typeIcon,
+                                                                contentDescription = null,
+                                                                modifier =
+                                                                        Modifier.padding(end = 8.dp)
+                                                        )
+                                                        Text(screenTitle)
+                                                }
+                                        },
+                                        navigationIcon = {
+                                                IconButton(onClick = navigateBack) {
+                                                        Icon(Icons.Filled.ArrowBack, "Back")
+                                                }
+                                        }
+                                )
+                        }
+                ) { innerPadding ->
+                        Column(
+                                modifier =
+                                        Modifier.padding(innerPadding)
+                                                .fillMaxSize()
+                                                .padding(16.dp)
+                                                .verticalScroll(rememberScrollState()),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                                // Category Switcher
+                                TabRow(selectedTabIndex = selectedCategory) {
+                                        categories.forEachIndexed { index, title ->
+                                                Tab(
+                                                        selected = selectedCategory == index,
+                                                        onClick = { selectedCategory = index },
+                                                        text = { Text(title) }
+                                                )
+                                        }
+                                }
+
+                                if (selectedCategory == 0) {
+                                        FinancialForm(
+                                                state = financialState,
+                                                onScanFront = { scanDocument(false) },
+                                                onScanBack = { scanDocument(true) },
+                                                onPickLogo = { logoLauncher.launch("image/*") },
+                                                onSave = {
+                                                        viewModel.saveFinancialAccount(
+                                                                id = documentId ?: 0,
+                                                                type = financialState.type,
+                                                                institution =
+                                                                        financialState.institution,
+                                                                name = financialState.accName,
+                                                                holder = financialState.holder,
+                                                                number = financialState.number,
+                                                                routing = financialState.routing,
+                                                                ifsc = financialState.ifsc,
+                                                                swift = financialState.swift,
+                                                                expiryDate = financialState.expiry,
+                                                                cvv = financialState.cvv,
+                                                                pin = financialState.pin,
+                                                                notes = financialState.notes,
+                                                                contact = financialState.contact,
+                                                                cardNetwork =
+                                                                        financialState.network,
+                                                                frontImagePath =
+                                                                        financialState.frontPath,
+                                                                backImagePath =
+                                                                        financialState.backPath,
+                                                                barcode = financialState.barcode,
+                                                                barcodeFormat =
+                                                                        financialState
+                                                                                .barcodeFormat,
+                                                                linkedPhoneNumber =
+                                                                        financialState.linkedPhone,
+                                                                logoImagePath =
+                                                                        financialState.logoPath,
+                                                                // Bank account fields
+                                                                accountSubType =
+                                                                        financialState
+                                                                                .accountSubType,
+                                                                wireNumber =
+                                                                        financialState.wireNumber,
+                                                                branchAddress =
+                                                                        financialState
+                                                                                .branchAddress,
+                                                                branchContactNumber =
+                                                                        financialState
+                                                                                .branchContact,
+                                                                bankWebUrl =
+                                                                        financialState.bankWebUrl,
+                                                                bankBrandColor =
+                                                                        financialState
+                                                                                .bankBrandColor,
+                                                                holderAddress =
+                                                                        financialState.holderAddress
+                                                        )
+                                                },
+                                                onNavigateBack = navigateBack
+                                        )
+                                } else {
+                                        IdentityForm(
+                                                state = identityState,
+                                                onScanFront = { scanDocument(false) },
+                                                onScanBack = { scanDocument(true) },
+                                                onSave = {
+                                                        viewModel.saveIdentityDocument(
+                                                                id = documentId ?: 0,
+                                                                type = identityState.type,
+                                                                country = identityState.country,
+                                                                docNumber = identityState.number,
+                                                                holder =
+                                                                        identityState.firstName +
+                                                                                " " +
+                                                                                identityState
+                                                                                        .lastName,
+                                                                expiryDate = null, // TODO: Parse
+                                                                // identityState.expiry
+                                                                // (String) to Long
+                                                                frontImagePath =
+                                                                        identityState.frontPath,
+                                                                backImagePath =
+                                                                        identityState.backPath,
+                                                                state = identityState.region,
+                                                                address = identityState.address,
+                                                                dob = identityState.dob,
+                                                                sex = identityState.sex,
+                                                                eyeColor = identityState.eyeColor,
+                                                                height = identityState.height,
+                                                                licenseClass =
+                                                                        identityState.licenseClass,
+                                                                restrictions =
+                                                                        identityState.restrictions,
+                                                                endorsements =
+                                                                        identityState.endorsements,
+                                                                issuingAuthority =
+                                                                        identityState
+                                                                                .issuingAuthority
+                                                        )
+                                                },
+                                                onNavigateBack = navigateBack
+                                        )
+                                }
+                        }
+                }
+
+                // Barcode Scanner Overlay
+                if (showBarcodeScanner) {
+                        BarcodeScannerScreen(
+                                onBarcodeScanned = handleBarcodeResult,
+                                onDismiss = { showBarcodeScanner = false }
+                        )
+                }
+        } // Close Box
 }

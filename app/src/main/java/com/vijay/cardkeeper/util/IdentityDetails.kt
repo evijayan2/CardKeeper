@@ -17,5 +17,7 @@ data class IdentityDetails(
         val licenseClass: String = "",
         val restrictions: String = "",
         val endorsements: String = "",
-        val issuingAuthority: String = ""
+        val issueDate: String = "",
+        val issuingAuthority: String = "",
+        val country: String = ""
 )

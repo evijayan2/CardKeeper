@@ -9,7 +9,18 @@ enum class AccountType {
     BANK_ACCOUNT,
     INVESTMENT,
     INSURANCE,
-    LOAN
+    LOAN,
+    REWARDS_CARD
+}
+
+enum class BankAccountSubType {
+    CHECKING,
+    SAVINGS,
+    NRE,
+    NRO,
+    CURRENT,
+    MONEY_MARKET,
+    OTHER
 }
 
 @Entity(tableName = "financial_accounts")
@@ -30,6 +41,15 @@ data class FinancialAccount(
         val ifscCode: String? = null, // India
         val swiftCode: String? = null, // International
         val branchCode: String? = null, // Specific branch
+        val wireNumber: String? = null, // Wire transfer routing
+        val accountSubType: BankAccountSubType? = null, // Checking/Savings/NRE/NRO etc.
+
+        // Branch/Contact Info
+        val branchAddress: String? = null,
+        val branchContactNumber: String? = null,
+        val bankWebUrl: String? = null,
+        val bankBrandColor: Long? = null, // Bank's brand color for UI
+        val holderAddress: String? = null, // Account holder's mailing address
 
         // Dates (Stored as hull Epoch Millis)
         val expiryDate: String? = null, // MM/YY
@@ -42,5 +62,9 @@ data class FinancialAccount(
         val cardPin: String? = null,
         val lostCardContactNumber: String? = null,
         val frontImagePath: String? = null,
-        val backImagePath: String? = null
+        val backImagePath: String? = null,
+        val barcode: String? = null,
+        val barcodeFormat: Int? = null, // MLKit Format Constant
+        val linkedPhoneNumber: String? = null,
+        val logoImagePath: String? = null
 )

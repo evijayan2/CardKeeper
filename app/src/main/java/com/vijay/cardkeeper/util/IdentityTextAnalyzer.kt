@@ -32,14 +32,14 @@ class IdentityTextAnalyzer(
     private val sexPattern = Regex("\\b(?:SEX|S)[:\\s]*([MF])\\b")
     private val heightPattern = Regex("\\b(?:HGT|H)[:\\s]*(\\d['-]\\d{1,2})\\b") // 5-08 or 5'08
     private val eyesPattern = Regex("\\b(?:EYES|E)[:\\s]*([A-Z]{3})\\b") // BRO, BLU
-    private val classPattern = Regex("\\b(?:CLASS|C)[:\\s]*([A-Z0-9]+)\\b")
+    private val classPattern = Regex("\\b(?:CLASS|C)[:\\s]+([A-Z0-9]+)\\b")
     private val endPattern = Regex("\\b(?:END|E)[:\\s]*([A-Z0-9]+)\\b") // Endorsements
     private val restrPattern = Regex("\\b(?:RESTR|R)[:\\s]*([A-Z0-9]+)\\b") // Restrictions
-    private val issPattern =
-            Regex(
-                    "\\b(?:ISS|ISSUED\\s+BY|AUTH)[:\\.]?\\s*([A-Za-z0-9\\s,]+)\\b",
-                    RegexOption.IGNORE_CASE
-            )
+    // private val issPattern =
+    //         Regex(
+    //                 "\\b(?:ISS|ISSUED\\s+BY|AUTH|ISS)[:\\.]?\\s*([A-Za-z0-9\\s,]+)\\b",
+    //                 RegexOption.IGNORE_CASE
+    //         )
 
     // States (Simplified list of 2-letter codes for heuristic)
     private val stateCodes =
@@ -203,6 +203,8 @@ class IdentityTextAnalyzer(
                                     foundDob = valDate
                                 } else if (lineText.contains("EXP") || valDate.startsWith("202")) {
                                     foundExp = valDate
+                                } else if (lineText.contains("ISS")) {
+                                    foundIss = valDate
                                 } else if (foundDob.isEmpty()) {
                                     foundDob = valDate // Fallback
                                 }
@@ -218,12 +220,12 @@ class IdentityTextAnalyzer(
                             // ISS might be mixed case on some cards, but we UpperCased
                             // lineText.
                             // Re-run find on original text if needed, or just rely on Upper.
-                            issPattern.find(line.text)?.let {
-                                // Clean up common noise
-                                var v = it.groupValues[1].trim()
-                                if (v.length > 20) v = v.take(20)
-                                foundIss = v
-                            }
+                            // issPattern.find(line.text)?.let {
+                            //     // Clean up common noise
+                            //     var v = it.groupValues[1].trim()
+                            //     if (v.length > 20) v = v.take(20)
+                            //     foundIss = v
+                            // }
                         }
                     }
 
@@ -258,7 +260,7 @@ class IdentityTextAnalyzer(
                                         licenseClass = foundClass,
                                         restrictions = foundRestr,
                                         endorsements = foundEnd,
-                                        issuingAuthority = foundIss
+                                        issueDate = foundIss
                                         // caller attaches capturedImage
                                         )
                         )
