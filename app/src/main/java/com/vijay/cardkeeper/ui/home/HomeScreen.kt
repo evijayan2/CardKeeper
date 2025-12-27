@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -51,9 +52,9 @@ fun HomeScreen(
         navigateToItemEntry: (Int, String?) -> Unit,
         navigateToItemView: (Int) -> Unit,
         navigateToIdentityView: (Int) -> Unit,
-        navigateToPassportView: (Int) -> Unit =
-                {}, // Default empty for now to avoid breaking callers immediately
+        navigateToPassportView: (Int) -> Unit = {},
         navigateToRewardsView: (Int) -> Unit = {},
+        navigateToSearch: () -> Unit = {},
         viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val bankAccounts by viewModel.bankAccounts.collectAsState(initial = emptyList())
@@ -86,6 +87,11 @@ fun HomeScreen(
                                         modifier = Modifier.size(32.dp).padding(end = 8.dp)
                                 )
                                 Text("Kards")
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = navigateToSearch) {
+                                Icon(Icons.Filled.Search, contentDescription = "Search")
                             }
                         }
                 )

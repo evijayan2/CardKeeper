@@ -5,7 +5,7 @@ import com.vijay.cardkeeper.data.entity.IdentityDocument
 import kotlinx.coroutines.flow.Flow
 
 class IdentityRepository(private val identityDao: IdentityDocumentDao) {
-    
+
     val allDocuments: Flow<List<IdentityDocument>> = identityDao.getAllDocuments()
 
     fun getExpiringDocuments(now: Long, futureDate: Long): Flow<List<IdentityDocument>> {
@@ -26,5 +26,9 @@ class IdentityRepository(private val identityDao: IdentityDocumentDao) {
 
     suspend fun deleteDocument(doc: IdentityDocument) {
         identityDao.deleteDocument(doc)
+    }
+
+    fun searchDocuments(query: String): Flow<List<IdentityDocument>> {
+        return identityDao.searchDocuments(query)
     }
 }

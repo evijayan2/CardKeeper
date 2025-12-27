@@ -15,4 +15,12 @@ interface PassportDao {
     @Query("SELECT * FROM passports WHERE id = :id") fun getPassport(id: Int): Flow<Passport>
 
     @Query("SELECT * FROM passports ORDER BY id DESC") fun getAllPassports(): Flow<List<Passport>>
+
+    @Query("""
+        SELECT * FROM passports 
+        WHERE passportNumber LIKE '%' || :query || '%' 
+        OR surname LIKE '%' || :query || '%' 
+        OR givenNames LIKE '%' || :query || '%'
+    """)
+    fun searchPassports(query: String): Flow<List<Passport>>
 }

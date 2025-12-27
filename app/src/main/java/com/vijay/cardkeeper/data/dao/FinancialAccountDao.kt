@@ -25,4 +25,13 @@ interface FinancialAccountDao {
 
     @Delete
     suspend fun deleteAccount(account: FinancialAccount)
+
+    @Query("""
+        SELECT * FROM financial_accounts 
+        WHERE institutionName LIKE '%' || :query || '%' 
+        OR accountName LIKE '%' || :query || '%' 
+        OR holderName LIKE '%' || :query || '%' 
+        OR number LIKE '%' || :query || '%'
+    """)
+    fun searchAccounts(query: String): Flow<List<FinancialAccount>>
 }

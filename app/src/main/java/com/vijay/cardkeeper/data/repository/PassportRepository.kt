@@ -20,4 +20,8 @@ class PassportRepository(private val passportDao: PassportDao) {
     suspend fun delete(passport: Passport) {
         passportDao.delete(passport)
     }
+
+    fun searchPassports(query: String): Flow<List<Passport>> {
+        return passportDao.searchPassports(query)
+    }
 }

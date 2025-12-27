@@ -23,6 +23,7 @@ object AppViewModelProvider {
             )
         }
         initializer { ViewItemViewModel(cardKeeperApplication().container.financialRepository) }
+        initializer { SearchViewModel(cardKeeperApplication().container.searchRepository) }
     }
 }
 

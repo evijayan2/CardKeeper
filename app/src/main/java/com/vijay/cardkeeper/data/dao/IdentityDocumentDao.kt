@@ -30,4 +30,12 @@ interface IdentityDocumentDao {
 
     @Delete
     suspend fun deleteDocument(doc: IdentityDocument)
+
+    @Query("""
+        SELECT * FROM identity_documents 
+        WHERE holderName LIKE '%' || :query || '%' 
+        OR docNumber LIKE '%' || :query || '%' 
+        OR issuingAuthority LIKE '%' || :query || '%'
+    """)
+    fun searchDocuments(query: String): Flow<List<IdentityDocument>>
 }

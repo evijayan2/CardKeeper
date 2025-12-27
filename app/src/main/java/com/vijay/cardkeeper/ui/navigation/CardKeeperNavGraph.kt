@@ -11,6 +11,7 @@ import com.vijay.cardkeeper.ui.home.HomeScreen
 import com.vijay.cardkeeper.ui.item.AddItemScreen
 import com.vijay.cardkeeper.ui.item.ViewIdentityScreen
 import com.vijay.cardkeeper.ui.item.ViewItemScreen
+import com.vijay.cardkeeper.ui.search.SearchScreen
 
 object CardKeeperDestinations {
     const val HOME_ROUTE = "home"
@@ -21,6 +22,7 @@ object CardKeeperDestinations {
     const val VIEW_IDENTITY_ROUTE = "view_identity/{documentId}"
     const val VIEW_PASSPORT_ROUTE = "view_passport/{passportId}"
     const val VIEW_REWARDS_ROUTE = "view_rewards/{accountId}"
+    const val SEARCH_ROUTE = "search"
 }
 
 @Composable
@@ -46,6 +48,25 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                     },
                     navigateToRewardsView = { accountId ->
                         navController.navigate("view_rewards/$accountId")
+                    },
+                    navigateToSearch = {
+                        navController.navigate(CardKeeperDestinations.SEARCH_ROUTE)
+                    }
+            )
+        }
+        composable(route = CardKeeperDestinations.SEARCH_ROUTE) {
+            SearchScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onResultClick = { id, type ->
+                        val route =
+                                when (type) {
+                                    "Finance" -> "view_item/$id"
+                                    "Identity" -> "view_identity/$id"
+                                    "Passport" -> "view_passport/$id"
+                                    "Rewards" -> "view_rewards/$id"
+                                    else -> null
+                                }
+                        route?.let { navController.navigate(it) }
                     }
             )
         }

@@ -4,12 +4,14 @@ import android.content.Context
 import com.vijay.cardkeeper.data.AppDatabase
 import com.vijay.cardkeeper.data.repository.FinancialRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
+import com.vijay.cardkeeper.data.repository.SearchRepository
 
 /** AppContainer for manual dependency injection. */
 interface AppContainer {
     val financialRepository: FinancialRepository
     val identityRepository: IdentityRepository
     val passportRepository: com.vijay.cardkeeper.data.repository.PassportRepository
+    val searchRepository: SearchRepository
 }
 
 class DefaultAppContainer(private val context: Context) : AppContainer {
@@ -27,5 +29,9 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     override val passportRepository:
             com.vijay.cardkeeper.data.repository.PassportRepository by lazy {
         com.vijay.cardkeeper.data.repository.PassportRepository(database.passportDao())
+    }
+
+    override val searchRepository: SearchRepository by lazy {
+        SearchRepository(financialRepository, identityRepository, passportRepository)
     }
 }
