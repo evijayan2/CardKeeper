@@ -58,6 +58,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.17.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
     implementation("androidx.activity:activity-compose:1.12.2")
+    implementation("androidx.fragment:fragment-ktx:1.8.9")
     implementation(platform("androidx.compose:compose-bom:2025.12.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -112,6 +113,10 @@ dependencies {
 
     // Bouncy Castle for Crypto
     implementation("org.bouncycastle:bcpkix-jdk15to18:1.70")
+
+    // Security & Encryption
+    implementation("net.zetetic:sqlcipher-android:4.12.0")
+    implementation("androidx.biometric:biometric:1.1.0")
 }
 
 // Task to download UIDAI certificates for Aadhar QR signature verification

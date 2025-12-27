@@ -20,7 +20,15 @@ interface AppContainer {
 
 class DefaultAppContainer(private val context: Context) : AppContainer {
 
-    private val database: AppDatabase by lazy { AppDatabase.getDatabase(context) }
+    // We assume that by the time this is accessed, the secure key is unlocked and cached.
+    // If not, it means we bypassed AuthActivity, which is a security violation, so crashing is
+    // appropriate.
+    private val database: AppDatabase by lazy {
+        val key =
+                com.vijay.cardkeeper.util.KeyManager.cachedPassphrase
+                        ?: throw IllegalStateException("Database accessed before authentication!")
+        AppDatabase.getDatabase(context, key)
+    }
 
     override val financialRepository: FinancialRepository by lazy {
         FinancialRepository(database.financialAccountDao())

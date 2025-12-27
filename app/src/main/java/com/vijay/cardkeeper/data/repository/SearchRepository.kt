@@ -78,29 +78,39 @@ class SearchRepository(
                         allGreenCards,
                         allAadharCards
                 ) { results ->
+                        @Suppress("UNCHECKED_CAST")
                         val accounts =
                                 results[0] as
                                         List<com.vijay.cardkeeper.data.entity.FinancialAccount>
+                        @Suppress("UNCHECKED_CAST")
                         val identities =
                                 results[1] as
                                         List<com.vijay.cardkeeper.data.entity.IdentityDocument>
+                        @Suppress("UNCHECKED_CAST")
                         val passports =
                                 results[2] as List<com.vijay.cardkeeper.data.entity.Passport>
+                        @Suppress("UNCHECKED_CAST")
                         val greenCards =
                                 results[3] as List<com.vijay.cardkeeper.data.entity.GreenCard>
+                        @Suppress("UNCHECKED_CAST")
                         val aadharCards =
                                 results[4] as List<com.vijay.cardkeeper.data.entity.AadharCard>
 
+                        @Suppress("UNCHECKED_CAST")
                         val allAccounts =
                                 results[5] as
                                         List<com.vijay.cardkeeper.data.entity.FinancialAccount>
+                        @Suppress("UNCHECKED_CAST")
                         val allIdentities =
                                 results[6] as
                                         List<com.vijay.cardkeeper.data.entity.IdentityDocument>
+                        @Suppress("UNCHECKED_CAST")
                         val allPassportsList =
                                 results[7] as List<com.vijay.cardkeeper.data.entity.Passport>
+                        @Suppress("UNCHECKED_CAST")
                         val allGreenCardsList =
                                 results[8] as List<com.vijay.cardkeeper.data.entity.GreenCard>
+                        @Suppress("UNCHECKED_CAST")
                         val allAadharCardsList =
                                 results[9] as List<com.vijay.cardkeeper.data.entity.AadharCard>
 

@@ -95,15 +95,18 @@ abstract class AppDatabase : RoomDatabase() {
 
         @Volatile private var INSTANCE: AppDatabase? = null
 
-        fun getDatabase(context: Context): AppDatabase {
+        fun getDatabase(context: Context, passphrase: ByteArray): AppDatabase {
             return INSTANCE
                     ?: synchronized(this) {
+                        val factory =
+                                net.zetetic.database.sqlcipher.SupportOpenHelperFactory(passphrase)
                         val instance =
                                 Room.databaseBuilder(
                                                 context.applicationContext,
                                                 AppDatabase::class.java,
                                                 "cardkeeper_database"
                                         )
+                                        .openHelperFactory(factory)
                                         .addMigrations(
                                                 MIGRATION_11_12,
                                                 MIGRATION_12_13,
