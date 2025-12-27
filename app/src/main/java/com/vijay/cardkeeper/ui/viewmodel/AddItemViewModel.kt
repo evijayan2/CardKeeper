@@ -6,8 +6,10 @@ import com.vijay.cardkeeper.data.entity.AccountType
 import com.vijay.cardkeeper.data.entity.BankAccountSubType
 import com.vijay.cardkeeper.data.entity.DocumentType
 import com.vijay.cardkeeper.data.entity.FinancialAccount
+import com.vijay.cardkeeper.data.entity.GreenCard
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.data.repository.FinancialRepository
+import com.vijay.cardkeeper.data.repository.GreenCardRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.launch
@@ -15,7 +17,8 @@ import kotlinx.coroutines.launch
 class AddItemViewModel(
         private val financialRepository: FinancialRepository,
         private val identityRepository: IdentityRepository,
-        private val passportRepository: com.vijay.cardkeeper.data.repository.PassportRepository
+        private val passportRepository: com.vijay.cardkeeper.data.repository.PassportRepository,
+        private val greenCardRepository: GreenCardRepository
 ) : ViewModel() {
 
         fun saveFinancialAccount(
@@ -106,6 +109,8 @@ class AddItemViewModel(
 
         suspend fun getPassport(id: Int) = passportRepository.getPassport(id)
 
+        suspend fun getGreenCard(id: Int) = greenCardRepository.getGreenCard(id)
+
         fun saveIdentityDocument(
                 id: Int = 0,
                 type: DocumentType,
@@ -174,6 +179,20 @@ class AddItemViewModel(
                 viewModelScope.launch { passportRepository.delete(passport) }
         }
 
+        fun saveGreenCard(greenCard: GreenCard) {
+                viewModelScope.launch {
+                        if (greenCard.id > 0) {
+                                greenCardRepository.update(greenCard)
+                        } else {
+                                greenCardRepository.insert(greenCard)
+                        }
+                }
+        }
+
+        fun deleteGreenCard(greenCard: GreenCard) {
+                viewModelScope.launch { greenCardRepository.delete(greenCard) }
+        }
+
         fun getItem(id: Int?, type: String?): kotlinx.coroutines.flow.Flow<Any?> =
                 kotlinx.coroutines.flow.flow {
                         if (id == null || id == 0) {
@@ -185,6 +204,8 @@ class AddItemViewModel(
                                         emit(identityRepository.getDocumentById(id))
                                 } else if (type == "passport") {
                                         emitAll(passportRepository.getPassport(id))
+                                } else if (type == "greencard") {
+                                        emitAll(greenCardRepository.getGreenCard(id))
                                 }
                         }
                 }

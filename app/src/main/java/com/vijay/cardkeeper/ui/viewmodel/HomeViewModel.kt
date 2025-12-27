@@ -3,9 +3,11 @@ package com.vijay.cardkeeper.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vijay.cardkeeper.data.entity.FinancialAccount
+import com.vijay.cardkeeper.data.entity.GreenCard
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.data.entity.Passport
 import com.vijay.cardkeeper.data.repository.FinancialRepository
+import com.vijay.cardkeeper.data.repository.GreenCardRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
 import com.vijay.cardkeeper.data.repository.PassportRepository
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,7 +18,8 @@ import kotlinx.coroutines.flow.stateIn
 class HomeViewModel(
         financialRepository: FinancialRepository,
         identityRepository: IdentityRepository,
-        passportRepository: PassportRepository
+        passportRepository: PassportRepository,
+        greenCardRepository: GreenCardRepository
 ) : ViewModel() {
 
         val bankAccounts: StateFlow<List<FinancialAccount>> =
@@ -58,6 +61,13 @@ class HomeViewModel(
 
         val passports: StateFlow<List<Passport>> =
                 passportRepository.allPassports.stateIn(
+                        viewModelScope,
+                        SharingStarted.WhileSubscribed(5000),
+                        emptyList()
+                )
+
+        val greenCards: StateFlow<List<GreenCard>> =
+                greenCardRepository.allGreenCards.stateIn(
                         viewModelScope,
                         SharingStarted.WhileSubscribed(5000),
                         emptyList()

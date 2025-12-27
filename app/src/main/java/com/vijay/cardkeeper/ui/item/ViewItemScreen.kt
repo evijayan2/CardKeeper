@@ -404,7 +404,6 @@ fun ViewItemScreen(
                             label = "Number",
                             value = acc.number,
                             isCopyable = true,
-                            context = context,
                             fontFamily = FontFamily.Monospace
                     )
                 }
@@ -429,7 +428,6 @@ fun ViewItemScreen(
                             label = "Linked Phone",
                             value = it,
                             isCopyable = true,
-                            context = context
                     )
                 }
 
@@ -439,7 +437,6 @@ fun ViewItemScreen(
                                 label = "Routing Number",
                                 value = it,
                                 isCopyable = true,
-                                context = context,
                                 fontFamily = FontFamily.Monospace
                         )
                     }
@@ -448,7 +445,6 @@ fun ViewItemScreen(
                                 label = "IFSC Code",
                                 value = it,
                                 isCopyable = true,
-                                context = context,
                                 fontFamily = FontFamily.Monospace
                         )
                     }
@@ -457,7 +453,6 @@ fun ViewItemScreen(
                                 label = "SWIFT Code",
                                 value = it,
                                 isCopyable = true,
-                                context = context,
                                 fontFamily = FontFamily.Monospace
                         )
                     }
@@ -466,7 +461,6 @@ fun ViewItemScreen(
                                 label = "Wire Number",
                                 value = it,
                                 isCopyable = true,
-                                context = context,
                                 fontFamily = FontFamily.Monospace
                         )
                     }
@@ -475,7 +469,6 @@ fun ViewItemScreen(
                                 label = "Branch Address",
                                 value = it,
                                 isCopyable = true,
-                                context = context
                         )
                     }
                 }
@@ -610,49 +603,6 @@ fun ViewItemScreen(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun DetailRow(
-        label: String,
-        value: String,
-        isCopyable: Boolean = false,
-        context: Context? = null,
-        fontFamily: FontFamily? = null
-) {
-    Column(
-            modifier =
-                    Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable(
-                                    enabled = isCopyable
-                            ) {
-                        if (isCopyable && context != null) {
-                            val clipboard =
-                                    context.getSystemService(Context.CLIPBOARD_SERVICE) as
-                                            ClipboardManager
-                            val clip = ClipData.newPlainText(label, value)
-                            clipboard.setPrimaryClip(clip)
-                            Toast.makeText(context, "$label copied", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-    ) {
-        Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary
-        )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                    text = value,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontFamily = fontFamily,
-                    modifier = Modifier.weight(1f)
-            )
-            if (isCopyable) {
-                Icon(Icons.Filled.ContentCopy, "Copy", modifier = Modifier.size(16.dp))
-            }
-        }
-        HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
     }
 }
 

@@ -5,6 +5,8 @@ import android.graphics.Bitmap
 data class IdentityDetails(
         val docNumber: String = "",
         val name: String = "",
+        val firstName: String = "",
+        val lastName: String = "",
         val dob: String = "",
         val expiryDate: String = "",
         val rawText: String = "",
@@ -19,5 +21,10 @@ data class IdentityDetails(
         val endorsements: String = "",
         val issueDate: String = "",
         val issuingAuthority: String = "",
-        val country: String = ""
+        val country: String = "",
+        val countryOfBirth: String = "",
+        val residentSince: String = "",
+        val category: String = "",
+        val uscisNumber: String = "",
+        val isMrzData: Boolean = false // True if data was parsed from MRZ (highest precedence)
 )

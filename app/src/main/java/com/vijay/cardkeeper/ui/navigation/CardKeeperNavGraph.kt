@@ -21,6 +21,7 @@ object CardKeeperDestinations {
     const val VIEW_ITEM_ROUTE = "view_item/{accountId}"
     const val VIEW_IDENTITY_ROUTE = "view_identity/{documentId}"
     const val VIEW_PASSPORT_ROUTE = "view_passport/{passportId}"
+    const val VIEW_GREEN_CARD_ROUTE = "view_greencard/{gcId}"
     const val VIEW_REWARDS_ROUTE = "view_rewards/{accountId}"
     const val SEARCH_ROUTE = "search"
 }
@@ -46,6 +47,9 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                     navigateToPassportView = { passportId ->
                         navController.navigate("view_passport/$passportId")
                     },
+                    navigateToGreenCardView = { gcId ->
+                        navController.navigate("view_greencard/$gcId")
+                    },
                     navigateToRewardsView = { accountId ->
                         navController.navigate("view_rewards/$accountId")
                     },
@@ -63,6 +67,7 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                                     "Finance" -> "view_item/$id"
                                     "Identity" -> "view_identity/$id"
                                     "Passport" -> "view_passport/$id"
+                                    "Green Card" -> "view_greencard/$id"
                                     "Rewards" -> "view_rewards/$id"
                                     else -> null
                                 }
@@ -132,6 +137,17 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                     passportId = passportId,
                     navigateBack = { navController.popBackStack() },
                     onEditClick = { id -> navController.navigate("add_item?category=2&itemId=$id") }
+            )
+        }
+        composable(
+                route = CardKeeperDestinations.VIEW_GREEN_CARD_ROUTE,
+                arguments = listOf(navArgument("gcId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val gcId = backStackEntry.arguments?.getInt("gcId") ?: 0
+            com.vijay.cardkeeper.ui.item.ViewGreenCardScreen(
+                    greenCardId = gcId,
+                    navigateBack = { navController.popBackStack() },
+                    onEditClick = { id -> navController.navigate("add_item?category=4&itemId=$id") }
             )
         }
         composable(

@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 class PassportRepository(private val passportDao: PassportDao) {
     val allPassports: Flow<List<Passport>> = passportDao.getAllPassports()
 
-    fun getPassport(id: Int): Flow<Passport> = passportDao.getPassport(id)
+    fun getPassport(id: Int): Flow<Passport?> = passportDao.getPassport(id)
 
     suspend fun insert(passport: Passport) {
         passportDao.insert(passport)

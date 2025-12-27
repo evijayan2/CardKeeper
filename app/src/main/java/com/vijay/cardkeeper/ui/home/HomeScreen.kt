@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.vijay.cardkeeper.R
 import com.vijay.cardkeeper.data.entity.AccountType
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.IdentityDocument
@@ -53,6 +54,7 @@ fun HomeScreen(
         navigateToItemView: (Int) -> Unit,
         navigateToIdentityView: (Int) -> Unit,
         navigateToPassportView: (Int) -> Unit = {},
+        navigateToGreenCardView: (Int) -> Unit = {},
         navigateToRewardsView: (Int) -> Unit = {},
         navigateToSearch: () -> Unit = {},
         viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
@@ -61,6 +63,7 @@ fun HomeScreen(
     val rewardsCards by viewModel.rewardsCards.collectAsState(initial = emptyList())
     val identityState by viewModel.identityDocuments.collectAsState(initial = emptyList())
     val passportState by viewModel.passports.collectAsState(initial = emptyList())
+    val greenCardState by viewModel.greenCards.collectAsState(initial = emptyList())
     var selectedTab by remember { mutableStateOf(0) }
     // Update tabs list
     val tabs = listOf("Finance", "Identity", "Passports", "Rewards")
@@ -74,15 +77,7 @@ fun HomeScreen(
                         title = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Image(
-                                        painter =
-                                                painterResource(
-                                                        id =
-                                                                com.vijay
-                                                                        .cardkeeper
-                                                                        .R
-                                                                        .mipmap
-                                                                        .ic_app_logo_1
-                                                ),
+                                        painter = painterResource(id = R.mipmap.ic_app_logo_1),
                                         contentDescription = null,
                                         modifier = Modifier.size(32.dp).padding(end = 8.dp)
                                 )
@@ -157,6 +152,19 @@ fun HomeScreen(
                                 }
                         )
                         DropdownMenuItem(
+                                text = { Text("Green Card") },
+                                onClick = {
+                                    showMenu = false
+                                    navigateToItemEntry(4, "GREEN_CARD")
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                            Icons.Filled.Face,
+                                            contentDescription = null
+                                    ) // Using Face as placeholder
+                                }
+                        )
+                        DropdownMenuItem(
                                 text = { Text("Other Identity") },
                                 onClick = {
                                     showMenu = false
@@ -192,7 +200,13 @@ fun HomeScreen(
 
             when (selectedTab) {
                 0 -> FinancialList(bankAccounts, navigateToItemView)
-                1 -> IdentityList(identityState, navigateToIdentityView)
+                1 ->
+                        IdentityList(
+                                identityState,
+                                greenCardState,
+                                navigateToIdentityView,
+                                navigateToGreenCardView
+                        )
                 2 -> PassportList(passportState, navigateToPassportView)
                 3 -> RewardsList(rewardsCards, navigateToRewardsView)
             }
@@ -505,25 +519,12 @@ fun getAccountColor(account: FinancialAccount): androidx.compose.ui.graphics.Col
 fun getCardLogoResId(network: String?): Int? {
     if (network == null) return null
     return when {
-        network.contains("Visa", ignoreCase = true) -> com.vijay.cardkeeper.R.drawable.ic_brand_visa
-        network.contains("Master", ignoreCase = true) ->
-                com.vijay.cardkeeper.R.drawable.ic_brand_mastercard
-        network.contains("Amex", ignoreCase = true) -> com.vijay.cardkeeper.R.drawable.ic_brand_amex
-        network.contains("Discover", ignoreCase = true) ->
-                com.vijay.cardkeeper.R.drawable.ic_brand_discover
-        network.contains("Capital", ignoreCase = true) ->
-                com.vijay
-                        .cardkeeper
-                        .R
-                        .drawable
-                        .ic_brand_capitolone // Handling typo in filename is risky, but user said
-        // they added it. Filename was
-        // 'ic_brand_capitolone.jpg' which might be problematic
-        // as a drawable resource name if not png? Android
-        // resources flatten extensions, so
-        // R.drawable.ic_brand_capitolone should work.
-        network.contains("Rupay", ignoreCase = true) ->
-                com.vijay.cardkeeper.R.drawable.ic_brand_rupay
+        network.contains("Visa", ignoreCase = true) -> R.drawable.ic_brand_visa
+        network.contains("Master", ignoreCase = true) -> R.drawable.ic_brand_mastercard
+        network.contains("Amex", ignoreCase = true) -> R.drawable.ic_brand_amex
+        network.contains("Discover", ignoreCase = true) -> R.drawable.ic_brand_discover
+        network.contains("Capital", ignoreCase = true) -> R.drawable.ic_brand_capitolone
+        network.contains("Rupay", ignoreCase = true) -> R.drawable.ic_brand_rupay
         else -> null
     }
 }
@@ -537,11 +538,115 @@ fun PassportList(list: List<Passport>, onItemClick: (Int) -> Unit) {
 }
 
 @Composable
-fun IdentityList(list: List<IdentityDocument>, onItemClick: (Int) -> Unit) {
+fun IdentityList(
+        identityList: List<IdentityDocument>,
+        greenCardList: List<com.vijay.cardkeeper.data.entity.GreenCard>,
+        onIdentityClick: (Int) -> Unit,
+        onGreenCardClick: (Int) -> Unit
+) {
     LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) { items(list) { doc -> IdentityItem(doc, onItemClick) } }
+    ) {
+        items(identityList) { doc -> IdentityItem(doc, onIdentityClick) }
+        items(greenCardList) { gc -> GreenCardItem(gc, onGreenCardClick) }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GreenCardItem(gc: com.vijay.cardkeeper.data.entity.GreenCard, onItemClick: (Int) -> Unit) {
+    Card(
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            onClick = { onItemClick(gc.id) }
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // Background US Flag
+            val backgroundUrl = "https://flagcdn.com/w320/us.png"
+
+            AsyncImage(
+                    model =
+                            ImageRequest.Builder(LocalContext.current)
+                                    .data(backgroundUrl)
+                                    .crossfade(true)
+                                    .build(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    alpha = 0.15f,
+                    modifier = Modifier.matchParentSize()
+            )
+
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                                text = "GREEN CARD",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                                text = "UNITED STATES OF AMERICA",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // Flag Icon
+                    AsyncImage(
+                            model =
+                                    ImageRequest.Builder(LocalContext.current)
+                                            .data("https://flagcdn.com/w160/us.png")
+                                            .crossfade(true)
+                                            .build(),
+                            contentDescription = "US Flag",
+                            modifier = Modifier.size(24.dp).clip(RoundedCornerShape(2.dp))
+                    )
+
+                    if (gc.uscisNumber.isNotEmpty()) {
+                        Text(
+                                text = gc.uscisNumber,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Details
+                Text(
+                        text = "Name: ${gc.givenName} ${gc.surname}",
+                        style = MaterialTheme.typography.bodyMedium
+                )
+                if (gc.dob.isNotEmpty()) {
+                    Text(text = "DOB: ${gc.dob}", style = MaterialTheme.typography.bodyMedium)
+                }
+                if (gc.expiryDate.isNotEmpty()) {
+                    Text(
+                            text = "Expires: ${gc.expiryDate}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Images
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    gc.frontImagePath?.let { path ->
+                        DashboardImageThumbnail(path = path, label = "Front")
+                    }
+                    gc.backImagePath?.let { path ->
+                        DashboardImageThumbnail(path = path, label = "Back")
+                    }
+                }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -554,19 +659,18 @@ fun IdentityItem(doc: IdentityDocument, onItemClick: (Int) -> Unit) {
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             // Background Full Watermark (State or Country)
-            val countryCode = doc.country.lowercase()
-            val stateCode = doc.state?.let { StateUtils.getStateCode(it) }
+            val cCode = doc.country.lowercase()
+            val sCode = doc.state?.let { StateUtils.getStateCode(it) }
 
             val backgroundUrl =
                     when {
                         doc.type == com.vijay.cardkeeper.data.entity.DocumentType.DRIVER_LICENSE &&
-                                stateCode != null ->
-                                "https://flagcdn.com/w320/us-${stateCode.lowercase()}.png"
-                        countryCode == "usa" || countryCode == "us" ->
-                                "https://flagcdn.com/w320/us.png"
-                        countryCode == "ind" || countryCode == "in" || countryCode == "india" ->
+                                sCode != null ->
+                                "https://flagcdn.com/w320/us-${sCode.lowercase()}.png"
+                        cCode == "usa" || cCode == "us" -> "https://flagcdn.com/w320/us.png"
+                        cCode == "ind" || cCode == "in" || cCode == "india" ->
                                 "https://flagcdn.com/w320/in.png"
-                        countryCode.length == 2 -> "https://flagcdn.com/w320/$countryCode.png"
+                        cCode.length == 2 -> "https://flagcdn.com/w320/$cCode.png"
                         else -> null
                     }
 
@@ -608,14 +712,14 @@ fun IdentityItem(doc: IdentityDocument, onItemClick: (Int) -> Unit) {
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         // Country Flag
-                        val countryCode = doc.country.lowercase()
+                        val cCodeFlag = doc.country.lowercase()
                         val flagUrl =
-                                when (countryCode) {
+                                when (cCodeFlag) {
                                     "usa", "us" -> "https://flagcdn.com/w160/us.png"
                                     "ind", "in", "india" -> "https://flagcdn.com/w160/in.png"
                                     else ->
-                                            if (countryCode.length == 2)
-                                                    "https://flagcdn.com/w160/$countryCode.png"
+                                            if (cCodeFlag.length == 2)
+                                                    "https://flagcdn.com/w160/$cCodeFlag.png"
                                             else null
                                 }
 
@@ -633,10 +737,10 @@ fun IdentityItem(doc: IdentityDocument, onItemClick: (Int) -> Unit) {
 
                         // State Flag (as emblem placeholder)
                         if (!doc.state.isNullOrEmpty()) {
-                            val stateCode = StateUtils.getStateCode(doc.state)
-                            if (stateCode != null) {
+                            val sCodeFlag = StateUtils.getStateCode(doc.state)
+                            if (sCodeFlag != null) {
                                 val stateFlagUrl =
-                                        "https://flagcdn.com/w160/us-${stateCode.lowercase()}.png"
+                                        "https://flagcdn.com/w160/us-${sCodeFlag.lowercase()}.png"
                                 AsyncImage(
                                         model =
                                                 ImageRequest.Builder(LocalContext.current)

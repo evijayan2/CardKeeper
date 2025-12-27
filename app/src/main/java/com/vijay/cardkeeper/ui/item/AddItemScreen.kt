@@ -34,14 +34,17 @@ import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.data.entity.Passport
 import com.vijay.cardkeeper.scanning.ChequeScanner
 import com.vijay.cardkeeper.scanning.DriverLicenseScanner
+import com.vijay.cardkeeper.scanning.GreenCardScanner
 import com.vijay.cardkeeper.scanning.IdentityScanner
 import com.vijay.cardkeeper.scanning.PassportScanner
 import com.vijay.cardkeeper.scanning.PaymentCardScanner
 import com.vijay.cardkeeper.scanning.RewardsScanner
 import com.vijay.cardkeeper.ui.item.forms.FinancialForm
+import com.vijay.cardkeeper.ui.item.forms.GreenCardForm
 import com.vijay.cardkeeper.ui.item.forms.IdentityForm
 import com.vijay.cardkeeper.ui.item.forms.PassportForm
 import com.vijay.cardkeeper.ui.item.forms.rememberFinancialFormState
+import com.vijay.cardkeeper.ui.item.forms.rememberGreenCardFormState
 import com.vijay.cardkeeper.ui.item.forms.rememberIdentityFormState
 import com.vijay.cardkeeper.ui.item.forms.rememberPassportFormState
 import com.vijay.cardkeeper.ui.scanner.BarcodeScannerScreen
@@ -69,6 +72,7 @@ fun AddItemScreen(
                                 0 -> "financial"
                                 1 -> "identity"
                                 2 -> "passport"
+                                4 -> "greencard"
                                 else -> "financial"
                         }
         // Load existing item if editing
@@ -77,7 +81,8 @@ fun AddItemScreen(
         // Category / Tabs
         // If we are editing, we lock the category to the item type.
         // If adding new, we start at 0 (Financial) but user can switch.
-        // Index mapping: 0 -> Financial, 1 -> Identity, 2 -> Passport, 3 -> Rewards
+        // Index mapping: 0 -> Financial, 1 -> Identity, 2 -> Passport, 3 -> Rewards, 4 -> Green
+        // Card
         var selectedCategory by remember { mutableIntStateOf(initialCategory) }
 
         // Sync selectedCategory with loaded item
@@ -91,6 +96,8 @@ fun AddItemScreen(
                                 selectedCategory = 3
                         else selectedCategory = 0
                 } else if (currentItem is Passport) selectedCategory = 2
+                else if (currentItem is com.vijay.cardkeeper.data.entity.GreenCard)
+                        selectedCategory = 4
         }
 
         // Parse initialType from documentType string for financial accounts
@@ -111,6 +118,7 @@ fun AddItemScreen(
                         when (documentType?.uppercase()) {
                                 "DRIVER_LICENSE" -> DocumentType.DRIVER_LICENSE
                                 // "PASSPORT" -> DocumentType.PASSPORT // Passport is now separate
+                                "GREEN_CARD" -> DocumentType.GREEN_CARD
                                 else -> null
                         }
                 }
@@ -121,6 +129,8 @@ fun AddItemScreen(
         val identityState =
                 rememberIdentityFormState(item as? IdentityDocument, initialDocumentType)
         val passportState = rememberPassportFormState(item as? Passport)
+        val greenCardState =
+                rememberGreenCardFormState(item as? com.vijay.cardkeeper.data.entity.GreenCard)
 
         // Scanners
         val paymentScanner = remember { PaymentCardScanner() }
@@ -129,6 +139,7 @@ fun AddItemScreen(
         val driverLicenseScanner = remember { DriverLicenseScanner() }
         val chequeScanner = remember { ChequeScanner() }
         val passportScanner = remember { PassportScanner() }
+        val greenCardScanner = remember { GreenCardScanner() }
 
         // Constants for Camera Logic
         var scanningBack by remember { mutableStateOf(false) }
@@ -171,571 +182,583 @@ fun AddItemScreen(
                                                         )
 
                                                 scope.launch {
-                                                        if (selectedCategory == 0 ||
-                                                                        selectedCategory == 3
-                                                        ) {
-                                                                // Financial (0) or Rewards (3)
-                                                                // If category is 3, force type to
-                                                                // REWARDS_CARD for logic if needed,
-                                                                // though state.type should be set
-                                                                // by UI selection or default.
-
-                                                                if (scanningBack) {
-                                                                        financialState.backBitmap =
-                                                                                bitmap
-                                                                        financialState.backPath =
-                                                                                savedPath
-                                                                        // Back Scan Logic
-                                                                        if (financialState.type ==
-                                                                                        AccountType
-                                                                                                .REWARDS_CARD ||
-                                                                                        selectedCategory ==
-                                                                                                3
-                                                                        ) {
-                                                                                val res =
-                                                                                        rewardsScanner
-                                                                                                .scan(
-                                                                                                        bitmap
-                                                                                                )
-                                                                                res.barcode?.let {
-                                                                                        financialState
-                                                                                                .barcode =
-                                                                                                it
-                                                                                }
-                                                                                res.barcodeFormat
-                                                                                        ?.let {
-                                                                                                financialState
-                                                                                                        .barcodeFormat =
-                                                                                                        it
-                                                                                        }
-                                                                                res.shopName?.let {
-                                                                                        financialState
-                                                                                                .institution =
-                                                                                                it
-                                                                                }
-                                                                        } else {
-                                                                                // Payment Card Back
-                                                                                // logic
-                                                                                val details =
-                                                                                        paymentScanner
-                                                                                                .scan(
-                                                                                                        bitmap
-                                                                                                )
-                                                                                // Only update if
-                                                                                // empty
+                                                        when (selectedCategory) {
+                                                                0, 3 -> {
+                                                                        // Financial (0) or Rewards
+                                                                        // (3)
+                                                                        if (scanningBack) {
+                                                                                financialState
+                                                                                        .backBitmap =
+                                                                                        bitmap
+                                                                                financialState
+                                                                                        .backPath =
+                                                                                        savedPath
                                                                                 if (financialState
-                                                                                                .number
-                                                                                                .isEmpty() &&
-                                                                                                details.number
-                                                                                                        .isNotEmpty()
-                                                                                )
-                                                                                        financialState
-                                                                                                .number =
-                                                                                                details.number
-                                                                                if (financialState
-                                                                                                .expiry
-                                                                                                .isEmpty() &&
-                                                                                                details.expiryDate
-                                                                                                        .isNotEmpty()
-                                                                                )
-                                                                                        financialState
-                                                                                                .expiry =
-                                                                                                details.expiryDate
-                                                                                // CVV is rarely
-                                                                                // extracted by
-                                                                                // MLKit
-                                                                                // text but possible
-                                                                        }
-                                                                } else {
-                                                                        financialState.frontBitmap =
-                                                                                bitmap
-                                                                        financialState.frontPath =
-                                                                                savedPath
-                                                                        // Front Scan Logic
-                                                                        if (financialState.type ==
-                                                                                        AccountType
-                                                                                                .REWARDS_CARD
-                                                                        ) {
-                                                                                val res =
-                                                                                        rewardsScanner
-                                                                                                .scan(
-                                                                                                        bitmap
-                                                                                                )
-                                                                                res.barcode?.let {
-                                                                                        financialState
-                                                                                                .barcode =
-                                                                                                it
-                                                                                }
-                                                                                res.barcodeFormat
-                                                                                        ?.let {
-                                                                                                financialState
-                                                                                                        .barcodeFormat =
-                                                                                                        it
-                                                                                        }
-                                                                                res.shopName?.let {
-                                                                                        financialState
-                                                                                                .institution =
-                                                                                                it
-                                                                                }
-                                                                                // Logo logic?
-                                                                                // (Simplified:
-                                                                                // prefer
-                                                                                // front scan for
-                                                                                // logo if not
-                                                                                // explicitly
-                                                                                // picked)
-                                                                                if (financialState
-                                                                                                .logoPath ==
-                                                                                                null
+                                                                                                .type ==
+                                                                                                AccountType
+                                                                                                        .REWARDS_CARD ||
+                                                                                                selectedCategory ==
+                                                                                                        3
                                                                                 ) {
-                                                                                        financialState
-                                                                                                .logoPath =
-                                                                                                savedPath
-                                                                                        financialState
-                                                                                                .logoBitmap =
-                                                                                                bitmap
-                                                                                }
-                                                                        } else if (financialState
-                                                                                        .type ==
-                                                                                        AccountType
-                                                                                                .BANK_ACCOUNT
-                                                                        ) {
-                                                                                // Bank Account -
-                                                                                // Cheque Scan
-                                                                                val chequeDetails =
-                                                                                        chequeScanner
-                                                                                                .scan(
-                                                                                                        bitmap
-                                                                                                )
-
-                                                                                // Update fields
-                                                                                // from scan only if
-                                                                                // they were found
-                                                                                if (chequeDetails
-                                                                                                .accountNumber
-                                                                                                .isNotEmpty()
-                                                                                )
-                                                                                        financialState
-                                                                                                .number =
-                                                                                                chequeDetails
-                                                                                                        .accountNumber
-                                                                                if (chequeDetails
-                                                                                                .routingNumber
-                                                                                                .isNotEmpty()
-                                                                                )
-                                                                                        financialState
-                                                                                                .routing =
-                                                                                                chequeDetails
-                                                                                                        .routingNumber
-                                                                                if (chequeDetails
-                                                                                                .bankName
-                                                                                                .isNotEmpty()
-                                                                                )
-                                                                                        financialState
-                                                                                                .institution =
-                                                                                                chequeDetails
-                                                                                                        .bankName
-                                                                                if (chequeDetails
-                                                                                                .ifscCode
-                                                                                                .isNotEmpty()
-                                                                                )
-                                                                                        financialState
-                                                                                                .ifsc =
-                                                                                                chequeDetails
-                                                                                                        .ifscCode
-                                                                                if (chequeDetails
-                                                                                                .holderName
-                                                                                                .isNotEmpty()
-                                                                                )
-                                                                                        financialState
-                                                                                                .holder =
-                                                                                                chequeDetails
-                                                                                                        .holderName
-                                                                                if (chequeDetails
-                                                                                                .holderAddress
-                                                                                                .isNotEmpty()
-                                                                                )
-                                                                                        financialState
-                                                                                                .holderAddress =
-                                                                                                chequeDetails
-                                                                                                        .holderAddress
-
-                                                                                // Show toast with
-                                                                                // extraction
-                                                                                // summary from
-                                                                                // scanner for user
-                                                                                // verification
-                                                                                android.widget.Toast
-                                                                                        .makeText(
-                                                                                                context,
-                                                                                                chequeDetails
-                                                                                                        .extractionSummary,
-                                                                                                android.widget
-                                                                                                        .Toast
-                                                                                                        .LENGTH_LONG
-                                                                                        )
-                                                                                        .show()
-                                                                        } else {
-                                                                                val details =
-                                                                                        paymentScanner
-                                                                                                .scan(
-                                                                                                        bitmap
-                                                                                                )
-                                                                                if (financialState
-                                                                                                .number
-                                                                                                .isEmpty()
-                                                                                )
-                                                                                        financialState
-                                                                                                .number =
-                                                                                                details.number
-                                                                                if (financialState
-                                                                                                .expiry
-                                                                                                .isEmpty()
-                                                                                )
-                                                                                        financialState
-                                                                                                .expiry =
-                                                                                                details.expiryDate
-                                                                                if (financialState
-                                                                                                .holder
-                                                                                                .isEmpty()
-                                                                                )
-                                                                                        financialState
-                                                                                                .holder =
-                                                                                                details.ownerName
-                                                                                if (financialState
-                                                                                                .institution
-                                                                                                .isEmpty()
-                                                                                )
-                                                                                        financialState
-                                                                                                .institution =
-                                                                                                details.bankName
-                                                                                // Map Scheme to
-                                                                                // Network
-                                                                                if (financialState
-                                                                                                .network
-                                                                                                .isEmpty() &&
-                                                                                                details.scheme
-                                                                                                        .isNotEmpty() &&
-                                                                                                details.scheme !=
-                                                                                                        "Unknown"
-                                                                                ) {
-                                                                                        financialState
-                                                                                                .network =
-                                                                                                details.scheme
-                                                                                }
-                                                                                if (details.cardType ==
-                                                                                                "Debit"
-                                                                                ) {
-                                                                                        // logic to
-                                                                                        // switch
-                                                                                        // type?
-                                                                                        // User
-                                                                                        // picks
-                                                                                        // type
-                                                                                        // first
-                                                                                        // usually.
+                                                                                        val res =
+                                                                                                rewardsScanner
+                                                                                                        .scan(
+                                                                                                                bitmap
+                                                                                                        )
+                                                                                        res.barcode
+                                                                                                ?.let {
+                                                                                                        financialState
+                                                                                                                .barcode =
+                                                                                                                it
+                                                                                                }
+                                                                                        res.barcodeFormat
+                                                                                                ?.let {
+                                                                                                        financialState
+                                                                                                                .barcodeFormat =
+                                                                                                                it
+                                                                                                }
+                                                                                        res.shopName
+                                                                                                ?.let {
+                                                                                                        financialState
+                                                                                                                .institution =
+                                                                                                                it
+                                                                                                }
+                                                                                } else {
+                                                                                        val details =
+                                                                                                paymentScanner
+                                                                                                        .scan(
+                                                                                                                bitmap
+                                                                                                        )
                                                                                         if (financialState
-                                                                                                        .type ==
-                                                                                                        AccountType
-                                                                                                                .CREDIT_CARD
+                                                                                                        .number
+                                                                                                        .isEmpty() &&
+                                                                                                        details.number
+                                                                                                                .isNotEmpty()
                                                                                         )
                                                                                                 financialState
-                                                                                                        .type =
-                                                                                                        AccountType
-                                                                                                                .DEBIT_CARD
+                                                                                                        .number =
+                                                                                                        details.number
+                                                                                        if (financialState
+                                                                                                        .expiry
+                                                                                                        .isEmpty() &&
+                                                                                                        details.expiryDate
+                                                                                                                .isNotEmpty()
+                                                                                        )
+                                                                                                financialState
+                                                                                                        .expiry =
+                                                                                                        details.expiryDate
                                                                                 }
-                                                                        }
-                                                                }
-                                                        } else if (selectedCategory == 2) {
-                                                                // Passport
-                                                                if (scanningBack) {
-                                                                        passportState.backBitmap =
-                                                                                bitmap
-                                                                        passportState.backPath =
-                                                                                savedPath
-                                                                        val details =
-                                                                                passportScanner
-                                                                                        .scanBack(
-                                                                                                bitmap
-                                                                                        )
-                                                                        // Update back-side fields
-                                                                        if (details.fatherName
-                                                                                        ?.isNotEmpty() ==
-                                                                                        true
-                                                                        )
-                                                                                passportState
-                                                                                        .fatherName =
-                                                                                        details.fatherName
-                                                                        if (details.motherName
-                                                                                        ?.isNotEmpty() ==
-                                                                                        true
-                                                                        )
-                                                                                passportState
-                                                                                        .motherName =
-                                                                                        details.motherName
-                                                                        if (details.spouseName
-                                                                                        ?.isNotEmpty() ==
-                                                                                        true
-                                                                        )
-                                                                                passportState
-                                                                                        .spouseName =
-                                                                                        details.spouseName
-                                                                        if (details.address
-                                                                                        ?.isNotEmpty() ==
-                                                                                        true
-                                                                        )
-                                                                                passportState
-                                                                                        .address =
-                                                                                        details.address
-                                                                        if (details.fileNumber
-                                                                                        ?.isNotEmpty() ==
-                                                                                        true
-                                                                        )
-                                                                                passportState
-                                                                                        .fileNumber =
-                                                                                        details.fileNumber
-                                                                } else {
-                                                                        passportState.frontBitmap =
-                                                                                bitmap
-                                                                        passportState.frontPath =
-                                                                                savedPath
-                                                                        val details =
-                                                                                passportScanner
-                                                                                        .scanFront(
-                                                                                                bitmap
-                                                                                        )
-                                                                        // Update front-side fields
-                                                                        // (MRZ)
-
-                                                                        // Helper to safely set
-                                                                        // string fields
-                                                                        fun setIfNotNull(
-                                                                                value: String?,
-                                                                                setter:
-                                                                                        (
-                                                                                                String) -> Unit
-                                                                        ) {
-                                                                                if (!value.isNullOrEmpty()
+                                                                        } else {
+                                                                                financialState
+                                                                                        .frontBitmap =
+                                                                                        bitmap
+                                                                                financialState
+                                                                                        .frontPath =
+                                                                                        savedPath
+                                                                                if (financialState
+                                                                                                .type ==
+                                                                                                AccountType
+                                                                                                        .REWARDS_CARD
                                                                                 ) {
-                                                                                        setter(
-                                                                                                value
+                                                                                        val res =
+                                                                                                rewardsScanner
+                                                                                                        .scan(
+                                                                                                                bitmap
+                                                                                                        )
+                                                                                        res.barcode
+                                                                                                ?.let {
+                                                                                                        financialState
+                                                                                                                .barcode =
+                                                                                                                it
+                                                                                                }
+                                                                                        res.barcodeFormat
+                                                                                                ?.let {
+                                                                                                        financialState
+                                                                                                                .barcodeFormat =
+                                                                                                                it
+                                                                                                }
+                                                                                        res.shopName
+                                                                                                ?.let {
+                                                                                                        financialState
+                                                                                                                .institution =
+                                                                                                                it
+                                                                                                }
+                                                                                        if (financialState
+                                                                                                        .logoPath ==
+                                                                                                        null
+                                                                                        ) {
+                                                                                                financialState
+                                                                                                        .logoPath =
+                                                                                                        savedPath
+                                                                                                financialState
+                                                                                                        .logoBitmap =
+                                                                                                        bitmap
+                                                                                        }
+                                                                                } else if (financialState
+                                                                                                .type ==
+                                                                                                AccountType
+                                                                                                        .BANK_ACCOUNT
+                                                                                ) {
+                                                                                        val chequeDetails =
+                                                                                                chequeScanner
+                                                                                                        .scan(
+                                                                                                                bitmap
+                                                                                                        )
+                                                                                        if (chequeDetails
+                                                                                                        .accountNumber
+                                                                                                        .isNotEmpty()
                                                                                         )
+                                                                                                financialState
+                                                                                                        .number =
+                                                                                                        chequeDetails
+                                                                                                                .accountNumber
+                                                                                        if (chequeDetails
+                                                                                                        .routingNumber
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                financialState
+                                                                                                        .routing =
+                                                                                                        chequeDetails
+                                                                                                                .routingNumber
+                                                                                        if (chequeDetails
+                                                                                                        .bankName
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                financialState
+                                                                                                        .institution =
+                                                                                                        chequeDetails
+                                                                                                                .bankName
+                                                                                        if (chequeDetails
+                                                                                                        .ifscCode
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                financialState
+                                                                                                        .ifsc =
+                                                                                                        chequeDetails
+                                                                                                                .ifscCode
+                                                                                        if (chequeDetails
+                                                                                                        .holderName
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                financialState
+                                                                                                        .holder =
+                                                                                                        chequeDetails
+                                                                                                                .holderName
+                                                                                        if (chequeDetails
+                                                                                                        .holderAddress
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                financialState
+                                                                                                        .holderAddress =
+                                                                                                        chequeDetails
+                                                                                                                .holderAddress
+                                                                                        Toast.makeText(
+                                                                                                        context,
+                                                                                                        chequeDetails
+                                                                                                                .extractionSummary,
+                                                                                                        Toast.LENGTH_LONG
+                                                                                                )
+                                                                                                .show()
+                                                                                } else {
+                                                                                        val details =
+                                                                                                paymentScanner
+                                                                                                        .scan(
+                                                                                                                bitmap
+                                                                                                        )
+                                                                                        if (financialState
+                                                                                                        .number
+                                                                                                        .isEmpty()
+                                                                                        )
+                                                                                                financialState
+                                                                                                        .number =
+                                                                                                        details.number
+                                                                                        if (financialState
+                                                                                                        .expiry
+                                                                                                        .isEmpty()
+                                                                                        )
+                                                                                                financialState
+                                                                                                        .expiry =
+                                                                                                        details.expiryDate
+                                                                                        if (financialState
+                                                                                                        .holder
+                                                                                                        .isEmpty()
+                                                                                        )
+                                                                                                financialState
+                                                                                                        .holder =
+                                                                                                        details.ownerName
+                                                                                        if (financialState
+                                                                                                        .institution
+                                                                                                        .isEmpty()
+                                                                                        )
+                                                                                                financialState
+                                                                                                        .institution =
+                                                                                                        details.bankName
+                                                                                        if (financialState
+                                                                                                        .network
+                                                                                                        .isEmpty() &&
+                                                                                                        details.scheme
+                                                                                                                .isNotEmpty() &&
+                                                                                                        details.scheme !=
+                                                                                                                "Unknown"
+                                                                                        ) {
+                                                                                                financialState
+                                                                                                        .network =
+                                                                                                        details.scheme
+                                                                                        }
+                                                                                        if (details.cardType ==
+                                                                                                        "Debit"
+                                                                                        ) {
+                                                                                                if (financialState
+                                                                                                                .type ==
+                                                                                                                AccountType
+                                                                                                                        .CREDIT_CARD
+                                                                                                )
+                                                                                                        financialState
+                                                                                                                .type =
+                                                                                                                AccountType
+                                                                                                                        .DEBIT_CARD
+                                                                                        }
                                                                                 }
                                                                         }
-
-                                                                        setIfNotNull(
-                                                                                details.passportNumber
-                                                                        ) {
-                                                                                passportState
-                                                                                        .passportNumber =
-                                                                                        it
-                                                                        }
-                                                                        setIfNotNull(
-                                                                                details.countryCode
-                                                                        ) {
-                                                                                passportState
-                                                                                        .countryCode =
-                                                                                        it
-                                                                        }
-                                                                        setIfNotNull(
-                                                                                details.surname
-                                                                        ) {
-                                                                                passportState
-                                                                                        .surname =
-                                                                                        it
-                                                                        }
-                                                                        setIfNotNull(
-                                                                                details.givenNames
-                                                                        ) {
-                                                                                passportState
-                                                                                        .givenNames =
-                                                                                        it
-                                                                        }
-                                                                        setIfNotNull(
-                                                                                details.nationality
-                                                                        ) {
-                                                                                passportState
-                                                                                        .nationality =
-                                                                                        it
-                                                                        }
-                                                                        setIfNotNull(details.dob) {
-                                                                                passportState.dob =
-                                                                                        it
-                                                                        }
-                                                                        setIfNotNull(details.sex) {
-                                                                                passportState.sex =
-                                                                                        it
-                                                                        }
-                                                                        setIfNotNull(
-                                                                                details.dateOfExpiry
-                                                                        ) {
-                                                                                passportState
-                                                                                        .dateOfExpiry =
-                                                                                        it
-                                                                        }
-                                                                        setIfNotNull(
-                                                                                details.dateOfIssue
-                                                                        ) {
-                                                                                passportState
-                                                                                        .dateOfIssue =
-                                                                                        it
-                                                                        }
-                                                                        setIfNotNull(
-                                                                                details.placeOfBirth
-                                                                        ) {
-                                                                                passportState
-                                                                                        .placeOfBirth =
-                                                                                        it
-                                                                        }
-                                                                        setIfNotNull(
-                                                                                details.placeOfIssue
-                                                                        ) {
-                                                                                passportState
-                                                                                        .placeOfIssue =
-                                                                                        it
-                                                                        }
-                                                                        setIfNotNull(
-                                                                                details.authority
-                                                                        ) {
-                                                                                passportState
-                                                                                        .authority =
-                                                                                        it
-                                                                        }
                                                                 }
-                                                        } else {
-                                                                // Identity
-                                                                if (scanningBack) {
-                                                                        identityState.backBitmap =
-                                                                                bitmap
-                                                                        identityState.backPath =
-                                                                                savedPath
-
-                                                                        // Use barcode scanner for
-                                                                        // Driver License back
-                                                                        // (PDF417)
-                                                                        // Barcode data is MORE
-                                                                        // ACCURATE than OCR, so we
-                                                                        // overwrite fields
-                                                                        if (identityState.type ==
-                                                                                        DocumentType
-                                                                                                .DRIVER_LICENSE
-                                                                        ) {
+                                                                2 -> {
+                                                                        // Passport
+                                                                        if (scanningBack) {
+                                                                                passportState
+                                                                                        .backBitmap =
+                                                                                        bitmap
+                                                                                passportState
+                                                                                        .backPath =
+                                                                                        savedPath
                                                                                 val details =
-                                                                                        driverLicenseScanner
-                                                                                                .scan(
+                                                                                        passportScanner
+                                                                                                .scanBack(
                                                                                                         bitmap
                                                                                                 )
-
-                                                                                // Always use
-                                                                                // barcode data if
-                                                                                // available (more
-                                                                                // reliable than
-                                                                                // OCR)
-                                                                                if (details.docNumber
-                                                                                                .isNotEmpty()
+                                                                                if (details.fatherName
+                                                                                                ?.isNotEmpty() ==
+                                                                                                true
                                                                                 )
-                                                                                        identityState
-                                                                                                .number =
-                                                                                                details.docNumber
-                                                                                if (details.name
-                                                                                                .isNotEmpty()
-                                                                                ) {
-                                                                                        identityState
-                                                                                                .firstName =
-                                                                                                details.name
-                                                                                                        .substringBefore(
-                                                                                                                " "
-                                                                                                        )
-                                                                                        identityState
-                                                                                                .lastName =
-                                                                                                details.name
-                                                                                                        .substringAfterLast(
-                                                                                                                " ",
-                                                                                                                ""
-                                                                                                        )
-                                                                                }
-                                                                                if (details.dob
-                                                                                                .isNotEmpty()
+                                                                                        passportState
+                                                                                                .fatherName =
+                                                                                                details.fatherName
+                                                                                if (details.motherName
+                                                                                                ?.isNotEmpty() ==
+                                                                                                true
                                                                                 )
-                                                                                        identityState
-                                                                                                .dob =
-                                                                                                details.dob
-                                                                                if (details.expiryDate
-                                                                                                .isNotEmpty()
+                                                                                        passportState
+                                                                                                .motherName =
+                                                                                                details.motherName
+                                                                                if (details.spouseName
+                                                                                                ?.isNotEmpty() ==
+                                                                                                true
                                                                                 )
-                                                                                        identityState
-                                                                                                .expiry =
-                                                                                                details.expiryDate
+                                                                                        passportState
+                                                                                                .spouseName =
+                                                                                                details.spouseName
                                                                                 if (details.address
-                                                                                                .isNotEmpty()
+                                                                                                ?.isNotEmpty() ==
+                                                                                                true
                                                                                 )
-                                                                                        identityState
+                                                                                        passportState
                                                                                                 .address =
                                                                                                 details.address
-                                                                                if (details.sex
-                                                                                                .isNotEmpty()
+                                                                                if (details.fileNumber
+                                                                                                ?.isNotEmpty() ==
+                                                                                                true
                                                                                 )
-                                                                                        identityState
-                                                                                                .sex =
-                                                                                                details.sex
-                                                                                if (details.eyeColor
-                                                                                                .isNotEmpty()
-                                                                                )
-                                                                                        identityState
-                                                                                                .eyeColor =
-                                                                                                details.eyeColor
-                                                                                if (details.height
-                                                                                                .isNotEmpty()
-                                                                                )
-                                                                                        identityState
-                                                                                                .height =
-                                                                                                details.height
-                                                                                if (details.licenseClass
-                                                                                                .isNotEmpty()
-                                                                                )
-                                                                                        identityState
-                                                                                                .licenseClass =
-                                                                                                details.licenseClass
-                                                                                if (details.restrictions
-                                                                                                .isNotEmpty()
-                                                                                )
-                                                                                        identityState
-                                                                                                .restrictions =
-                                                                                                details.restrictions
-                                                                                if (details.endorsements
-                                                                                                .isNotEmpty()
-                                                                                )
-                                                                                        identityState
-                                                                                                .endorsements =
-                                                                                                details.endorsements
-                                                                                if (details.state
-                                                                                                .isNotEmpty()
-                                                                                )
-                                                                                        identityState
-                                                                                                .region =
-                                                                                                details.state
-                                                                                if (details.issuingAuthority
-                                                                                                .isNotEmpty()
-                                                                                )
-                                                                                        identityState
-                                                                                                .issuingAuthority =
-                                                                                                details.issuingAuthority
-                                                                                if (details.country
-                                                                                                .isNotEmpty()
-                                                                                )
-                                                                                        identityState
-                                                                                                .country =
-                                                                                                details.country
+                                                                                        passportState
+                                                                                                .fileNumber =
+                                                                                                details.fileNumber
                                                                         } else {
-                                                                                // Use text
-                                                                                // recognition for
-                                                                                // Passport back
+                                                                                passportState
+                                                                                        .frontBitmap =
+                                                                                        bitmap
+                                                                                passportState
+                                                                                        .frontPath =
+                                                                                        savedPath
+                                                                                val details =
+                                                                                        passportScanner
+                                                                                                .scanFront(
+                                                                                                        bitmap
+                                                                                                )
+                                                                                fun setIfNotNull(
+                                                                                        value:
+                                                                                                String?,
+                                                                                        setter:
+                                                                                                (
+                                                                                                        String) -> Unit
+                                                                                ) {
+                                                                                        if (!value.isNullOrEmpty()
+                                                                                        ) {
+                                                                                                setter(
+                                                                                                        value
+                                                                                                )
+                                                                                        }
+                                                                                }
+                                                                                setIfNotNull(
+                                                                                        details.passportNumber
+                                                                                ) {
+                                                                                        passportState
+                                                                                                .passportNumber =
+                                                                                                it
+                                                                                }
+                                                                                setIfNotNull(
+                                                                                        details.countryCode
+                                                                                ) {
+                                                                                        passportState
+                                                                                                .countryCode =
+                                                                                                it
+                                                                                }
+                                                                                setIfNotNull(
+                                                                                        details.surname
+                                                                                ) {
+                                                                                        passportState
+                                                                                                .surname =
+                                                                                                it
+                                                                                }
+                                                                                setIfNotNull(
+                                                                                        details.givenNames
+                                                                                ) {
+                                                                                        passportState
+                                                                                                .givenNames =
+                                                                                                it
+                                                                                }
+                                                                                setIfNotNull(
+                                                                                        details.nationality
+                                                                                ) {
+                                                                                        passportState
+                                                                                                .nationality =
+                                                                                                it
+                                                                                }
+                                                                                setIfNotNull(
+                                                                                        details.dob
+                                                                                ) {
+                                                                                        passportState
+                                                                                                .dob =
+                                                                                                it
+                                                                                }
+                                                                                setIfNotNull(
+                                                                                        details.sex
+                                                                                ) {
+                                                                                        passportState
+                                                                                                .sex =
+                                                                                                it
+                                                                                }
+                                                                                setIfNotNull(
+                                                                                        details.dateOfExpiry
+                                                                                ) {
+                                                                                        passportState
+                                                                                                .dateOfExpiry =
+                                                                                                it
+                                                                                }
+                                                                                setIfNotNull(
+                                                                                        details.dateOfIssue
+                                                                                ) {
+                                                                                        passportState
+                                                                                                .dateOfIssue =
+                                                                                                it
+                                                                                }
+                                                                                setIfNotNull(
+                                                                                        details.placeOfBirth
+                                                                                ) {
+                                                                                        passportState
+                                                                                                .placeOfBirth =
+                                                                                                it
+                                                                                }
+                                                                                setIfNotNull(
+                                                                                        details.placeOfIssue
+                                                                                ) {
+                                                                                        passportState
+                                                                                                .placeOfIssue =
+                                                                                                it
+                                                                                }
+                                                                                setIfNotNull(
+                                                                                        details.authority
+                                                                                ) {
+                                                                                        passportState
+                                                                                                .authority =
+                                                                                                it
+                                                                                }
+                                                                        }
+                                                                }
+                                                                1 -> {
+                                                                        // Identity
+                                                                        if (scanningBack) {
+                                                                                identityState
+                                                                                        .backBitmap =
+                                                                                        bitmap
+                                                                                identityState
+                                                                                        .backPath =
+                                                                                        savedPath
+                                                                                if (identityState
+                                                                                                .type ==
+                                                                                                DocumentType
+                                                                                                        .DRIVER_LICENSE
+                                                                                ) {
+                                                                                        val details =
+                                                                                                driverLicenseScanner
+                                                                                                        .scan(
+                                                                                                                bitmap
+                                                                                                        )
+                                                                                        if (details.docNumber
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .number =
+                                                                                                        details.docNumber
+                                                                                        if (details.name
+                                                                                                        .isNotEmpty()
+                                                                                        ) {
+                                                                                                identityState
+                                                                                                        .firstName =
+                                                                                                        details.name
+                                                                                                                .substringBefore(
+                                                                                                                        " "
+                                                                                                                )
+                                                                                                identityState
+                                                                                                        .lastName =
+                                                                                                        details.name
+                                                                                                                .substringAfterLast(
+                                                                                                                        " ",
+                                                                                                                        ""
+                                                                                                                )
+                                                                                        }
+                                                                                        if (details.dob
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .dob =
+                                                                                                        details.dob
+                                                                                        if (details.expiryDate
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .expiry =
+                                                                                                        details.expiryDate
+                                                                                        if (details.address
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .address =
+                                                                                                        details.address
+                                                                                        if (details.sex
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .sex =
+                                                                                                        details.sex
+                                                                                        if (details.eyeColor
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .eyeColor =
+                                                                                                        details.eyeColor
+                                                                                        if (details.height
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .height =
+                                                                                                        details.height
+                                                                                        if (details.licenseClass
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .licenseClass =
+                                                                                                        details.licenseClass
+                                                                                        if (details.restrictions
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .restrictions =
+                                                                                                        details.restrictions
+                                                                                        if (details.endorsements
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .endorsements =
+                                                                                                        details.endorsements
+                                                                                        if (details.state
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .region =
+                                                                                                        details.state
+                                                                                        if (details.issuingAuthority
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .issuingAuthority =
+                                                                                                        details.issuingAuthority
+                                                                                        if (details.country
+                                                                                                        .isNotEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .country =
+                                                                                                        details.country
+                                                                                } else {
+                                                                                        val details =
+                                                                                                identityScanner
+                                                                                                        .scan(
+                                                                                                                bitmap,
+                                                                                                                scanningBack
+                                                                                                        )
+                                                                                        if (identityState
+                                                                                                        .dob
+                                                                                                        .isEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .dob =
+                                                                                                        details.dob
+                                                                                        if (identityState
+                                                                                                        .sex
+                                                                                                        .isEmpty()
+                                                                                        )
+                                                                                                identityState
+                                                                                                        .sex =
+                                                                                                        details.sex
+                                                                                }
+                                                                        } else {
+                                                                                identityState
+                                                                                        .frontBitmap =
+                                                                                        bitmap
+                                                                                identityState
+                                                                                        .frontPath =
+                                                                                        savedPath
                                                                                 val details =
                                                                                         identityScanner
                                                                                                 .scan(
                                                                                                         bitmap,
                                                                                                         scanningBack
                                                                                                 )
+                                                                                if (identityState
+                                                                                                .number
+                                                                                                .isEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .number =
+                                                                                                details.docNumber
+                                                                                if (identityState
+                                                                                                .firstName
+                                                                                                .isEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .firstName =
+                                                                                                details.name
+                                                                                                        .substringBefore(
+                                                                                                                " "
+                                                                                                        )
+                                                                                if (identityState
+                                                                                                .lastName
+                                                                                                .isEmpty()
+                                                                                )
+                                                                                        identityState
+                                                                                                .lastName =
+                                                                                                details.name
+                                                                                                        .substringAfter(
+                                                                                                                " ",
+                                                                                                                ""
+                                                                                                        )
                                                                                 if (identityState
                                                                                                 .dob
                                                                                                 .isEmpty()
@@ -744,70 +767,152 @@ fun AddItemScreen(
                                                                                                 .dob =
                                                                                                 details.dob
                                                                                 if (identityState
-                                                                                                .sex
+                                                                                                .address
                                                                                                 .isEmpty()
                                                                                 )
                                                                                         identityState
-                                                                                                .sex =
-                                                                                                details.sex
+                                                                                                .address =
+                                                                                                details.address
                                                                         }
-                                                                        // update other
-                                                                        // back-specific fields if
-                                                                        // needed
-                                                                } else {
-                                                                        identityState.frontBitmap =
-                                                                                bitmap
-                                                                        identityState.frontPath =
-                                                                                savedPath
+                                                                }
+                                                                4 -> {
+                                                                        // Save the image
+                                                                        if (scanningBack) {
+                                                                                greenCardState
+                                                                                        .backBitmap =
+                                                                                        bitmap
+                                                                                greenCardState
+                                                                                        .backPath =
+                                                                                        savedPath
+                                                                        } else {
+                                                                                greenCardState
+                                                                                        .frontBitmap =
+                                                                                        bitmap
+                                                                                greenCardState
+                                                                                        .frontPath =
+                                                                                        savedPath
+                                                                        }
+
+                                                                        // Parse BOTH front and back
+                                                                        // scans
                                                                         val details =
-                                                                                identityScanner
+                                                                                greenCardScanner
                                                                                         .scan(
-                                                                                                bitmap,
-                                                                                                scanningBack
+                                                                                                bitmap
                                                                                         )
-                                                                        if (identityState.number
-                                                                                        .isEmpty()
-                                                                        )
-                                                                                identityState
-                                                                                        .number =
-                                                                                        details.docNumber
-                                                                        if (identityState.firstName
-                                                                                        .isEmpty()
-                                                                        )
-                                                                                identityState
-                                                                                        .firstName =
-                                                                                        details.name
-                                                                                                .substringBefore(
-                                                                                                        " "
-                                                                                                )
-                                                                        if (identityState.lastName
-                                                                                        .isEmpty()
-                                                                        )
-                                                                                identityState
-                                                                                        .lastName =
-                                                                                        details.name
-                                                                                                .substringAfter(
-                                                                                                        " ",
-                                                                                                        ""
-                                                                                                )
-                                                                        if (identityState.dob
-                                                                                        .isEmpty()
-                                                                        )
-                                                                                identityState.dob =
+
+                                                                        // For back scan (MRZ):
+                                                                        // always overwrite
+                                                                        // For front scan: only fill
+                                                                        // empty fields
+                                                                        val shouldOverwrite =
+                                                                                scanningBack &&
+                                                                                        details.isMrzData
+
+                                                                        if (details.firstName
+                                                                                        .isNotEmpty() &&
+                                                                                        (shouldOverwrite ||
+                                                                                                greenCardState
+                                                                                                        .givenName
+                                                                                                        .isEmpty())
+                                                                        ) {
+                                                                                greenCardState
+                                                                                        .givenName =
+                                                                                        details.firstName
+                                                                        }
+                                                                        if (details.lastName
+                                                                                        .isNotEmpty() &&
+                                                                                        (shouldOverwrite ||
+                                                                                                greenCardState
+                                                                                                        .surname
+                                                                                                        .isEmpty())
+                                                                        ) {
+                                                                                greenCardState
+                                                                                        .surname =
+                                                                                        details.lastName
+                                                                        }
+                                                                        if (details.uscisNumber
+                                                                                        .isNotEmpty() &&
+                                                                                        (shouldOverwrite ||
+                                                                                                greenCardState
+                                                                                                        .uscisNumber
+                                                                                                        .isEmpty())
+                                                                        ) {
+                                                                                greenCardState
+                                                                                        .uscisNumber =
+                                                                                        details.uscisNumber
+                                                                        }
+                                                                        if (details.dob
+                                                                                        .isNotEmpty() &&
+                                                                                        (shouldOverwrite ||
+                                                                                                greenCardState
+                                                                                                        .dob
+                                                                                                        .isEmpty())
+                                                                        ) {
+                                                                                greenCardState.dob =
                                                                                         details.dob
-                                                                        if (identityState.address
-                                                                                        .isEmpty()
-                                                                        )
-                                                                                identityState
-                                                                                        .address =
-                                                                                        details.address
+                                                                        }
+                                                                        if (details.expiryDate
+                                                                                        .isNotEmpty() &&
+                                                                                        (shouldOverwrite ||
+                                                                                                greenCardState
+                                                                                                        .expiryDate
+                                                                                                        .isEmpty())
+                                                                        ) {
+                                                                                greenCardState
+                                                                                        .expiryDate =
+                                                                                        details.expiryDate
+                                                                        }
+                                                                        if (details.sex
+                                                                                        .isNotEmpty() &&
+                                                                                        (shouldOverwrite ||
+                                                                                                greenCardState
+                                                                                                        .sex
+                                                                                                        .isEmpty())
+                                                                        ) {
+                                                                                greenCardState.sex =
+                                                                                        details.sex
+                                                                        }
+                                                                        if (details.countryOfBirth
+                                                                                        .isNotEmpty() &&
+                                                                                        (shouldOverwrite ||
+                                                                                                greenCardState
+                                                                                                        .countryOfBirth
+                                                                                                        .isEmpty())
+                                                                        ) {
+                                                                                greenCardState
+                                                                                        .countryOfBirth =
+                                                                                        details.countryOfBirth
+                                                                        }
+                                                                        if (details.residentSince
+                                                                                        .isNotEmpty() &&
+                                                                                        (shouldOverwrite ||
+                                                                                                greenCardState
+                                                                                                        .residentSince
+                                                                                                        .isEmpty())
+                                                                        ) {
+                                                                                greenCardState
+                                                                                        .residentSince =
+                                                                                        details.residentSince
+                                                                        }
+                                                                        if (details.category
+                                                                                        .isNotEmpty() &&
+                                                                                        (shouldOverwrite ||
+                                                                                                greenCardState
+                                                                                                        .category
+                                                                                                        .isEmpty())
+                                                                        ) {
+                                                                                greenCardState
+                                                                                        .category =
+                                                                                        details.category
+                                                                        }
                                                                 }
                                                         }
                                                 }
-                                        } // closes if (bitmap != null)
-                                } // closes let
-                        } // closes if (result.resultCode == RESULT_OK)
-                } // closes rememberLauncherForActivityResult
+                                        }
+                                }
+                        }
+                }
 
         val scanDocument = { isBack: Boolean ->
                 scanningBack = isBack
@@ -864,71 +969,82 @@ fun AddItemScreen(
         val screenTitle =
                 if (documentId != null && documentId != 0) {
                         // Editing existing item
-                        if (selectedCategory == 0) {
-                                when (financialState.type) {
-                                        AccountType.CREDIT_CARD, AccountType.DEBIT_CARD ->
-                                                "Update Credit/Debit Card"
-                                        AccountType.BANK_ACCOUNT -> "Update Bank Account"
-                                        else -> "Update Financial Account"
+                        when (selectedCategory) {
+                                0 -> {
+                                        when (financialState.type) {
+                                                AccountType.CREDIT_CARD, AccountType.DEBIT_CARD ->
+                                                        "Update Credit/Debit Card"
+                                                AccountType.BANK_ACCOUNT -> "Update Bank Account"
+                                                else -> "Update Financial Account"
+                                        }
                                 }
-                        } else if (selectedCategory == 3) {
-                                when (financialState.type) {
-                                        AccountType.LIBRARY_CARD -> "Update Library Card"
-                                        else -> "Update Rewards Card"
+                                3 -> {
+                                        when (financialState.type) {
+                                                AccountType.LIBRARY_CARD -> "Update Library Card"
+                                                else -> "Update Rewards Card"
+                                        }
                                 }
-                        } else if (selectedCategory == 2) {
-                                "Update Passport"
-                        } else {
-                                when (identityState.type) {
-                                        DocumentType.DRIVER_LICENSE -> "Update Driver License"
-                                        DocumentType.SSN -> "Update SSN"
-                                        DocumentType.PAN -> "Update PAN"
-                                        DocumentType.ADHAAR -> "Update Aadhar"
-                                        else -> "Update Identity Document"
+                                2 -> "Update Passport"
+                                4 -> "Update Green Card"
+                                else -> {
+                                        when (identityState.type) {
+                                                DocumentType.DRIVER_LICENSE ->
+                                                        "Update Driver License"
+                                                DocumentType.SSN -> "Update SSN"
+                                                DocumentType.PAN -> "Update PAN"
+                                                DocumentType.ADHAAR -> "Update Aadhar"
+                                                else -> "Update Identity Document"
+                                        }
                                 }
                         }
                 } else {
                         // Adding new item
-                        if (selectedCategory == 0) {
-                                when (financialState.type) {
-                                        AccountType.CREDIT_CARD, AccountType.DEBIT_CARD ->
-                                                "Add Credit/Debit Card"
-                                        AccountType.BANK_ACCOUNT -> "Add Bank Account"
-                                        else -> "Add Financial Account"
+                        when (selectedCategory) {
+                                0 -> {
+                                        when (financialState.type) {
+                                                AccountType.CREDIT_CARD, AccountType.DEBIT_CARD ->
+                                                        "Add Credit/Debit Card"
+                                                AccountType.BANK_ACCOUNT -> "Add Bank Account"
+                                                else -> "Add Financial Account"
+                                        }
                                 }
-                        } else if (selectedCategory == 3) {
-                                when (financialState.type) {
-                                        AccountType.LIBRARY_CARD -> "Add Library Card"
-                                        else -> "Add Rewards Card"
+                                3 -> {
+                                        when (financialState.type) {
+                                                AccountType.LIBRARY_CARD -> "Add Library Card"
+                                                else -> "Add Rewards Card"
+                                        }
                                 }
-                        } else if (selectedCategory == 2) {
-                                "Add Passport"
-                        } else {
-                                when (identityState.type) {
-                                        DocumentType.DRIVER_LICENSE -> "Add Driver License"
-                                        DocumentType.SSN -> "Add SSN"
-                                        DocumentType.PAN -> "Add PAN"
-                                        DocumentType.ADHAAR -> "Add Aadhar"
-                                        else -> "Add Identity Document"
+                                2 -> "Add Passport"
+                                4 -> "Add Green Card"
+                                else -> {
+                                        when (identityState.type) {
+                                                DocumentType.DRIVER_LICENSE -> "Add Driver License"
+                                                DocumentType.SSN -> "Add SSN"
+                                                DocumentType.PAN -> "Add PAN"
+                                                DocumentType.ADHAAR -> "Add Aadhar"
+                                                else -> "Add Identity Document"
+                                        }
                                 }
                         }
                 }
 
         val typeIcon =
-                if (selectedCategory == 0) {
-                        when (financialState.type) {
-                                AccountType.CREDIT_CARD, AccountType.DEBIT_CARD ->
-                                        Icons.Filled.CreditCard
-                                AccountType.BANK_ACCOUNT -> Icons.Filled.AccountBalance
-                                AccountType.REWARDS_CARD -> Icons.Filled.CardGiftcard
-                                else -> Icons.Filled.AccountBalance
+                when (selectedCategory) {
+                        0 -> {
+                                when (financialState.type) {
+                                        AccountType.CREDIT_CARD, AccountType.DEBIT_CARD ->
+                                                Icons.Filled.CreditCard
+                                        AccountType.BANK_ACCOUNT -> Icons.Filled.AccountBalance
+                                        AccountType.REWARDS_CARD -> Icons.Filled.CardGiftcard
+                                        else -> Icons.Filled.AccountBalance
+                                }
                         }
-                } else if (selectedCategory == 2) {
-                        Icons.Filled.AccountBox
-                } else {
-                        when (identityState.type) {
-                                DocumentType.DRIVER_LICENSE -> Icons.Filled.DirectionsCar
-                                else -> Icons.Filled.Face
+                        2, 4 -> Icons.Filled.AccountBox
+                        else -> {
+                                when (identityState.type) {
+                                        DocumentType.DRIVER_LICENSE -> Icons.Filled.DirectionsCar
+                                        else -> Icons.Filled.Face
+                                }
                         }
                 }
 
@@ -1024,200 +1140,311 @@ fun AddItemScreen(
                         ) {
                                 // Category Switcher Removed per user request
 
-                                if (selectedCategory == 0 || selectedCategory == 3) {
-                                        // If Rewards category is selected, ensure type is
-                                        // REWARDS_CARD or LIBRARY_CARD
-                                        if (selectedCategory == 3 &&
-                                                        financialState.type !=
-                                                                AccountType.REWARDS_CARD &&
-                                                        financialState.type !=
-                                                                AccountType.LIBRARY_CARD
-                                        ) {
-                                                financialState.type = AccountType.REWARDS_CARD
-                                        }
+                                when (selectedCategory) {
+                                        0, 3 -> {
+                                                // If Rewards category is selected, ensure type is
+                                                // REWARDS_CARD or LIBRARY_CARD
+                                                if (selectedCategory == 3 &&
+                                                                financialState.type !=
+                                                                        AccountType.REWARDS_CARD &&
+                                                                financialState.type !=
+                                                                        AccountType.LIBRARY_CARD
+                                                ) {
+                                                        financialState.type =
+                                                                AccountType.REWARDS_CARD
+                                                }
 
-                                        FinancialForm(
-                                                state = financialState,
-                                                onScanFront = { scanDocument(false) },
-                                                onScanBack = { scanDocument(true) },
-                                                onPickLogo = { logoLauncher.launch("image/*") },
-                                                onSave = {
-                                                        viewModel.saveFinancialAccount(
-                                                                id = documentId ?: 0,
-                                                                type = financialState.type,
-                                                                institution =
-                                                                        financialState.institution,
-                                                                name = financialState.accName,
-                                                                holder = financialState.holder,
-                                                                number = financialState.number,
-                                                                routing = financialState.routing,
-                                                                ifsc = financialState.ifsc,
-                                                                swift = financialState.swift,
-                                                                expiryDate = financialState.expiry,
-                                                                cvv = financialState.cvv,
-                                                                pin = financialState.pin,
-                                                                notes = financialState.notes,
-                                                                contact = financialState.contact,
-                                                                cardNetwork =
-                                                                        financialState.network,
-                                                                frontImagePath =
-                                                                        financialState.frontPath,
-                                                                backImagePath =
-                                                                        financialState.backPath,
-                                                                barcode =
-                                                                        if (financialState.type ==
-                                                                                        AccountType
-                                                                                                .REWARDS_CARD
-                                                                        )
+                                                FinancialForm(
+                                                        state = financialState,
+                                                        onScanFront = { scanDocument(false) },
+                                                        onScanBack = { scanDocument(true) },
+                                                        onPickLogo = {
+                                                                logoLauncher.launch("image/*")
+                                                        },
+                                                        onSave = {
+                                                                viewModel.saveFinancialAccount(
+                                                                        id = documentId ?: 0,
+                                                                        type = financialState.type,
+                                                                        institution =
                                                                                 financialState
-                                                                                        .barcode
-                                                                        else null,
-                                                                barcodeFormat =
-                                                                        if (financialState.type ==
-                                                                                        AccountType
-                                                                                                .REWARDS_CARD
-                                                                        )
+                                                                                        .institution,
+                                                                        name =
                                                                                 financialState
-                                                                                        .barcodeFormat
-                                                                        else null,
-                                                                linkedPhoneNumber =
-                                                                        financialState.linkedPhone,
-                                                                logoImagePath =
-                                                                        financialState.logoPath,
-                                                                accountSubType =
-                                                                        financialState
-                                                                                .accountSubType,
-                                                                wireNumber =
-                                                                        financialState.wireNumber,
-                                                                branchAddress =
-                                                                        financialState
-                                                                                .branchAddress,
-                                                                branchContactNumber =
-                                                                        financialState
-                                                                                .branchContact,
-                                                                bankWebUrl =
-                                                                        financialState.bankWebUrl,
-                                                                bankBrandColor =
-                                                                        financialState
-                                                                                .bankBrandColor,
-                                                                holderAddress =
-                                                                        financialState.holderAddress
-                                                        )
-                                                },
-                                                onNavigateBack = navigateBack
-                                        )
-                                } else if (selectedCategory == 2) {
-                                        // Passport Form
-                                        PassportForm(
-                                                state = passportState,
-                                                onScanFront = { scanDocument(false) },
-                                                onScanBack = { scanDocument(true) },
-                                                onSave = {
-                                                        viewModel.savePassport(
-                                                                Passport(
-                                                                        id =
-                                                                                if (item is Passport
-                                                                                )
-                                                                                        (item as
-                                                                                                        Passport)
-                                                                                                .id
-                                                                                else 0,
-                                                                        passportNumber =
-                                                                                passportState
-                                                                                        .passportNumber,
-                                                                        countryCode =
-                                                                                passportState
-                                                                                        .countryCode,
-                                                                        surname =
-                                                                                passportState
-                                                                                        .surname,
-                                                                        givenNames =
-                                                                                passportState
-                                                                                        .givenNames,
-                                                                        nationality =
-                                                                                passportState
-                                                                                        .nationality,
-                                                                        dob = passportState.dob,
-                                                                        sex = passportState.sex,
-                                                                        placeOfBirth =
-                                                                                passportState
-                                                                                        .placeOfBirth,
-                                                                        dateOfIssue =
-                                                                                passportState
-                                                                                        .dateOfIssue,
-                                                                        placeOfIssue =
-                                                                                passportState
-                                                                                        .placeOfIssue,
-                                                                        dateOfExpiry =
-                                                                                passportState
-                                                                                        .dateOfExpiry,
-                                                                        authority =
-                                                                                passportState
-                                                                                        .authority,
-                                                                        fatherName =
-                                                                                passportState
-                                                                                        .fatherName,
-                                                                        motherName =
-                                                                                passportState
-                                                                                        .motherName,
-                                                                        spouseName =
-                                                                                passportState
-                                                                                        .spouseName,
-                                                                        address =
-                                                                                passportState
-                                                                                        .address,
-                                                                        fileNumber =
-                                                                                passportState
-                                                                                        .fileNumber,
+                                                                                        .accName,
+                                                                        holder =
+                                                                                financialState
+                                                                                        .holder,
+                                                                        number =
+                                                                                financialState
+                                                                                        .number,
+                                                                        routing =
+                                                                                financialState
+                                                                                        .routing,
+                                                                        ifsc = financialState.ifsc,
+                                                                        swift =
+                                                                                financialState
+                                                                                        .swift,
+                                                                        expiryDate =
+                                                                                financialState
+                                                                                        .expiry,
+                                                                        cvv = financialState.cvv,
+                                                                        pin = financialState.pin,
+                                                                        notes =
+                                                                                financialState
+                                                                                        .notes,
+                                                                        contact =
+                                                                                financialState
+                                                                                        .contact,
+                                                                        cardNetwork =
+                                                                                financialState
+                                                                                        .network,
                                                                         frontImagePath =
-                                                                                passportState
+                                                                                financialState
                                                                                         .frontPath,
                                                                         backImagePath =
-                                                                                passportState
-                                                                                        .backPath
+                                                                                financialState
+                                                                                        .backPath,
+                                                                        barcode =
+                                                                                if (financialState
+                                                                                                .type ==
+                                                                                                AccountType
+                                                                                                        .REWARDS_CARD
+                                                                                )
+                                                                                        financialState
+                                                                                                .barcode
+                                                                                else null,
+                                                                        barcodeFormat =
+                                                                                if (financialState
+                                                                                                .type ==
+                                                                                                AccountType
+                                                                                                        .REWARDS_CARD
+                                                                                )
+                                                                                        financialState
+                                                                                                .barcodeFormat
+                                                                                else null,
+                                                                        linkedPhoneNumber =
+                                                                                financialState
+                                                                                        .linkedPhone,
+                                                                        logoImagePath =
+                                                                                financialState
+                                                                                        .logoPath,
+                                                                        accountSubType =
+                                                                                financialState
+                                                                                        .accountSubType,
+                                                                        wireNumber =
+                                                                                financialState
+                                                                                        .wireNumber,
+                                                                        branchAddress =
+                                                                                financialState
+                                                                                        .branchAddress,
+                                                                        branchContactNumber =
+                                                                                financialState
+                                                                                        .branchContact,
+                                                                        bankWebUrl =
+                                                                                financialState
+                                                                                        .bankWebUrl,
+                                                                        bankBrandColor =
+                                                                                financialState
+                                                                                        .bankBrandColor,
+                                                                        holderAddress =
+                                                                                financialState
+                                                                                        .holderAddress
                                                                 )
-                                                        )
-                                                },
-                                                onNavigateBack = navigateBack
-                                        )
-                                } else {
-                                        // Identity
-                                        IdentityForm(
-                                                state = identityState,
-                                                onScanFront = { scanDocument(false) },
-                                                onScanBack = { scanDocument(true) },
-                                                onSave = {
-                                                        viewModel.saveIdentityDocument(
-                                                                id = documentId ?: 0,
-                                                                type = identityState.type,
-                                                                country = identityState.country,
-                                                                docNumber = identityState.number,
-                                                                holder =
-                                                                        "${identityState.firstName} ${identityState.lastName}".trim(),
-                                                                expiryDate = identityState.expiry,
-                                                                frontImagePath =
-                                                                        identityState.frontPath,
-                                                                backImagePath =
-                                                                        identityState.backPath,
-                                                                state = identityState.region,
-                                                                address = identityState.address,
-                                                                dob = identityState.dob,
-                                                                sex = identityState.sex,
-                                                                eyeColor = identityState.eyeColor,
-                                                                height = identityState.height,
-                                                                licenseClass =
-                                                                        identityState.licenseClass,
-                                                                restrictions =
-                                                                        identityState.restrictions,
-                                                                endorsements =
-                                                                        identityState.endorsements,
-                                                                issuingAuthority =
-                                                                        identityState
-                                                                                .issuingAuthority
-                                                        )
-                                                },
-                                                onNavigateBack = navigateBack
-                                        )
+                                                        },
+                                                        onNavigateBack = navigateBack
+                                                )
+                                        }
+                                        2 -> {
+                                                // Passport Form
+                                                PassportForm(
+                                                        state = passportState,
+                                                        onScanFront = { scanDocument(false) },
+                                                        onScanBack = { scanDocument(true) },
+                                                        onSave = {
+                                                                viewModel.savePassport(
+                                                                        Passport(
+                                                                                id =
+                                                                                        if (item is
+                                                                                                        Passport
+                                                                                        )
+                                                                                                (item as
+                                                                                                                Passport)
+                                                                                                        .id
+                                                                                        else 0,
+                                                                                passportNumber =
+                                                                                        passportState
+                                                                                                .passportNumber,
+                                                                                countryCode =
+                                                                                        passportState
+                                                                                                .countryCode,
+                                                                                surname =
+                                                                                        passportState
+                                                                                                .surname,
+                                                                                givenNames =
+                                                                                        passportState
+                                                                                                .givenNames,
+                                                                                nationality =
+                                                                                        passportState
+                                                                                                .nationality,
+                                                                                dob =
+                                                                                        passportState
+                                                                                                .dob,
+                                                                                sex =
+                                                                                        passportState
+                                                                                                .sex,
+                                                                                placeOfBirth =
+                                                                                        passportState
+                                                                                                .placeOfBirth,
+                                                                                dateOfIssue =
+                                                                                        passportState
+                                                                                                .dateOfIssue,
+                                                                                placeOfIssue =
+                                                                                        passportState
+                                                                                                .placeOfIssue,
+                                                                                dateOfExpiry =
+                                                                                        passportState
+                                                                                                .dateOfExpiry,
+                                                                                authority =
+                                                                                        passportState
+                                                                                                .authority,
+                                                                                fatherName =
+                                                                                        passportState
+                                                                                                .fatherName,
+                                                                                motherName =
+                                                                                        passportState
+                                                                                                .motherName,
+                                                                                spouseName =
+                                                                                        passportState
+                                                                                                .spouseName,
+                                                                                address =
+                                                                                        passportState
+                                                                                                .address,
+                                                                                fileNumber =
+                                                                                        passportState
+                                                                                                .fileNumber,
+                                                                                frontImagePath =
+                                                                                        passportState
+                                                                                                .frontPath,
+                                                                                backImagePath =
+                                                                                        passportState
+                                                                                                .backPath
+                                                                        )
+                                                                )
+                                                        },
+                                                        onNavigateBack = navigateBack
+                                                )
+                                        }
+                                        1 -> {
+                                                // Identity
+                                                IdentityForm(
+                                                        state = identityState,
+                                                        onScanFront = { scanDocument(false) },
+                                                        onScanBack = { scanDocument(true) },
+                                                        onSave = {
+                                                                viewModel.saveIdentityDocument(
+                                                                        id = documentId ?: 0,
+                                                                        type = identityState.type,
+                                                                        country =
+                                                                                identityState
+                                                                                        .country,
+                                                                        docNumber =
+                                                                                identityState
+                                                                                        .number,
+                                                                        holder =
+                                                                                "${identityState.firstName} ${identityState.lastName}".trim(),
+                                                                        expiryDate =
+                                                                                identityState
+                                                                                        .expiry,
+                                                                        frontImagePath =
+                                                                                identityState
+                                                                                        .frontPath,
+                                                                        backImagePath =
+                                                                                identityState
+                                                                                        .backPath,
+                                                                        state =
+                                                                                identityState
+                                                                                        .region,
+                                                                        address =
+                                                                                identityState
+                                                                                        .address,
+                                                                        dob = identityState.dob,
+                                                                        sex = identityState.sex,
+                                                                        eyeColor =
+                                                                                identityState
+                                                                                        .eyeColor,
+                                                                        height =
+                                                                                identityState
+                                                                                        .height,
+                                                                        licenseClass =
+                                                                                identityState
+                                                                                        .licenseClass,
+                                                                        restrictions =
+                                                                                identityState
+                                                                                        .restrictions,
+                                                                        endorsements =
+                                                                                identityState
+                                                                                        .endorsements,
+                                                                        issuingAuthority =
+                                                                                identityState
+                                                                                        .issuingAuthority
+                                                                )
+                                                        },
+                                                        onNavigateBack = navigateBack
+                                                )
+                                        }
+                                        4 -> {
+                                                GreenCardForm(
+                                                        state = greenCardState,
+                                                        onScanFront = { scanDocument(false) },
+                                                        onScanBack = { scanDocument(true) },
+                                                        onSave = {
+                                                                viewModel.saveGreenCard(
+                                                                        com.vijay.cardkeeper.data
+                                                                                .entity.GreenCard(
+                                                                                id = documentId
+                                                                                                ?: 0,
+                                                                                surname =
+                                                                                        greenCardState
+                                                                                                .surname,
+                                                                                givenName =
+                                                                                        greenCardState
+                                                                                                .givenName,
+                                                                                uscisNumber =
+                                                                                        greenCardState
+                                                                                                .uscisNumber,
+                                                                                category =
+                                                                                        greenCardState
+                                                                                                .category,
+                                                                                countryOfBirth =
+                                                                                        greenCardState
+                                                                                                .countryOfBirth,
+                                                                                dob =
+                                                                                        greenCardState
+                                                                                                .dob,
+                                                                                sex =
+                                                                                        greenCardState
+                                                                                                .sex,
+                                                                                expiryDate =
+                                                                                        greenCardState
+                                                                                                .expiryDate,
+                                                                                residentSince =
+                                                                                        greenCardState
+                                                                                                .residentSince,
+                                                                                frontImagePath =
+                                                                                        greenCardState
+                                                                                                .frontPath,
+                                                                                backImagePath =
+                                                                                        greenCardState
+                                                                                                .backPath
+                                                                        )
+                                                                )
+                                                        },
+                                                        onNavigateBack = navigateBack
+                                                )
+                                        }
+                                        else -> {
+                                                Text("Unsupported category: $selectedCategory")
+                                        }
                                 }
                         }
                 }
@@ -1230,4 +1457,4 @@ fun AddItemScreen(
                         )
                 }
         } // Close Box
-}
+} // Close AddItemScreen

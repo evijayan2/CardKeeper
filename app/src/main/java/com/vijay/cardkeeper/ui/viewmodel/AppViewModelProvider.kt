@@ -12,14 +12,16 @@ object AppViewModelProvider {
             HomeViewModel(
                     cardKeeperApplication().container.financialRepository,
                     cardKeeperApplication().container.identityRepository,
-                    cardKeeperApplication().container.passportRepository
+                    cardKeeperApplication().container.passportRepository,
+                    cardKeeperApplication().container.greenCardRepository
             )
         }
         initializer {
             AddItemViewModel(
                     cardKeeperApplication().container.financialRepository,
                     cardKeeperApplication().container.identityRepository,
-                    cardKeeperApplication().container.passportRepository
+                    cardKeeperApplication().container.passportRepository,
+                    cardKeeperApplication().container.greenCardRepository
             )
         }
         initializer { ViewItemViewModel(cardKeeperApplication().container.financialRepository) }

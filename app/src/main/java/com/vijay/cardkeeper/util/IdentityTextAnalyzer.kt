@@ -251,6 +251,8 @@ class IdentityTextAnalyzer(
                                 IdentityDetails(
                                         docNumber = foundDocId,
                                         name = foundName,
+                                        firstName = foundName.substringBefore(" ").trim(),
+                                        lastName = foundName.substringAfterLast(" ", "").trim(),
                                         dob = foundDob,
                                         expiryDate = foundExp,
                                         state = foundState,

@@ -87,8 +87,7 @@ fun ViewIdentityScreen(
                     }
             )
         }
-        if (document != null) {
-            val doc = document!!
+        document?.let { doc ->
             Column(
                     modifier =
                             Modifier.padding(padding)
@@ -297,11 +296,10 @@ fun ViewIdentityScreen(
                     }
                 }
             }
-        } else {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
         }
+                ?: Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
     }
 }
 
@@ -335,19 +333,5 @@ fun IdentityImage(path: String, label: String, modifier: Modifier = Modifier, on
                 style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
         )
-    }
-}
-
-@Composable
-fun DetailRow(label: String, value: String?) {
-    if (!value.isNullOrEmpty()) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.secondary
-            )
-            Text(text = value, style = MaterialTheme.typography.bodyLarge)
-        }
     }
 }

@@ -121,6 +121,31 @@ If the app is already running:
 2. Select your device and the `com.cardkeeper` (or your app package name) process.
 3. Click **OK**.
 
+## Search Functionality
+
+CardKeeper includes a powerful search feature accessible via the search icon on the home screen. You can search in two ways:
+
+### Field-Based Search
+Type any text to search across all stored items by their fields:
+- **Financial Accounts**: Institution name, account name, holder name, account number
+- **Identity Documents**: Holder name, document number, issuing authority
+- **Passports**: Passport number, surname, given names
+- **Green Cards**: USCIS number, surname, given name
+
+### Type-Based Search
+Search by category to see all items of a specific type:
+
+| Search Term | Returns |
+|-------------|---------|
+| `green card`, `greencard`, `gc` | All green cards |
+| `passport`, `passports` | All passports |
+| `identity`, `id`, `document`, `documents` | All identity documents |
+| `finance`, `financial`, `bank`, `card`, `cards` | All financial accounts (credit/debit/ATM cards) |
+| `rewards`, `reward`, `library` | All rewards & library cards |
+
+> [!TIP]
+> Search requires at least 2 characters. Results are displayed with type badges for easy identification.
+
 ## Project Structure
 
 - `app/`: Main application module containing source code and resources.
