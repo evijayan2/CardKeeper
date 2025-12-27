@@ -100,11 +100,6 @@ class AadharQrScanner(private val context: Context) {
     fun parse(qrData: String): AadharQrResult {
         return try {
             android.util.Log.d("AadharQrScanner", "Parsing QR data of length: ${qrData.length}")
-            if (qrData.length > 50) {
-                android.util.Log.d("AadharQrScanner", "QR Data Start: ${qrData.substring(0, 50)}")
-            } else {
-                android.util.Log.d("AadharQrScanner", "QR Data: $qrData")
-            }
 
             // Check if it's XML (Legacy QR)
             if (qrData.trim().startsWith("<") || qrData.contains("<?xml")) {
