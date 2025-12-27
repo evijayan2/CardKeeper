@@ -8,7 +8,8 @@ class SearchRepository(
         private val financialRepository: FinancialRepository,
         private val identityRepository: IdentityRepository,
         private val passportRepository: PassportRepository,
-        private val greenCardRepository: GreenCardRepository
+        private val greenCardRepository: GreenCardRepository,
+        private val aadharCardRepository: AadharCardRepository
 ) {
         fun search(query: String): Flow<List<SearchResult>> {
                 val lowerQuery = query.lowercase().trim()
@@ -29,6 +30,11 @@ class SearchRepository(
                                         lowerQuery == "dl" ||
                                         lowerQuery.contains("driver") &&
                                                 lowerQuery.contains("license") -> "identity"
+                                lowerQuery == "aadhar" ||
+                                        lowerQuery == "aadhaar" ||
+                                        lowerQuery == "adhaar" ||
+                                        lowerQuery.contains("aadhar") ||
+                                        lowerQuery.contains("आधार") -> "aadhar"
                                 lowerQuery == "finance" ||
                                         lowerQuery == "financial" ||
                                         lowerQuery == "bank" ||
@@ -51,22 +57,26 @@ class SearchRepository(
                 val identitySearch = identityRepository.searchDocuments(query)
                 val passportSearch = passportRepository.searchPassports(query)
                 val greenCardSearch = greenCardRepository.searchGreenCards(query)
+                val aadharSearch = aadharCardRepository.searchAadharCards(query)
 
                 // Also get all items for type-based search
                 val allFinancial = financialRepository.allAccounts
                 val allIdentity = identityRepository.allDocuments
                 val allPassports = passportRepository.allPassports
                 val allGreenCards = greenCardRepository.allGreenCards
+                val allAadharCards = aadharCardRepository.allAadharCards
 
                 return combine(
                         financialSearch,
                         identitySearch,
                         passportSearch,
                         greenCardSearch,
+                        aadharSearch,
                         allFinancial,
                         allIdentity,
                         allPassports,
-                        allGreenCards
+                        allGreenCards,
+                        allAadharCards
                 ) { results ->
                         val accounts =
                                 results[0] as
@@ -78,17 +88,21 @@ class SearchRepository(
                                 results[2] as List<com.vijay.cardkeeper.data.entity.Passport>
                         val greenCards =
                                 results[3] as List<com.vijay.cardkeeper.data.entity.GreenCard>
+                        val aadharCards =
+                                results[4] as List<com.vijay.cardkeeper.data.entity.AadharCard>
 
                         val allAccounts =
-                                results[4] as
+                                results[5] as
                                         List<com.vijay.cardkeeper.data.entity.FinancialAccount>
                         val allIdentities =
-                                results[5] as
+                                results[6] as
                                         List<com.vijay.cardkeeper.data.entity.IdentityDocument>
                         val allPassportsList =
-                                results[6] as List<com.vijay.cardkeeper.data.entity.Passport>
+                                results[7] as List<com.vijay.cardkeeper.data.entity.Passport>
                         val allGreenCardsList =
-                                results[7] as List<com.vijay.cardkeeper.data.entity.GreenCard>
+                                results[8] as List<com.vijay.cardkeeper.data.entity.GreenCard>
+                        val allAadharCardsList =
+                                results[9] as List<com.vijay.cardkeeper.data.entity.AadharCard>
 
                         val searchResults = mutableListOf<SearchResult>()
                         val addedIds =
@@ -188,11 +202,29 @@ class SearchRepository(
                                 }
                         }
 
+                        // Helper to add aadhar card
+                        fun addAadharResult(aadhar: com.vijay.cardkeeper.data.entity.AadharCard) {
+                                val key = "aadhar_${aadhar.id}"
+                                if (key !in addedIds) {
+                                        addedIds.add(key)
+                                        searchResults.add(
+                                                SearchResult(
+                                                        id = aadhar.id,
+                                                        title = "Aadhaar Card",
+                                                        subtitle = aadhar.holderName,
+                                                        type = "Aadhar",
+                                                        originalType = "AADHAR"
+                                                )
+                                        )
+                                }
+                        }
+
                         // If searching by type, return all items of that type
                         when (searchByType) {
                                 "greencard" -> allGreenCardsList.forEach { addGreenCardResult(it) }
                                 "passport" -> allPassportsList.forEach { addPassportResult(it) }
                                 "identity" -> allIdentities.forEach { addIdentityResult(it) }
+                                "aadhar" -> allAadharCardsList.forEach { addAadharResult(it) }
                                 "finance" ->
                                         allAccounts
                                                 .filter {
@@ -223,6 +255,7 @@ class SearchRepository(
                                         identities.forEach { addIdentityResult(it) }
                                         passports.forEach { addPassportResult(it) }
                                         greenCards.forEach { addGreenCardResult(it) }
+                                        aadharCards.forEach { addAadharResult(it) }
                                 }
                         }
 

@@ -4,8 +4,10 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.vijay.cardkeeper.data.dao.AadharCardDao
 import com.vijay.cardkeeper.data.dao.FinancialAccountDao
 import com.vijay.cardkeeper.data.dao.IdentityDocumentDao
+import com.vijay.cardkeeper.data.entity.AadharCard
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.GreenCard
 import com.vijay.cardkeeper.data.entity.IdentityDocument
@@ -16,8 +18,9 @@ import com.vijay.cardkeeper.data.entity.IdentityDocument
                         FinancialAccount::class,
                         IdentityDocument::class,
                         com.vijay.cardkeeper.data.entity.Passport::class,
-                        GreenCard::class],
-        version = 12,
+                        GreenCard::class,
+                        AadharCard::class],
+        version = 14,
         exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -25,6 +28,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun identityDocumentDao(): IdentityDocumentDao
     abstract fun passportDao(): com.vijay.cardkeeper.data.dao.PassportDao
     abstract fun greenCardDao(): com.vijay.cardkeeper.data.dao.GreenCardDao
+    abstract fun aadharCardDao(): AadharCardDao
 
     companion object {
         val MIGRATION_11_12 =
@@ -51,6 +55,44 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                 }
 
+        val MIGRATION_12_13 =
+                object : androidx.room.migration.Migration(12, 13) {
+                    override fun migrate(database: androidx.sqlite.db.SupportSQLiteDatabase) {
+                        database.execSQL(
+                                """
+                    CREATE TABLE IF NOT EXISTS `aadhar_cards` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `referenceId` TEXT NOT NULL,
+                        `holderName` TEXT NOT NULL,
+                        `dob` TEXT NOT NULL,
+                        `gender` TEXT NOT NULL,
+                        `address` TEXT NOT NULL,
+                        `pincode` TEXT,
+                        `maskedAadhaarNumber` TEXT NOT NULL,
+                        `uid` TEXT,
+                        `vid` TEXT,
+                        `photoBase64` TEXT,
+                        `timestamp` TEXT,
+                        `digitalSignature` TEXT,
+                        `certificateId` TEXT,
+                        `enrollmentNumber` TEXT,
+                        `frontImagePath` TEXT,
+                        `backImagePath` TEXT,
+                        `qrData` TEXT
+                    )
+                """.trimIndent()
+                        )
+                    }
+                }
+
+        val MIGRATION_13_14 =
+                object : androidx.room.migration.Migration(13, 14) {
+                    override fun migrate(database: androidx.sqlite.db.SupportSQLiteDatabase) {
+                        database.execSQL("ALTER TABLE `aadhar_cards` ADD COLUMN `email` TEXT")
+                        database.execSQL("ALTER TABLE `aadhar_cards` ADD COLUMN `mobile` TEXT")
+                    }
+                }
+
         @Volatile private var INSTANCE: AppDatabase? = null
 
         fun getDatabase(context: Context): AppDatabase {
@@ -62,7 +104,11 @@ abstract class AppDatabase : RoomDatabase() {
                                                 AppDatabase::class.java,
                                                 "cardkeeper_database"
                                         )
-                                        .addMigrations(MIGRATION_11_12)
+                                        .addMigrations(
+                                                MIGRATION_11_12,
+                                                MIGRATION_12_13,
+                                                MIGRATION_13_14
+                                        )
                                         .fallbackToDestructiveMigration(false)
                                         .build()
                         INSTANCE = instance

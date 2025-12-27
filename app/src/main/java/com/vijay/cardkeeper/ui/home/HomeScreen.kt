@@ -55,6 +55,7 @@ fun HomeScreen(
         navigateToIdentityView: (Int) -> Unit,
         navigateToPassportView: (Int) -> Unit = {},
         navigateToGreenCardView: (Int) -> Unit = {},
+        navigateToAadharView: (Int) -> Unit = {},
         navigateToRewardsView: (Int) -> Unit = {},
         navigateToSearch: () -> Unit = {},
         viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
@@ -64,6 +65,7 @@ fun HomeScreen(
     val identityState by viewModel.identityDocuments.collectAsState(initial = emptyList())
     val passportState by viewModel.passports.collectAsState(initial = emptyList())
     val greenCardState by viewModel.greenCards.collectAsState(initial = emptyList())
+    val aadharCardState by viewModel.aadharCards.collectAsState(initial = emptyList())
     var selectedTab by remember { mutableStateOf(0) }
     // Update tabs list
     val tabs = listOf("Finance", "Identity", "Passports", "Rewards")
@@ -165,6 +167,14 @@ fun HomeScreen(
                                 }
                         )
                         DropdownMenuItem(
+                                text = { Text("Aadhaar Card") },
+                                onClick = {
+                                    showMenu = false
+                                    navigateToItemEntry(5, "AADHAR")
+                                },
+                                leadingIcon = { Icon(Icons.Filled.Face, contentDescription = null) }
+                        )
+                        DropdownMenuItem(
                                 text = { Text("Other Identity") },
                                 onClick = {
                                     showMenu = false
@@ -212,8 +222,10 @@ fun HomeScreen(
                         IdentityList(
                                 identityState,
                                 greenCardState,
+                                aadharCardState,
                                 navigateToIdentityView,
-                                navigateToGreenCardView
+                                navigateToGreenCardView,
+                                navigateToAadharView
                         )
                 2 -> PassportList(passportState, navigateToPassportView)
                 3 -> RewardsList(rewardsCards, navigateToRewardsView)
@@ -549,8 +561,10 @@ fun PassportList(list: List<Passport>, onItemClick: (Int) -> Unit) {
 fun IdentityList(
         identityList: List<IdentityDocument>,
         greenCardList: List<com.vijay.cardkeeper.data.entity.GreenCard>,
+        aadharCardList: List<com.vijay.cardkeeper.data.entity.AadharCard>,
         onIdentityClick: (Int) -> Unit,
-        onGreenCardClick: (Int) -> Unit
+        onGreenCardClick: (Int) -> Unit,
+        onAadharClick: (Int) -> Unit
 ) {
     LazyColumn(
             contentPadding = PaddingValues(16.dp),
@@ -558,6 +572,7 @@ fun IdentityList(
     ) {
         items(identityList) { doc -> IdentityItem(doc, onIdentityClick) }
         items(greenCardList) { gc -> GreenCardItem(gc, onGreenCardClick) }
+        items(aadharCardList) { aadhar -> AadharCardItem(aadhar, onAadharClick) }
     }
 }
 
@@ -649,6 +664,108 @@ fun GreenCardItem(gc: com.vijay.cardkeeper.data.entity.GreenCard, onItemClick: (
                         DashboardImageThumbnail(path = path, label = "Front")
                     }
                     gc.backImagePath?.let { path ->
+                        DashboardImageThumbnail(path = path, label = "Back")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AadharCardItem(
+        aadhar: com.vijay.cardkeeper.data.entity.AadharCard,
+        onItemClick: (Int) -> Unit
+) {
+    Card(
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            onClick = { onItemClick(aadhar.id) }
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // Background India Flag
+            val backgroundUrl = "https://flagcdn.com/w320/in.png"
+
+            AsyncImage(
+                    model =
+                            ImageRequest.Builder(LocalContext.current)
+                                    .data(backgroundUrl)
+                                    .crossfade(true)
+                                    .build(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    alpha = 0.15f,
+                    modifier = Modifier.matchParentSize()
+            )
+
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                                text = "AADHAAR CARD",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                                text = "आधार",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // Flag Icon
+                    AsyncImage(
+                            model =
+                                    ImageRequest.Builder(LocalContext.current)
+                                            .data("https://flagcdn.com/w160/in.png")
+                                            .crossfade(true)
+                                            .build(),
+                            contentDescription = "India Flag",
+                            modifier = Modifier.size(24.dp).clip(RoundedCornerShape(2.dp))
+                    )
+
+                    // Masked Aadhaar number
+                    if (aadhar.maskedAadhaarNumber.isNotEmpty()) {
+                        Text(
+                                text = aadhar.maskedAadhaarNumber,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Details
+                Text(
+                        text = "Name: ${aadhar.holderName}",
+                        style = MaterialTheme.typography.bodyMedium
+                )
+                if (aadhar.dob.isNotEmpty()) {
+                    Text(text = "DOB: ${aadhar.dob}", style = MaterialTheme.typography.bodyMedium)
+                }
+                if (aadhar.address.isNotEmpty()) {
+                    Text(
+                            text =
+                                    aadhar.address.take(50) +
+                                            if (aadhar.address.length > 50) "..." else "",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Images
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    aadhar.frontImagePath?.let { path ->
+                        DashboardImageThumbnail(path = path, label = "Front")
+                    }
+                    aadhar.backImagePath?.let { path ->
                         DashboardImageThumbnail(path = path, label = "Back")
                     }
                 }

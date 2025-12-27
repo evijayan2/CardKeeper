@@ -2,12 +2,14 @@ package com.vijay.cardkeeper.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vijay.cardkeeper.data.entity.AadharCard
 import com.vijay.cardkeeper.data.entity.AccountType
 import com.vijay.cardkeeper.data.entity.BankAccountSubType
 import com.vijay.cardkeeper.data.entity.DocumentType
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.GreenCard
 import com.vijay.cardkeeper.data.entity.IdentityDocument
+import com.vijay.cardkeeper.data.repository.AadharCardRepository
 import com.vijay.cardkeeper.data.repository.FinancialRepository
 import com.vijay.cardkeeper.data.repository.GreenCardRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
@@ -18,7 +20,8 @@ class AddItemViewModel(
         private val financialRepository: FinancialRepository,
         private val identityRepository: IdentityRepository,
         private val passportRepository: com.vijay.cardkeeper.data.repository.PassportRepository,
-        private val greenCardRepository: GreenCardRepository
+        private val greenCardRepository: GreenCardRepository,
+        private val aadharCardRepository: AadharCardRepository
 ) : ViewModel() {
 
         fun saveFinancialAccount(
@@ -111,6 +114,8 @@ class AddItemViewModel(
 
         suspend fun getGreenCard(id: Int) = greenCardRepository.getGreenCard(id)
 
+        suspend fun getAadharCard(id: Int) = aadharCardRepository.getAadharCard(id)
+
         fun saveIdentityDocument(
                 id: Int = 0,
                 type: DocumentType,
@@ -193,6 +198,20 @@ class AddItemViewModel(
                 viewModelScope.launch { greenCardRepository.delete(greenCard) }
         }
 
+        fun saveAadharCard(aadharCard: AadharCard) {
+                viewModelScope.launch {
+                        if (aadharCard.id > 0) {
+                                aadharCardRepository.update(aadharCard)
+                        } else {
+                                aadharCardRepository.insert(aadharCard)
+                        }
+                }
+        }
+
+        fun deleteAadharCard(aadharCard: AadharCard) {
+                viewModelScope.launch { aadharCardRepository.delete(aadharCard) }
+        }
+
         fun getItem(id: Int?, type: String?): kotlinx.coroutines.flow.Flow<Any?> =
                 kotlinx.coroutines.flow.flow {
                         if (id == null || id == 0) {
@@ -206,6 +225,8 @@ class AddItemViewModel(
                                         emitAll(passportRepository.getPassport(id))
                                 } else if (type == "greencard") {
                                         emitAll(greenCardRepository.getGreenCard(id))
+                                } else if (type == "aadhar") {
+                                        emitAll(aadharCardRepository.getAadharCard(id))
                                 }
                         }
                 }

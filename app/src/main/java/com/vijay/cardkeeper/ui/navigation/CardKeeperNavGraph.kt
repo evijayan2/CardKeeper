@@ -22,6 +22,7 @@ object CardKeeperDestinations {
     const val VIEW_IDENTITY_ROUTE = "view_identity/{documentId}"
     const val VIEW_PASSPORT_ROUTE = "view_passport/{passportId}"
     const val VIEW_GREEN_CARD_ROUTE = "view_greencard/{gcId}"
+    const val VIEW_AADHAR_ROUTE = "view_aadhar/{aadharId}"
     const val VIEW_REWARDS_ROUTE = "view_rewards/{accountId}"
     const val SEARCH_ROUTE = "search"
 }
@@ -50,6 +51,9 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                     navigateToGreenCardView = { gcId ->
                         navController.navigate("view_greencard/$gcId")
                     },
+                    navigateToAadharView = { aadharId ->
+                        navController.navigate("view_aadhar/$aadharId")
+                    },
                     navigateToRewardsView = { accountId ->
                         navController.navigate("view_rewards/$accountId")
                     },
@@ -68,6 +72,7 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                                     "Identity" -> "view_identity/$id"
                                     "Passport" -> "view_passport/$id"
                                     "Green Card" -> "view_greencard/$id"
+                                    "Aadhar" -> "view_aadhar/$id"
                                     "Rewards" -> "view_rewards/$id"
                                     else -> null
                                 }
@@ -148,6 +153,17 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                     greenCardId = gcId,
                     navigateBack = { navController.popBackStack() },
                     onEditClick = { id -> navController.navigate("add_item?category=4&itemId=$id") }
+            )
+        }
+        composable(
+                route = CardKeeperDestinations.VIEW_AADHAR_ROUTE,
+                arguments = listOf(navArgument("aadharId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val aadharId = backStackEntry.arguments?.getInt("aadharId") ?: 0
+            com.vijay.cardkeeper.ui.item.ViewAadharCardScreen(
+                    aadharCardId = aadharId,
+                    navigateBack = { navController.popBackStack() },
+                    onEditClick = { id -> navController.navigate("add_item?category=5&itemId=$id") }
             )
         }
         composable(

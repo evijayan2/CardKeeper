@@ -32,6 +32,7 @@ import com.vijay.cardkeeper.data.entity.DocumentType
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.data.entity.Passport
+import com.vijay.cardkeeper.scanning.AadharQrScanner
 import com.vijay.cardkeeper.scanning.ChequeScanner
 import com.vijay.cardkeeper.scanning.DriverLicenseScanner
 import com.vijay.cardkeeper.scanning.GreenCardScanner
@@ -39,10 +40,12 @@ import com.vijay.cardkeeper.scanning.IdentityScanner
 import com.vijay.cardkeeper.scanning.PassportScanner
 import com.vijay.cardkeeper.scanning.PaymentCardScanner
 import com.vijay.cardkeeper.scanning.RewardsScanner
+import com.vijay.cardkeeper.ui.item.forms.AadharCardForm
 import com.vijay.cardkeeper.ui.item.forms.FinancialForm
 import com.vijay.cardkeeper.ui.item.forms.GreenCardForm
 import com.vijay.cardkeeper.ui.item.forms.IdentityForm
 import com.vijay.cardkeeper.ui.item.forms.PassportForm
+import com.vijay.cardkeeper.ui.item.forms.rememberAadharCardFormState
 import com.vijay.cardkeeper.ui.item.forms.rememberFinancialFormState
 import com.vijay.cardkeeper.ui.item.forms.rememberGreenCardFormState
 import com.vijay.cardkeeper.ui.item.forms.rememberIdentityFormState
@@ -73,6 +76,7 @@ fun AddItemScreen(
                                 1 -> "identity"
                                 2 -> "passport"
                                 4 -> "greencard"
+                                5 -> "aadhar"
                                 else -> "financial"
                         }
         // Load existing item if editing
@@ -98,6 +102,8 @@ fun AddItemScreen(
                 } else if (currentItem is Passport) selectedCategory = 2
                 else if (currentItem is com.vijay.cardkeeper.data.entity.GreenCard)
                         selectedCategory = 4
+                else if (currentItem is com.vijay.cardkeeper.data.entity.AadharCard)
+                        selectedCategory = 5
         }
 
         // Parse initialType from documentType string for financial accounts
@@ -131,6 +137,8 @@ fun AddItemScreen(
         val passportState = rememberPassportFormState(item as? Passport)
         val greenCardState =
                 rememberGreenCardFormState(item as? com.vijay.cardkeeper.data.entity.GreenCard)
+        val aadharCardState =
+                rememberAadharCardFormState(item as? com.vijay.cardkeeper.data.entity.AadharCard)
 
         // Scanners
         val paymentScanner = remember { PaymentCardScanner() }
@@ -140,6 +148,10 @@ fun AddItemScreen(
         val chequeScanner = remember { ChequeScanner() }
         val passportScanner = remember { PassportScanner() }
         val greenCardScanner = remember { GreenCardScanner() }
+        val aadharQrScanner = remember { AadharQrScanner(context) }
+
+        // State for Aadhar QR scanning
+        var showAadharQrScanner by remember { mutableStateOf(false) }
 
         // Constants for Camera Logic
         var scanningBack by remember { mutableStateOf(false) }
@@ -907,6 +919,24 @@ fun AddItemScreen(
                                                                                         details.category
                                                                         }
                                                                 }
+                                                                5 -> {
+                                                                        // Aadhar
+                                                                        if (scanningBack) {
+                                                                                aadharCardState
+                                                                                        .backBitmap =
+                                                                                        bitmap
+                                                                                aadharCardState
+                                                                                        .backPath =
+                                                                                        savedPath
+                                                                        } else {
+                                                                                aadharCardState
+                                                                                        .frontBitmap =
+                                                                                        bitmap
+                                                                                aadharCardState
+                                                                                        .frontPath =
+                                                                                        savedPath
+                                                                        }
+                                                                }
                                                         }
                                                 }
                                         }
@@ -986,6 +1016,7 @@ fun AddItemScreen(
                                 }
                                 2 -> "Update Passport"
                                 4 -> "Update Green Card"
+                                5 -> "Update Aadhar"
                                 else -> {
                                         when (identityState.type) {
                                                 DocumentType.DRIVER_LICENSE ->
@@ -1016,6 +1047,7 @@ fun AddItemScreen(
                                 }
                                 2 -> "Add Passport"
                                 4 -> "Add Green Card"
+                                5 -> "Add Aadhar"
                                 else -> {
                                         when (identityState.type) {
                                                 DocumentType.DRIVER_LICENSE -> "Add Driver License"
@@ -1442,6 +1474,96 @@ fun AddItemScreen(
                                                         onNavigateBack = navigateBack
                                                 )
                                         }
+                                        5 -> {
+                                                AadharCardForm(
+                                                        state = aadharCardState,
+                                                        onScanFront = { scanDocument(false) },
+                                                        onScanBack = { scanDocument(true) },
+                                                        onScanQr = { showAadharQrScanner = true },
+                                                        onSave = {
+                                                                viewModel.saveAadharCard(
+                                                                        com.vijay.cardkeeper.data
+                                                                                .entity.AadharCard(
+                                                                                id = documentId
+                                                                                                ?: 0,
+                                                                                referenceId =
+                                                                                        aadharCardState
+                                                                                                .referenceId,
+                                                                                holderName =
+                                                                                        aadharCardState
+                                                                                                .holderName,
+                                                                                dob =
+                                                                                        aadharCardState
+                                                                                                .dob,
+                                                                                gender =
+                                                                                        aadharCardState
+                                                                                                .gender,
+                                                                                address =
+                                                                                        aadharCardState
+                                                                                                .address,
+                                                                                pincode =
+                                                                                        aadharCardState
+                                                                                                .pincode
+                                                                                                .ifEmpty {
+                                                                                                        null
+                                                                                                },
+                                                                                maskedAadhaarNumber =
+                                                                                        aadharCardState
+                                                                                                .maskedAadhaarNumber,
+                                                                                uid =
+                                                                                        aadharCardState
+                                                                                                .uid
+                                                                                                .ifEmpty {
+                                                                                                        null
+                                                                                                },
+                                                                                vid =
+                                                                                        aadharCardState
+                                                                                                .vid
+                                                                                                .ifEmpty {
+                                                                                                        null
+                                                                                                },
+                                                                                photoBase64 =
+                                                                                        aadharCardState
+                                                                                                .photoBase64,
+                                                                                timestamp =
+                                                                                        aadharCardState
+                                                                                                .timestamp
+                                                                                                .ifEmpty {
+                                                                                                        null
+                                                                                                },
+                                                                                digitalSignature =
+                                                                                        aadharCardState
+                                                                                                .digitalSignature,
+                                                                                certificateId =
+                                                                                        aadharCardState
+                                                                                                .certificateId,
+                                                                                enrollmentNumber =
+                                                                                        aadharCardState
+                                                                                                .enrollmentNumber
+                                                                                                .ifEmpty {
+                                                                                                        null
+                                                                                                },
+                                                                                email =
+                                                                                        aadharCardState
+                                                                                                .email,
+                                                                                mobile =
+                                                                                        aadharCardState
+                                                                                                .mobile,
+                                                                                frontImagePath =
+                                                                                        aadharCardState
+                                                                                                .frontPath,
+                                                                                backImagePath =
+                                                                                        aadharCardState
+                                                                                                .backPath,
+                                                                                qrData =
+                                                                                        aadharCardState
+                                                                                                .qrData
+                                                                        )
+                                                                )
+                                                        },
+                                                        onNavigateBack = navigateBack
+                                                )
+                                        }
                                         else -> {
                                                 Text("Unsupported category: $selectedCategory")
                                         }
@@ -1454,6 +1576,100 @@ fun AddItemScreen(
                         BarcodeScannerScreen(
                                 onBarcodeScanned = handleBarcodeResult,
                                 onDismiss = { showBarcodeScanner = false }
+                        )
+                }
+
+                // Aadhar QR Scanner Overlay
+                if (showAadharQrScanner) {
+                        BarcodeScannerScreen(
+                                onBarcodeScanned = { qrData, _ ->
+                                        showAadharQrScanner = false
+                                        scope.launch {
+                                                val result = aadharQrScanner.parse(qrData)
+
+                                                // Populate form fields from QR
+                                                if (result.referenceId.isNotEmpty()) {
+                                                        aadharCardState.referenceId =
+                                                                result.referenceId
+                                                }
+                                                if (result.name.isNotEmpty()) {
+                                                        aadharCardState.holderName = result.name
+                                                }
+                                                if (result.dob.isNotEmpty()) {
+                                                        aadharCardState.dob = result.dob
+                                                }
+                                                if (result.gender.isNotEmpty()) {
+                                                        aadharCardState.gender = result.gender
+                                                }
+                                                if (result.fullAddress.isNotEmpty()) {
+                                                        aadharCardState.address = result.fullAddress
+                                                }
+                                                if (result.pincode.isNotEmpty()) {
+                                                        aadharCardState.pincode = result.pincode
+                                                }
+                                                // Handle Full UID from Legacy XML (stored in
+                                                // referenceId usually)
+                                                // If referenceId is exactly 12 digits, treat it as
+                                                // UID
+                                                if (result.referenceId.length == 12 &&
+                                                                result.referenceId.all {
+                                                                        it.isDigit()
+                                                                }
+                                                ) {
+                                                        aadharCardState.uid = result.referenceId
+                                                        // Also update masked if not already set
+                                                        // (though scanner usually sets it)
+                                                        if (aadharCardState.maskedAadhaarNumber
+                                                                        .isEmpty()
+                                                        ) {
+                                                                aadharCardState
+                                                                        .maskedAadhaarNumber =
+                                                                        "XXXX XXXX " +
+                                                                                result.referenceId
+                                                                                        .takeLast(4)
+                                                        }
+                                                }
+
+                                                if (result.email != null) {
+                                                        aadharCardState.email = result.email
+                                                }
+                                                if (result.mobile != null) {
+                                                        aadharCardState.mobile = result.mobile
+                                                }
+
+                                                if (result.maskedAadhaar.isNotEmpty()) {
+                                                        aadharCardState.maskedAadhaarNumber =
+                                                                "XXXX XXXX ${result.maskedAadhaar}"
+                                                }
+                                                if (result.photoBase64 != null) {
+                                                        aadharCardState.photoBase64 =
+                                                                result.photoBase64
+                                                }
+                                                // Store raw QR data for reproduction
+                                                aadharCardState.qrData = qrData
+
+                                                // Store signature verification status
+                                                aadharCardState.signatureValid =
+                                                        result.signatureValid
+
+                                                // Show verification result
+                                                val verifyMsg =
+                                                        if (result.signatureVerificationAttempted) {
+                                                                if (result.signatureValid)
+                                                                        "✓ Signature Verified"
+                                                                else "✗ Signature Invalid"
+                                                        } else {
+                                                                "⚠ Signature not verified (no certificate)"
+                                                        }
+                                                Toast.makeText(
+                                                                context,
+                                                                "QR Scanned: ${result.name}\n$verifyMsg",
+                                                                Toast.LENGTH_LONG
+                                                        )
+                                                        .show()
+                                        }
+                                },
+                                onDismiss = { showAadharQrScanner = false }
                         )
                 }
         } // Close Box

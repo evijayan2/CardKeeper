@@ -57,20 +57,13 @@ fun IdentityForm(
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text("Document Type", style = MaterialTheme.typography.labelLarge)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(
-                                        DocumentType.DRIVER_LICENSE,
-                                        DocumentType.SSN,
-                                        DocumentType.PAN,
-                                        DocumentType.ADHAAR,
-                                        DocumentType.OTHER
+                        listOf(DocumentType.DRIVER_LICENSE).forEach { type ->
+                                FilterChip(
+                                        selected = state.type == type,
+                                        onClick = { state.type = type },
+                                        label = { Text(type.name.replace("_", " ")) }
                                 )
-                                .forEach { type ->
-                                        FilterChip(
-                                                selected = state.type == type,
-                                                onClick = { state.type = type },
-                                                label = { Text(type.name.replace("_", " ")) }
-                                        )
-                                }
+                        }
                 }
 
                 // Scan Buttons

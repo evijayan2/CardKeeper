@@ -2,6 +2,7 @@ package com.vijay.cardkeeper.di
 
 import android.content.Context
 import com.vijay.cardkeeper.data.AppDatabase
+import com.vijay.cardkeeper.data.repository.AadharCardRepository
 import com.vijay.cardkeeper.data.repository.FinancialRepository
 import com.vijay.cardkeeper.data.repository.GreenCardRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
@@ -13,6 +14,7 @@ interface AppContainer {
     val identityRepository: IdentityRepository
     val passportRepository: com.vijay.cardkeeper.data.repository.PassportRepository
     val greenCardRepository: GreenCardRepository
+    val aadharCardRepository: AadharCardRepository
     val searchRepository: SearchRepository
 }
 
@@ -36,12 +38,17 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
         GreenCardRepository(database.greenCardDao())
     }
 
+    override val aadharCardRepository: AadharCardRepository by lazy {
+        AadharCardRepository(database.aadharCardDao())
+    }
+
     override val searchRepository: SearchRepository by lazy {
         SearchRepository(
                 financialRepository,
                 identityRepository,
                 passportRepository,
-                greenCardRepository
+                greenCardRepository,
+                aadharCardRepository
         )
     }
 }

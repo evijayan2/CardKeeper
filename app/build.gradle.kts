@@ -109,4 +109,47 @@ dependencies {
 
     // Image Loading (Coil)
     implementation("io.coil-kt:coil-compose:2.7.0")
+
+    // Bouncy Castle for Crypto
+    implementation("org.bouncycastle:bcpkix-jdk15to18:1.70")
 }
+
+// Task to download UIDAI certificates for Aadhar QR signature verification
+tasks.register("downloadUidaiCertificates") {
+    val certs = mapOf(
+        "uidai_auth_prod.cer" to "https://uidai.gov.in/images/authDoc/uidai_auth_prod.cer",
+        "uidai_auth_sign_prod_2026.cer" to "https://uidai.gov.in/images/authDoc/uidai_auth_sign_Prod_2026.cer",
+        "uidai_offline_2026.cer" to "https://uidai.gov.in/images/authDoc/uidai_offline_publickey_17022026.cer"
+    )
+    
+    val outputDir = file("src/main/assets/certs")
+    
+    doLast {
+        outputDir.mkdirs()
+        
+        certs.forEach { (fileName, urlStr) ->
+            val outputFile = file("$outputDir/$fileName")
+            try {
+                if (!outputFile.exists()) {
+                    println("Downloading $fileName...")
+                    val url = uri(urlStr).toURL()
+                    url.openStream().use { input ->
+                        outputFile.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    println("Downloaded: ${outputFile.absolutePath}")
+                } else {
+                    println("Exists: ${outputFile.absolutePath}")
+                }
+            } catch (e: Exception) {
+                println("Warning: Could not download $fileName: ${e.message}")
+            }
+        }
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn("downloadUidaiCertificates")
+}
+
