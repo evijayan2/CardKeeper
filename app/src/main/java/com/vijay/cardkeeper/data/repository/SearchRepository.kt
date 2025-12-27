@@ -23,12 +23,24 @@ class SearchRepository(
                                 lowerQuery == "identity" ||
                                         lowerQuery == "id" ||
                                         lowerQuery == "document" ||
-                                        lowerQuery == "documents" -> "identity"
+                                        lowerQuery == "documents" ||
+                                        lowerQuery == "driver" ||
+                                        lowerQuery == "license" ||
+                                        lowerQuery == "dl" ||
+                                        lowerQuery.contains("driver") &&
+                                                lowerQuery.contains("license") -> "identity"
                                 lowerQuery == "finance" ||
                                         lowerQuery == "financial" ||
                                         lowerQuery == "bank" ||
-                                        lowerQuery == "card" ||
-                                        lowerQuery == "cards" -> "finance"
+                                        lowerQuery == "credit" ||
+                                        lowerQuery == "debit" ||
+                                        lowerQuery == "atm" ||
+                                        lowerQuery.contains("credit") &&
+                                                lowerQuery.contains("card") ||
+                                        lowerQuery.contains("debit") &&
+                                                lowerQuery.contains("card") ||
+                                        lowerQuery.contains("atm") && lowerQuery.contains("card") ->
+                                        "finance"
                                 lowerQuery == "rewards" ||
                                         lowerQuery == "reward" ||
                                         lowerQuery == "library" -> "rewards"

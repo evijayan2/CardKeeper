@@ -182,7 +182,14 @@ fun HomeScreen(
                     Tab(
                             selected = selectedTab == index,
                             onClick = { selectedTab = index },
-                            text = { Text(title) },
+                            text = {
+                                Text(
+                                        title,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        style = MaterialTheme.typography.labelSmall
+                                )
+                            },
                             icon = {
                                 Icon(
                                         when (index) {
@@ -191,7 +198,8 @@ fun HomeScreen(
                                             2 -> Icons.Default.AccountBox
                                             else -> Icons.Default.CardGiftcard
                                         },
-                                        contentDescription = null
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
                                 )
                             }
                     )

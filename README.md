@@ -139,8 +139,8 @@ Search by category to see all items of a specific type:
 |-------------|---------|
 | `green card`, `greencard`, `gc` | All green cards |
 | `passport`, `passports` | All passports |
-| `identity`, `id`, `document`, `documents` | All identity documents |
-| `finance`, `financial`, `bank`, `card`, `cards` | All financial accounts (credit/debit/ATM cards) |
+| `identity`, `id`, `document`, `driver`, `license`, `dl`, `driver license` | All identity documents |
+| `finance`, `financial`, `bank`, `credit`, `debit`, `atm`, `credit card`, `debit card` | All financial accounts |
 | `rewards`, `reward`, `library` | All rewards & library cards |
 
 > [!TIP]
