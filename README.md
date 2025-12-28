@@ -19,6 +19,14 @@ It allows you to digitize, organize, and quickly access your **Financial Account
 *   **📵 Offline First**: Works completely offline. No reliance on cloud servers means no risk of remote data breaches.
 *   **🧠 Intelligent Integration**: Automatically scans and extracts data from Passports (MRZ), Driver Licenses (Barcode), and Aadhar Cards (QR), reducing manual entry errors.
 
+## Release Notes
+
+View the full history of changes:
+
+- [v1.0.0-alpha.3](releases/v1.0.0-alpha.3.md) - Rebranding to Kards, Aadhar & Green Card Support, Global Search.
+- [v1.0.0-alpha.2](releases/v1.0.0-alpha.2.md) - CI/CD Fixes.
+- [v1.0.0-alpha.1](releases/v1.0.0-alpha.1.md) - Initial Release with Financial & Identity support.
+
 ## Key Features
 
 -   **Biometric Authentication**: Access is protected by your device's biometric security (Fingerprint/Face Unlock). The app cannot be opened without you.
