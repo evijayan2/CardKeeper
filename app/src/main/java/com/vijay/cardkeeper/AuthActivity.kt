@@ -75,12 +75,25 @@ class AuthActivity : FragmentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text("Verifying Security...")
-                    }
+                    val isKeyCreated = KeyManager.isKeyCreated(this)
                     
-                    LaunchedEffect(Unit) {
-                         checkAndAuthenticate()
+                    if (isKeyCreated) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text("Verifying Security...")
+                        }
+                        
+                        LaunchedEffect(Unit) {
+                             checkAndAuthenticate()
+                        }
+                    } else {
+                        com.vijay.cardkeeper.ui.auth.WelcomeScreen(
+                            onRegisterClick = {
+                                checkAndAuthenticate()
+                            },
+                            onQuitClick = {
+                                finishAffinity()
+                            }
+                        )
                     }
                 }
             }

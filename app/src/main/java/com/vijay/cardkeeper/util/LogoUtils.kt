@@ -103,4 +103,9 @@ object LogoUtils {
 
                 return null
         }
+
+        fun getCardNetworkLogoUrl(network: String?): String? {
+            // Currently returning null to fallback to local resources
+            return null
+        }
 }
