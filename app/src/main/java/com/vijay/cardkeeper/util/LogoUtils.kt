@@ -1,22 +1,7 @@
 package com.vijay.cardkeeper.util
 
 object LogoUtils {
-        /**
-         * Returns a CDN URL for a card network logo. Source: aayush-v/payment-logos (via jsDelivr)
-         */
-        fun getCardNetworkLogoUrl(network: String?): String? {
-                if (network == null) return null
-                val net = network.lowercase()
-                return when {
-                        net.contains("visa") -> "https://payment-logos.com/api/logo/visa"
-                        net.contains("mastercard") ->
-                                "https://payment-logos.com/api/logo/mastercard"
-                        net.contains("amex") -> "https://payment-logos.com/api/logo/amex"
-                        net.contains("discover") -> "https://payment-logos.com/api/logo/discover"
-                        net.contains("rupay") -> "https://payment-logos.com/api/logo/rupay"
-                        else -> null
-                }
-        }
+
 
         /** Returns a Clearbit Logo URL for a bank institution. */
         fun getInstitutionLogoUrl(name: String?): String? {
@@ -51,7 +36,7 @@ object LogoUtils {
                                         null
                                 }
                         }
-                return domain?.let { "https://logo.clearbit.com/$it" }
+                return domain?.let { "https://img.logo.dev/$it" }
         }
 
         /** Returns a primary brand color for a bank or card network. */

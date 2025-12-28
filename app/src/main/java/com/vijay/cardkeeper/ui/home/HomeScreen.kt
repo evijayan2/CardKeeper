@@ -344,21 +344,21 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
             ) {
-                // 1. Institution Logo (Clearbit) - Top Left
-                val instLogoUrl = LogoUtils.getInstitutionLogoUrl(account.institutionName)
-                if (instLogoUrl != null) {
-                    AsyncImage(
-                            model =
-                                    ImageRequest.Builder(LocalContext.current)
-                                            .data(instLogoUrl)
-                                            .crossfade(true)
-                                            .build(),
-                            contentDescription = account.institutionName,
-                            modifier = Modifier.size(32.dp).clip(RoundedCornerShape(4.dp)),
-                            contentScale = ContentScale.Fit
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                }
+                // 1. Institution Logo (logo.dev) - Top Left
+                // val instLogoUrl = LogoUtils.getInstitutionLogoUrl(account.institutionName)
+                // if (instLogoUrl != null) {
+                //     AsyncImage(
+                //             model =
+                //                     ImageRequest.Builder(LocalContext.current)
+                //                             .data(instLogoUrl)
+                //                             .crossfade(true)
+                //                             .build(),
+                //             contentDescription = account.institutionName,
+                //             modifier = Modifier.size(32.dp).clip(RoundedCornerShape(4.dp)),
+                //             contentScale = ContentScale.Fit
+                //     )
+                //     Spacer(modifier = Modifier.width(12.dp))
+                // }
 
                 Column(modifier = Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -369,33 +369,18 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
                                 color = contentColor
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-
-                        val dynamicLogoUrl = LogoUtils.getCardNetworkLogoUrl(account.cardNetwork)
-                        if (dynamicLogoUrl != null) {
-                            AsyncImage(
-                                    model =
-                                            ImageRequest.Builder(LocalContext.current)
-                                                    .data(dynamicLogoUrl)
-                                                    .crossfade(true)
-                                                    .build(),
+                        
+                        val logoResId = getCardLogoResId(account.cardNetwork)
+                        if (logoResId != null) {
+                            Image(
+                                    painter = painterResource(id = logoResId),
                                     contentDescription = account.cardNetwork,
                                     modifier = Modifier.width(40.dp).height(24.dp),
                                     contentScale = ContentScale.Fit
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                        } else {
-                            val logoResId = getCardLogoResId(account.cardNetwork)
-                            if (logoResId != null) {
-                                Image(
-                                        painter = painterResource(id = logoResId),
-                                        contentDescription = account.cardNetwork,
-                                        modifier = Modifier.width(40.dp).height(24.dp),
-                                        contentScale = ContentScale.Fit
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                            }
                         }
-
+                        
                         Surface(
                                 shape = MaterialTheme.shapes.extraSmall,
                                 color =
