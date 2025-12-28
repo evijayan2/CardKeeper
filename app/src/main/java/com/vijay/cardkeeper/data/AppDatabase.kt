@@ -21,7 +21,7 @@ import com.vijay.cardkeeper.data.entity.IdentityDocument
                         GreenCard::class,
                         AadharCard::class],
         version = 14,
-        exportSchema = false
+        exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun financialAccountDao(): FinancialAccountDao

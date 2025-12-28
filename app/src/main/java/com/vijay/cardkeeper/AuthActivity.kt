@@ -1,6 +1,7 @@
 
 package com.vijay.cardkeeper
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -108,9 +109,13 @@ class AuthActivity : FragmentActivity() {
             }
             BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE -> {
                  Toast.makeText(this, "No biometric features available", Toast.LENGTH_LONG).show()
-                 unlockAndProceed() // Fallback? Or fail? For now, proceed (insecure fallback for dev) -> strict: fail.
-                 // Ideally we force PIN. Authenticator DEVICE_CREDENTIAL handles PIN.
-                 // If that fails, it means no pin set.
+                 // If no hardware, we MUST fall back to Device Credential (PIN/Pattern) check
+                 // However, canAuthenticate(BIOMETRIC_STRONG or DEVICE_CREDENTIAL) returns ERROR_NO_HARDWARE 
+                 // effectively only if NEITHER is available or supported correctly in this combo check? 
+                 // Actually, if DEVICE_CREDENTIAL is allowed, it should return SUCCESS if PIN is set.
+                 // If it returns NO_HARDWARE, it might mean the device has no biometrics AND maybe no PIN capability?
+                 // Safer to fail here for this strict security app.
+                 showSecurityRequiredDialog()
             }
             BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE -> {
                 Toast.makeText(this, "Biometric features are currently unavailable.", Toast.LENGTH_SHORT).show()
@@ -118,9 +123,7 @@ class AuthActivity : FragmentActivity() {
             }
             BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED -> {
                 // Prompts the user to create credentials that your app accepts.
-                Toast.makeText(this, "Please associate a biometric credential with your account.", Toast.LENGTH_LONG).show()
-                // In a real app, we might ask to setup.
-                unlockAndProceed() // For now, allow proceed if no security set up on device (fallback)
+                showSecurityRequiredDialog()
             }
             else -> {
                 unlockAndProceed()
@@ -141,5 +144,16 @@ class AuthActivity : FragmentActivity() {
             Toast.makeText(this, "Failed to unlock storage: ${e.message}", Toast.LENGTH_LONG).show()
             e.printStackTrace()
         }
+    }
+
+    private fun showSecurityRequiredDialog() {
+        AlertDialog.Builder(this)
+            .setTitle("Device Security Required")
+            .setMessage("To secure your data, CardKeeper requires your device to be protected by a Lock Screen (PIN, Pattern, or Password) or Biometrics.\n\nPlease set up security in Android Settings and try again.")
+            .setPositiveButton("Exit") { _, _ ->
+                finishAffinity()
+            }
+            .setCancelable(false)
+            .show()
     }
 }

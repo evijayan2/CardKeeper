@@ -46,6 +46,7 @@ import com.vijay.cardkeeper.ui.viewmodel.AppViewModelProvider
 import com.vijay.cardkeeper.ui.viewmodel.HomeViewModel
 import com.vijay.cardkeeper.util.LogoUtils
 import com.vijay.cardkeeper.util.StateUtils
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -239,7 +240,7 @@ fun FinancialList(list: List<FinancialAccount>, onItemClick: (Int) -> Unit) {
     LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) { items(list) { account -> FinancialAccountItem(account, onItemClick) } }
+    ) { items(list, key = { it.id }) { account -> FinancialAccountItem(account, onItemClick) } }
 }
 
 @Composable
@@ -247,7 +248,7 @@ fun RewardsList(list: List<FinancialAccount>, onItemClick: (Int) -> Unit) {
     LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) { items(list) { account -> RewardsCardItem(account, onItemClick) } }
+    ) { items(list, key = { it.id }) { account -> RewardsCardItem(account, onItemClick) } }
 }
 
 @Composable
@@ -263,28 +264,18 @@ fun RewardsCardItem(account: FinancialAccount, onItemClick: (Int) -> Unit) {
             // Document Icon or Image (Front Image or Logo)
             val imagePath = account.logoImagePath ?: account.frontImagePath
             if (imagePath != null) {
-                val file = java.io.File(imagePath)
-                if (file.exists()) {
-                    val bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath)
-                    Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = null,
-                            modifier =
-                                    Modifier.size(60.dp)
-                                            .clip(
-                                                    androidx.compose.foundation.shape
-                                                            .RoundedCornerShape(8.dp)
-                                            ),
-                            contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Icon(
-                            imageVector = Icons.Default.CardGiftcard,
-                            contentDescription = null,
-                            modifier = Modifier.size(60.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                    )
-                }
+                AsyncImage(
+                        model = File(imagePath),
+                        contentDescription = null,
+                        modifier =
+                                Modifier.size(60.dp)
+                                        .clip(
+                                                androidx.compose.foundation.shape
+                                                        .RoundedCornerShape(8.dp)
+                                        ),
+                        contentScale = ContentScale.Crop,
+                        fallback = painterResource(R.drawable.placeholder_image) // Placeholder
+                )
             } else {
                 Icon(
                         imageVector = Icons.Default.CardGiftcard,
@@ -539,7 +530,7 @@ fun PassportList(list: List<Passport>, onItemClick: (Int) -> Unit) {
     LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) { items(list) { passport -> PassportItem(passport, { onItemClick(passport.id) }) } }
+    ) { items(list, key = { it.id }) { passport -> PassportItem(passport, { onItemClick(passport.id) }) } }
 }
 
 @Composable
@@ -555,9 +546,9 @@ fun IdentityList(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        items(identityList) { doc -> IdentityItem(doc, onIdentityClick) }
-        items(greenCardList) { gc -> GreenCardItem(gc, onGreenCardClick) }
-        items(aadharCardList) { aadhar -> AadharCardItem(aadhar, onAadharClick) }
+        items(identityList, key = { "id_${it.id}" }) { doc -> IdentityItem(doc, onIdentityClick) }
+        items(greenCardList, key = { "gc_${it.id}" }) { gc -> GreenCardItem(gc, onGreenCardClick) }
+        items(aadharCardList, key = { "ad_${it.id}" }) { aadhar -> AadharCardItem(aadhar, onAadharClick) }
     }
 }
 
@@ -916,31 +907,20 @@ fun DashboardImageThumbnail(
         label: String,
         textColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
 ) {
-    val bitmap =
-            remember(path) {
-                try {
-                    android.graphics.BitmapFactory.decodeFile(path)
-                } catch (e: Exception) {
-                    null
-                }
-            }
-
-    if (bitmap != null) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            androidx.compose.foundation.Image(
-                    bitmap = bitmap.asImageBitmap(),
-                    contentDescription = label,
-                    modifier =
-                            Modifier.height(100.dp)
-                                    .width(150.dp) // Aspect ratio approx id card
-                                    .clip(
-                                            androidx.compose.foundation.shape.RoundedCornerShape(
-                                                    8.dp
-                                            )
-                                    ),
-                    contentScale = ContentScale.Crop
-            )
-            Text(text = label, style = MaterialTheme.typography.labelSmall, color = textColor)
-        }
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        AsyncImage(
+                model = File(path),
+                contentDescription = label,
+                modifier =
+                        Modifier.height(100.dp)
+                                .width(150.dp) // Aspect ratio approx id card
+                                .clip(
+                                        androidx.compose.foundation.shape.RoundedCornerShape(
+                                                8.dp
+                                        )
+                                ),
+                contentScale = ContentScale.Crop
+        )
+        Text(text = label, style = MaterialTheme.typography.labelSmall, color = textColor)
     }
 }
