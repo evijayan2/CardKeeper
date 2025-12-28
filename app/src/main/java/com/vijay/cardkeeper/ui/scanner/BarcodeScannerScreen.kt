@@ -160,8 +160,8 @@ fun BarcodeScannerScreen(
                                                                                 .resolutionselector
                                                                                 .ResolutionStrategy(
                                                                                         Size(
-                                                                                                1280,
-                                                                                                720
+                                                                                                1920,
+                                                                                                1080
                                                                                         ),
                                                                                         androidx.camera
                                                                                                 .core

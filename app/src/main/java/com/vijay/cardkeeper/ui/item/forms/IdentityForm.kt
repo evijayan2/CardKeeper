@@ -51,20 +51,11 @@ fun IdentityForm(
         state: IdentityFormState,
         onScanFront: () -> Unit,
         onScanBack: () -> Unit,
+        onScanBarcode: () -> Unit = {},
         onSave: () -> Unit,
         onNavigateBack: () -> Unit
 ) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Text("Document Type", style = MaterialTheme.typography.labelLarge)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf(DocumentType.DRIVER_LICENSE).forEach { type ->
-                                FilterChip(
-                                        selected = state.type == type,
-                                        onClick = { state.type = type },
-                                        label = { Text(type.name.replace("_", " ")) }
-                                )
-                        }
-                }
 
                 // Scan Buttons
                 Row(
@@ -125,6 +116,23 @@ fun IdentityForm(
                         }
                 }
 
+                if (state.type == DocumentType.DRIVER_LICENSE) {
+                        Button(
+                                onClick = onScanBarcode,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors()
+                        ) {
+                                Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment =
+                                                androidx.compose.ui.Alignment.CenterVertically
+                                ) {
+                                        Icon(Icons.Filled.PhotoCamera, "Scan Barcode")
+                                        Text("Scan Driver License Barcode")
+                                }
+                        }
+                }
+
                 OutlinedTextField(
                         value = state.country,
                         onValueChange = { v: String -> state.country = v },
@@ -178,6 +186,7 @@ fun IdentityForm(
                 }
 
                 if (state.type == DocumentType.DRIVER_LICENSE) {
+
                         OutlinedTextField(
                                 value = state.address,
                                 onValueChange = { v: String -> state.address = v },
@@ -239,6 +248,6 @@ fun IdentityForm(
                                 onNavigateBack()
                         },
                         modifier = Modifier.fillMaxWidth()
-                ) { Text("Save Document") }
+                ) { Text("Save Driver License") }
         }
 }

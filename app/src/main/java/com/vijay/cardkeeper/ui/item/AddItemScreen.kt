@@ -947,29 +947,21 @@ fun AddItemScreen(
         val scanDocument = { isBack: Boolean ->
                 scanningBack = isBack
 
-                // Use barcode scanner for Driver License back scans
-                if (isBack &&
-                                selectedCategory == 1 &&
-                                identityState.type == DocumentType.DRIVER_LICENSE
-                ) {
-                        showBarcodeScanner = true
-                } else {
-                        // Use document scanner for everything else
-                        scanner.getStartScanIntent(activity)
-                                .addOnSuccessListener { intentSender ->
-                                        scannerLauncher.launch(
-                                                IntentSenderRequest.Builder(intentSender).build()
+                // Use document scanner for everything
+                scanner.getStartScanIntent(activity)
+                        .addOnSuccessListener { intentSender ->
+                                scannerLauncher.launch(
+                                        IntentSenderRequest.Builder(intentSender).build()
+                                )
+                        }
+                        .addOnFailureListener { e ->
+                                Toast.makeText(
+                                                context,
+                                                "Scanner error: ${e.message}",
+                                                Toast.LENGTH_SHORT
                                         )
-                                }
-                                .addOnFailureListener { e ->
-                                        Toast.makeText(
-                                                        context,
-                                                        "Scanner error: ${e.message}",
-                                                        Toast.LENGTH_SHORT
-                                                )
-                                                .show()
-                                }
-                }
+                                        .show()
+                        }
         }
 
         // Logo Picker for Financial Form (Specific)
@@ -1080,57 +1072,38 @@ fun AddItemScreen(
                         }
                 }
 
-        // Barcode result handler - also captures and saves the back image
-        val handleBarcodeResult: (String, android.graphics.Bitmap?) -> Unit =
-                { rawData, capturedBitmap ->
-                        showBarcodeScanner = false
+        // Barcode result handler - captures data only (image is handled by Scan Back)
+        val handleBarcodeResult: (String, android.graphics.Bitmap?) -> Unit = { rawData, _ ->
+                showBarcodeScanner = false
 
-                        // Save the captured back image
-                        capturedBitmap?.let { bitmap ->
-                                val savedPath =
-                                        saveImageToInternalStorage(
-                                                context,
-                                                bitmap,
-                                                "dl_back_${System.currentTimeMillis()}"
-                                        )
-                                identityState.backBitmap = bitmap
-                                identityState.backPath = savedPath
+                scope.launch {
+                        val details = driverLicenseScanner.parseAAMVAData(rawData)
+
+                        // Populate form fields from barcode data
+                        if (details.docNumber.isNotEmpty()) identityState.number = details.docNumber
+                        if (details.name.isNotEmpty()) {
+                                identityState.firstName = details.name.substringBefore(" ")
+                                identityState.lastName = details.name.substringAfterLast(" ", "")
                         }
-
-                        scope.launch {
-                                val details = driverLicenseScanner.parseAAMVAData(rawData)
-
-                                // Populate form fields from barcode data
-                                if (details.docNumber.isNotEmpty())
-                                        identityState.number = details.docNumber
-                                if (details.name.isNotEmpty()) {
-                                        identityState.firstName = details.name.substringBefore(" ")
-                                        identityState.lastName =
-                                                details.name.substringAfterLast(" ", "")
-                                }
-                                if (details.dob.isNotEmpty()) identityState.dob = details.dob
-                                if (details.expiryDate.isNotEmpty())
-                                        identityState.expiry = details.expiryDate
-                                if (details.address.isNotEmpty())
-                                        identityState.address = details.address
-                                if (details.sex.isNotEmpty()) identityState.sex = details.sex
-                                if (details.eyeColor.isNotEmpty())
-                                        identityState.eyeColor = details.eyeColor
-                                if (details.height.isNotEmpty())
-                                        identityState.height = details.height
-                                if (details.licenseClass.isNotEmpty())
-                                        identityState.licenseClass = details.licenseClass
-                                if (details.restrictions.isNotEmpty())
-                                        identityState.restrictions = details.restrictions
-                                if (details.endorsements.isNotEmpty())
-                                        identityState.endorsements = details.endorsements
-                                if (details.state.isNotEmpty()) identityState.region = details.state
-                                if (details.issuingAuthority.isNotEmpty())
-                                        identityState.issuingAuthority = details.issuingAuthority
-                                if (details.country.isNotEmpty())
-                                        identityState.country = details.country
-                        }
+                        if (details.dob.isNotEmpty()) identityState.dob = details.dob
+                        if (details.expiryDate.isNotEmpty())
+                                identityState.expiry = details.expiryDate
+                        if (details.address.isNotEmpty()) identityState.address = details.address
+                        if (details.sex.isNotEmpty()) identityState.sex = details.sex
+                        if (details.eyeColor.isNotEmpty()) identityState.eyeColor = details.eyeColor
+                        if (details.height.isNotEmpty()) identityState.height = details.height
+                        if (details.licenseClass.isNotEmpty())
+                                identityState.licenseClass = details.licenseClass
+                        if (details.restrictions.isNotEmpty())
+                                identityState.restrictions = details.restrictions
+                        if (details.endorsements.isNotEmpty())
+                                identityState.endorsements = details.endorsements
+                        if (details.state.isNotEmpty()) identityState.region = details.state
+                        if (details.issuingAuthority.isNotEmpty())
+                                identityState.issuingAuthority = details.issuingAuthority
+                        if (details.country.isNotEmpty()) identityState.country = details.country
                 }
+        }
 
         Box(modifier = Modifier.fillMaxSize()) {
                 Scaffold(
@@ -1372,6 +1345,9 @@ fun AddItemScreen(
                                                         state = identityState,
                                                         onScanFront = { scanDocument(false) },
                                                         onScanBack = { scanDocument(true) },
+                                                        onScanBarcode = {
+                                                                showBarcodeScanner = true
+                                                        },
                                                         onSave = {
                                                                 viewModel.saveIdentityDocument(
                                                                         id = documentId ?: 0,
