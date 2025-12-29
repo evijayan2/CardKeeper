@@ -13,6 +13,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -31,7 +34,27 @@ class FinancialFormState(initialAccount: FinancialAccount?, initialType: Account
         var routing by mutableStateOf(initialAccount?.routingNumber ?: "")
         var ifsc by mutableStateOf(initialAccount?.ifscCode ?: "")
         var swift by mutableStateOf(initialAccount?.swiftCode ?: "")
-        var expiry by mutableStateOf(initialAccount?.expiryDate ?: "")
+    private var _expiry = mutableStateOf(initialAccount?.expiryDate?.filter { it.isDigit() }?.take(4) ?: "")
+    var expiry: String
+        get() = _expiry.value
+        set(value) {
+            val digits = value.filter { it.isDigit() }.take(4)
+            _expiry.value = digits
+            if (digits.length >= 2) {
+                val month = digits.take(2).toIntOrNull() ?: 0
+                expiryError = month < 1 || month > 12
+            } else {
+                expiryError = false
+            }
+        }
+    val formattedExpiry: String
+        get() = if (_expiry.value.length >= 2) {
+            _expiry.value.substring(0, 2) + "/" + _expiry.value.substring(2)
+        } else {
+            _expiry.value
+        }
+
+    var expiryError by mutableStateOf(false)
         var cvv by mutableStateOf(initialAccount?.cvv ?: "")
         var pin by mutableStateOf(initialAccount?.cardPin ?: "")
         var network by mutableStateOf(initialAccount?.cardNetwork ?: "")
@@ -401,8 +424,10 @@ fun FinancialForm(
                                 OutlinedTextField(
                                         value = state.expiry,
                                         onValueChange = { state.expiry = it },
+                                        visualTransformation = ExpiryDateVisualTransformation(),
                                         label = { Text("Expiry (MM/YY)") },
                                         modifier = Modifier.weight(1f),
+                                        isError = state.expiryError,
                                         keyboardOptions =
                                                 KeyboardOptions(keyboardType = KeyboardType.Number)
                                 )
@@ -498,4 +523,33 @@ fun FinancialForm(
                         modifier = Modifier.fillMaxWidth()
                 ) { Text("Save Financial Account") }
         }
+}
+
+class ExpiryDateVisualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val inputText = text.text
+        val formatted = StringBuilder()
+        for (i in inputText.indices) {
+            formatted.append(inputText[i])
+            if (i == 1) {
+                formatted.append("/")
+            }
+        }
+
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                if (offset <= 1) return offset
+                if (offset <= 4) return offset + 1
+                return 5
+            }
+
+            override fun transformedToOriginal(offset: Int): Int {
+                if (offset <= 2) return offset
+                if (offset <= 5) return offset - 1
+                return 4
+            }
+        }
+
+        return TransformedText(AnnotatedString(formatted.toString()), offsetMapping)
+    }
 }

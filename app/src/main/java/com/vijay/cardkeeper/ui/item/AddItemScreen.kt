@@ -1191,7 +1191,7 @@ fun AddItemScreen(
                                                                                         .swift,
                                                                         expiryDate =
                                                                                 financialState
-                                                                                        .expiry,
+                                                                                        .formattedExpiry,
                                                                         cvv = financialState.cvv,
                                                                         pin = financialState.pin,
                                                                         notes =
