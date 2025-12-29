@@ -111,6 +111,8 @@ fun FinancialForm(
         val context = LocalContext.current
 
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                val expiryDateVisualTransformation = remember { ExpiryDateVisualTransformation() }
+                
                 // Scan Buttons
                 Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -424,7 +426,7 @@ fun FinancialForm(
                                 OutlinedTextField(
                                         value = state.expiry,
                                         onValueChange = { state.expiry = it },
-                                        visualTransformation = ExpiryDateVisualTransformation(),
+                                        visualTransformation = expiryDateVisualTransformation,
                                         label = { Text("Expiry (MM/YY)") },
                                         modifier = Modifier.weight(1f),
                                         isError = state.expiryError,
@@ -538,15 +540,17 @@ class ExpiryDateVisualTransformation : VisualTransformation {
 
         val offsetMapping = object : OffsetMapping {
             override fun originalToTransformed(offset: Int): Int {
-                if (offset <= 1) return offset
-                if (offset <= 4) return offset + 1
-                return 5
+                val result = if (offset <= 1) offset
+                else if (offset <= 4) offset + 1
+                else 5
+                return result.coerceAtMost(formatted.length)
             }
 
             override fun transformedToOriginal(offset: Int): Int {
-                if (offset <= 2) return offset
-                if (offset <= 5) return offset - 1
-                return 4
+                val result = if (offset <= 2) offset
+                else if (offset <= 5) offset - 1
+                else 4
+                return result.coerceAtMost(inputText.length)
             }
         }
 

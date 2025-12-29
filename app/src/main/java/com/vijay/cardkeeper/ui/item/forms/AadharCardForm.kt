@@ -7,6 +7,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.QrCodeScanner
@@ -19,14 +20,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.vijay.cardkeeper.data.entity.AadharCard
+import com.vijay.cardkeeper.ui.common.DateFormatType
+import com.vijay.cardkeeper.ui.common.DateUtils
+import com.vijay.cardkeeper.ui.common.DateVisualTransformation
 
 class AadharCardFormState(initialCard: AadharCard?) {
         // QR data fields
         var referenceId by mutableStateOf(initialCard?.referenceId ?: "")
         var holderName by mutableStateOf(initialCard?.holderName ?: "")
-        var dob by mutableStateOf(initialCard?.dob ?: "")
+        
+        // Date field - Internal raw storage
+        // Aadhar might have YOB (4 digits) or DOB (8 digits).
+        var rawDob by mutableStateOf(initialCard?.dob?.filter { it.isDigit() } ?: "")
+        
+        // Exposed formatted property for AddItemScreen
+        val dob: String
+            get() = DateUtils.formatDate(rawDob)
+            
+        var dobError by mutableStateOf(false)
+
         var gender by mutableStateOf(initialCard?.gender ?: "")
         var address by mutableStateOf(initialCard?.address ?: "")
         var email by mutableStateOf(initialCard?.email ?: "")
@@ -77,6 +92,8 @@ fun AadharCardForm(
         onSave: () -> Unit,
         onNavigateBack: () -> Unit
 ) {
+        val dateVisualTransformation = remember { DateVisualTransformation() }
+
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 // Scan Buttons Row
                 Row(
@@ -324,10 +341,18 @@ fun AadharCardForm(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedTextField(
-                                value = state.dob,
-                                onValueChange = { state.dob = it },
-                                label = { Text("DOB / YOB") },
-                                modifier = Modifier.weight(1f)
+                                value = state.rawDob,
+                                onValueChange = {
+                                    if (it.length <= 8 && it.all { char -> char.isDigit() }) {
+                                        state.rawDob = it
+                                        state.dobError = !DateUtils.isValidDate(it, DateFormatType.INDIA) && it.length == 8
+                                    }
+                                },
+                                label = { Text("DOB (DD/MM/YYYY)") },
+                                modifier = Modifier.weight(1f),
+                                visualTransformation = dateVisualTransformation,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                isError = state.dobError
                         )
                         OutlinedTextField(
                                 value = state.gender,

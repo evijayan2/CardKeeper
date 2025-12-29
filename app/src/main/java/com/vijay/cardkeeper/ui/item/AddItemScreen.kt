@@ -547,8 +547,8 @@ fun AddItemScreen(
                                                                                         details.dob
                                                                                 ) {
                                                                                         passportState
-                                                                                                .dob =
-                                                                                                it
+                                                                                                .rawDob =
+                                                                                                it.filter { c -> c.isDigit() }
                                                                                 }
                                                                                 setIfNotNull(
                                                                                         details.sex
@@ -561,15 +561,15 @@ fun AddItemScreen(
                                                                                         details.dateOfExpiry
                                                                                 ) {
                                                                                         passportState
-                                                                                                .dateOfExpiry =
-                                                                                                it
+                                                                                                .rawDateOfExpiry =
+                                                                                                it.filter { c -> c.isDigit() }
                                                                                 }
                                                                                 setIfNotNull(
                                                                                         details.dateOfIssue
                                                                                 ) {
                                                                                         passportState
-                                                                                                .dateOfIssue =
-                                                                                                it
+                                                                                                .rawDateOfIssue =
+                                                                                                it.filter { c -> c.isDigit() }
                                                                                 }
                                                                                 setIfNotNull(
                                                                                         details.placeOfBirth
@@ -640,14 +640,14 @@ fun AddItemScreen(
                                                                                                         .isNotEmpty()
                                                                                         )
                                                                                                 identityState
-                                                                                                        .dob =
-                                                                                                        details.dob
+                                                                                                        .rawDob =
+                                                                                                        details.dob.filter { it.isDigit() }
                                                                                         if (details.expiryDate
                                                                                                         .isNotEmpty()
                                                                                         )
                                                                                                 identityState
-                                                                                                        .expiry =
-                                                                                                        details.expiryDate
+                                                                                                        .rawExpiry =
+                                                                                                        details.expiryDate.filter { it.isDigit() }
                                                                                         if (details.address
                                                                                                         .isNotEmpty()
                                                                                         )
@@ -720,8 +720,8 @@ fun AddItemScreen(
                                                                                                         .isEmpty()
                                                                                         )
                                                                                                 identityState
-                                                                                                        .dob =
-                                                                                                        details.dob
+                                                                                                        .rawDob =
+                                                                                                        details.dob.filter { it.isDigit() }
                                                                                         if (identityState
                                                                                                         .sex
                                                                                                         .isEmpty()
@@ -776,8 +776,8 @@ fun AddItemScreen(
                                                                                                 .isEmpty()
                                                                                 )
                                                                                         identityState
-                                                                                                .dob =
-                                                                                                details.dob
+                                                                                                 .rawDob =
+                                                                                                 details.dob.filter { it.isDigit() }
                                                                                 if (identityState
                                                                                                 .address
                                                                                                 .isEmpty()
@@ -861,8 +861,8 @@ fun AddItemScreen(
                                                                                                         .dob
                                                                                                         .isEmpty())
                                                                         ) {
-                                                                                greenCardState.dob =
-                                                                                        details.dob
+                                                                                greenCardState.rawDob =
+                                                                                        details.dob.filter { it.isDigit() }
                                                                         }
                                                                         if (details.expiryDate
                                                                                         .isNotEmpty() &&
@@ -872,8 +872,8 @@ fun AddItemScreen(
                                                                                                         .isEmpty())
                                                                         ) {
                                                                                 greenCardState
-                                                                                        .expiryDate =
-                                                                                        details.expiryDate
+                                                                                        .rawExpiryDate =
+                                                                                        details.expiryDate.filter { it.isDigit() }
                                                                         }
                                                                         if (details.sex
                                                                                         .isNotEmpty() &&
@@ -904,8 +904,8 @@ fun AddItemScreen(
                                                                                                         .isEmpty())
                                                                         ) {
                                                                                 greenCardState
-                                                                                        .residentSince =
-                                                                                        details.residentSince
+                                                                                        .rawResidentSince =
+                                                                                        details.residentSince.filter { it.isDigit() }
                                                                         }
                                                                         if (details.category
                                                                                         .isNotEmpty() &&
@@ -1085,9 +1085,9 @@ fun AddItemScreen(
                                 identityState.firstName = details.name.substringBefore(" ")
                                 identityState.lastName = details.name.substringAfterLast(" ", "")
                         }
-                        if (details.dob.isNotEmpty()) identityState.dob = details.dob
+                        if (details.dob.isNotEmpty()) identityState.rawDob = details.dob.filter { it.isDigit() }
                         if (details.expiryDate.isNotEmpty())
-                                identityState.expiry = details.expiryDate
+                                identityState.rawExpiry = details.expiryDate.filter { it.isDigit() }
                         if (details.address.isNotEmpty()) identityState.address = details.address
                         if (details.sex.isNotEmpty()) identityState.sex = details.sex
                         if (details.eyeColor.isNotEmpty()) identityState.eyeColor = details.eyeColor
@@ -1572,7 +1572,7 @@ fun AddItemScreen(
                                                         aadharCardState.holderName = result.name
                                                 }
                                                 if (result.dob.isNotEmpty()) {
-                                                        aadharCardState.dob = result.dob
+                                                        aadharCardState.rawDob = result.dob.filter { it.isDigit() }
                                                 }
                                                 if (result.gender.isNotEmpty()) {
                                                         aadharCardState.gender = result.gender
