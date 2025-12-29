@@ -28,11 +28,8 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Strip machine-specific gradle properties
-        run: sed -i '/org.gradle.java.home/d' gradle.properties
-
       - name: Build with Gradle
-        run: ./gradlew assembleRelease --no-daemon -x lintVitalRelease --info --stacktrace
+        run: ./gradlew assembleRelease --no-daemon -x lintVitalRelease --console=plain
 
       - name: Sign APK
         id: sign_app
