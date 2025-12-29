@@ -64,7 +64,7 @@ class AuthActivity : FragmentActivity() {
             })
 
         promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Biometric login for CardKeeper")
+            .setTitle("Biometric login for Kards")
             .setSubtitle("Log in using your biometric credential")
             .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL)
             .build()
@@ -149,7 +149,7 @@ class AuthActivity : FragmentActivity() {
     private fun showSecurityRequiredDialog() {
         AlertDialog.Builder(this)
             .setTitle("Device Security Required")
-            .setMessage("To secure your data, CardKeeper requires your device to be protected by a Lock Screen (PIN, Pattern, or Password) or Biometrics.\n\nPlease set up security in Android Settings and try again.")
+            .setMessage("To secure your data, Kards requires your device to be protected by a Lock Screen (PIN, Pattern, or Password) or Biometrics.\n\nPlease set up security in Android Settings and try again.")
             .setPositiveButton("Exit") { _, _ ->
                 finishAffinity()
             }
