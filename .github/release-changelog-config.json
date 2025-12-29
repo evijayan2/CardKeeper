@@ -1,0 +1,26 @@
+{
+  "categories": [
+    {
+      "title": "## 🚀 Features",
+      "labels": ["feature", "enhancement"],
+      "prefix": ["feat:", "Feat:"]
+    },
+    {
+      "title": "## 🐛 Fixes",
+      "labels": ["bug", "fix"],
+      "prefix": ["fix:", "Fix:"]
+    },
+    {
+      "title": "## ⚙️ CI/CD & internal",
+      "labels": ["ci", "chore"],
+      "prefix": ["CI:", "chore:"]
+    }
+  ],
+  "ignore_labels": [
+    "ignore"
+  ],
+  "sort": "ASC",
+  "template": "# Release Notes\n\n${{CHANGELOG}}\n\n---\n*Full Changelog: ${{RELEASE_DIFF_URL}}*",
+  "unmapped_information": "## 📦 Other changes\n\n${{CHANGELOG}}",
+  "empty_template": "# Release Notes\n\nNo major changes in this release."
+}

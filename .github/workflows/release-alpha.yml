@@ -23,11 +23,24 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
+      - name: Build Changelog
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v5
+        with:
+          configuration: ".github/release-changelog-config.json"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          generate-job-summary: true
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew assembleRelease -x lintVitalRelease
+        run: ./gradlew assembleRelease --no-daemon -x lintVitalRelease
 
       - name: Sign APK
         id: sign_app
@@ -51,8 +64,9 @@ jobs:
           files: app/build/outputs/apk/release/Kards-${{ github.ref_name }}.apk
           name: Alpha Release ${{ github.ref_name }}
           tag_name: ${{ github.ref }}
+          body: ${{ steps.build_changelog.outputs.changelog }}
           draft: false
           prerelease: false
-          generate_release_notes: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
