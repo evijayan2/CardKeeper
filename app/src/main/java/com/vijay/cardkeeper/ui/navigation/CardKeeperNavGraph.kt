@@ -25,6 +25,7 @@ object CardKeeperDestinations {
     const val VIEW_AADHAR_ROUTE = "view_aadhar/{aadharId}"
     const val VIEW_REWARDS_ROUTE = "view_rewards/{accountId}"
     const val SEARCH_ROUTE = "search"
+    const val SETTINGS_ROUTE = "settings"
 }
 
 @Composable
@@ -59,6 +60,9 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                     },
                     navigateToSearch = {
                         navController.navigate(CardKeeperDestinations.SEARCH_ROUTE)
+                    },
+                    navigateToSettings = {
+                        navController.navigate(CardKeeperDestinations.SETTINGS_ROUTE)
                     }
             )
         }
@@ -78,6 +82,11 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                                 }
                         route?.let { navController.navigate(it) }
                     }
+            )
+        }
+        composable(route = CardKeeperDestinations.SETTINGS_ROUTE) {
+            com.vijay.cardkeeper.ui.settings.SettingsScreen(
+                navigateBack = { navController.popBackStack() }
             )
         }
         composable(

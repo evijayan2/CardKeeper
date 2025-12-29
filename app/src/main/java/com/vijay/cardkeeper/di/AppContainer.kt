@@ -16,6 +16,7 @@ interface AppContainer {
     val greenCardRepository: GreenCardRepository
     val aadharCardRepository: AadharCardRepository
     val searchRepository: SearchRepository
+    val userPreferencesRepository: com.vijay.cardkeeper.data.repository.UserPreferencesRepository
 }
 
 class DefaultAppContainer(private val context: Context) : AppContainer {
@@ -58,5 +59,9 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 greenCardRepository,
                 aadharCardRepository
         )
+    }
+
+    override val userPreferencesRepository: com.vijay.cardkeeper.data.repository.UserPreferencesRepository by lazy {
+        com.vijay.cardkeeper.data.repository.UserPreferencesRepository(context)
     }
 }

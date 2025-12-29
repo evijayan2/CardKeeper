@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -59,6 +60,7 @@ fun HomeScreen(
         navigateToAadharView: (Int) -> Unit = {},
         navigateToRewardsView: (Int) -> Unit = {},
         navigateToSearch: () -> Unit = {},
+        navigateToSettings: () -> Unit = {},
         viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val bankAccounts by viewModel.bankAccounts.collectAsState(initial = emptyList())
@@ -90,6 +92,9 @@ fun HomeScreen(
                         actions = {
                             IconButton(onClick = navigateToSearch) {
                                 Icon(Icons.Filled.Search, contentDescription = "Search")
+                            }
+                            IconButton(onClick = navigateToSettings) {
+                                Icon(Icons.Filled.Settings, contentDescription = "Settings")
                             }
                         }
                 )

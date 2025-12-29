@@ -121,6 +121,9 @@ dependencies {
     // Security & Encryption
     implementation("net.zetetic:sqlcipher-android:4.12.0")
     implementation("androidx.biometric:biometric:1.1.0")
+    
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
 }
 
 // Task to download UIDAI certificates for Aadhar QR signature verification

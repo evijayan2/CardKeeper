@@ -27,7 +27,13 @@ object AppViewModelProvider {
             )
         }
         initializer { ViewItemViewModel(cardKeeperApplication().container.financialRepository) }
+        initializer { ViewItemViewModel(cardKeeperApplication().container.financialRepository) }
         initializer { SearchViewModel(cardKeeperApplication().container.searchRepository) }
+        initializer {
+            SettingsViewModel(
+                cardKeeperApplication().container.userPreferencesRepository
+            )
+        }
     }
 }
 
