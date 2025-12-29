@@ -113,7 +113,8 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     // Image Loading (Coil)
-    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
 
     // Bouncy Castle for Crypto
     implementation("org.bouncycastle:bcpkix-jdk15to18:1.70")

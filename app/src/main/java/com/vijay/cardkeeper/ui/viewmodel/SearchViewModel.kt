@@ -6,8 +6,9 @@ import com.vijay.cardkeeper.data.model.SearchResult
 import com.vijay.cardkeeper.data.repository.SearchRepository
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
-@OptIn(FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class SearchViewModel(private val searchRepository: SearchRepository) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")

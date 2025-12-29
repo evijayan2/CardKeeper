@@ -18,7 +18,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
+import coil3.request.crossfade
 import com.vijay.cardkeeper.R
 import com.vijay.cardkeeper.data.entity.Passport
 import java.io.File
@@ -48,7 +49,7 @@ fun PassportItem(passport: Passport, onClick: () -> Unit) {
                         if (backgroundUrl != null) {
                                 AsyncImage(
                                         model =
-                                                coil.request.ImageRequest.Builder(
+                                                coil3.request.ImageRequest.Builder(
                                                                 LocalContext.current
                                                         )
                                                         .data(backgroundUrl)
@@ -142,7 +143,7 @@ fun PassportItem(passport: Passport, onClick: () -> Unit) {
                                 if (flagUrl != null) {
                                         AsyncImage(
                                                 model =
-                                                        coil.request.ImageRequest.Builder(
+                                                        coil3.request.ImageRequest.Builder(
                                                                         LocalContext.current
                                                                 )
                                                                 .data(flagUrl)
