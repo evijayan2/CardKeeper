@@ -141,6 +141,11 @@ tasks.register("downloadUidaiCertificates") {
     val outputDir = file("src/main/assets/certs")
     
     doLast {
+        if (System.getenv("CI") == "true") {
+            println("Skipping UIDAI certificate download in CI environment.")
+            return@doLast
+        }
+        
         outputDir.mkdirs()
         
         certs.forEach { (fileName, urlStr) ->
