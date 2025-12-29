@@ -73,3 +73,34 @@ jobs:
           generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump Version and Push
+        if: success()
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Extract current values
+          CURRENT_VERSION_CODE=$(grep 'versionCode =' app/build.gradle.kts | awk '{print $3}')
+          CURRENT_VERSION_NAME=$(grep 'versionName =' app/build.gradle.kts | cut -d '"' -f 2)
+          
+          echo "Current Version: $CURRENT_VERSION_NAME ($CURRENT_VERSION_CODE)"
+          
+          # Increment values
+          NEW_VERSION_CODE=$((CURRENT_VERSION_CODE + 1))
+          
+          # Extract alpha number from 1.0.0-alpha.X
+          ALPHA_NUM=$(echo $CURRENT_VERSION_NAME | grep -oE '[0-9]+$')
+          NEW_ALPHA_NUM=$((ALPHA_NUM + 1))
+          NEW_VERSION_NAME="1.0.0-alpha.$NEW_ALPHA_NUM"
+          
+          echo "New Version: $NEW_VERSION_NAME ($NEW_VERSION_CODE)"
+          
+          # Update build.gradle.kts
+          sed -i "s/versionCode = $CURRENT_VERSION_CODE/versionCode = $NEW_VERSION_CODE/" app/build.gradle.kts
+          sed -i "s/versionName = \"$CURRENT_VERSION_NAME\"/versionName = \"$NEW_VERSION_NAME\"/" app/build.gradle.kts
+          
+          # Commit and Push
+          git add app/build.gradle.kts
+          git commit -m "chore: bump version to $NEW_VERSION_NAME [skip ci]"
+          git push origin HEAD:main
