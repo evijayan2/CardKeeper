@@ -1,0 +1,694 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 15,
+    "identityHash": "278e619a5cb063d2b9eeeb4569f514dd",
+    "entities": [
+      {
+        "tableName": "financial_accounts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `institutionName` TEXT NOT NULL, `accountName` TEXT NOT NULL, `holderName` TEXT NOT NULL, `number` TEXT NOT NULL, `cvv` TEXT, `pinHint` TEXT, `routingNumber` TEXT, `ifscCode` TEXT, `swiftCode` TEXT, `branchCode` TEXT, `wireNumber` TEXT, `accountSubType` TEXT, `branchAddress` TEXT, `branchContactNumber` TEXT, `bankWebUrl` TEXT, `bankBrandColor` INTEGER, `holderAddress` TEXT, `expiryDate` TEXT, `statementDate` INTEGER, `colorTheme` INTEGER, `cardNetwork` TEXT, `notes` TEXT, `cardPin` TEXT, `lostCardContactNumber` TEXT, `frontImagePath` TEXT, `backImagePath` TEXT, `barcode` TEXT, `barcodeFormat` INTEGER, `linkedPhoneNumber` TEXT, `logoImagePath` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "institutionName",
+            "columnName": "institutionName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accountName",
+            "columnName": "accountName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "holderName",
+            "columnName": "holderName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "number",
+            "columnName": "number",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cvv",
+            "columnName": "cvv",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "pinHint",
+            "columnName": "pinHint",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "routingNumber",
+            "columnName": "routingNumber",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ifscCode",
+            "columnName": "ifscCode",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "swiftCode",
+            "columnName": "swiftCode",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "branchCode",
+            "columnName": "branchCode",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "wireNumber",
+            "columnName": "wireNumber",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "accountSubType",
+            "columnName": "accountSubType",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "branchAddress",
+            "columnName": "branchAddress",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "branchContactNumber",
+            "columnName": "branchContactNumber",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bankWebUrl",
+            "columnName": "bankWebUrl",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "bankBrandColor",
+            "columnName": "bankBrandColor",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "holderAddress",
+            "columnName": "holderAddress",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "expiryDate",
+            "columnName": "expiryDate",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "statementDate",
+            "columnName": "statementDate",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "colorTheme",
+            "columnName": "colorTheme",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "cardNetwork",
+            "columnName": "cardNetwork",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "cardPin",
+            "columnName": "cardPin",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lostCardContactNumber",
+            "columnName": "lostCardContactNumber",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "frontImagePath",
+            "columnName": "frontImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "backImagePath",
+            "columnName": "backImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "barcode",
+            "columnName": "barcode",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "barcodeFormat",
+            "columnName": "barcodeFormat",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "linkedPhoneNumber",
+            "columnName": "linkedPhoneNumber",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "logoImagePath",
+            "columnName": "logoImagePath",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "identity_documents",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `country` TEXT NOT NULL, `docNumber` TEXT NOT NULL, `holderName` TEXT NOT NULL, `issueDate` TEXT, `expiryDate` TEXT, `issuingAuthority` TEXT, `metadata` TEXT, `frontImagePath` TEXT, `backImagePath` TEXT, `state` TEXT, `address` TEXT, `dob` TEXT, `sex` TEXT, `eyeColor` TEXT, `height` TEXT, `licenseClass` TEXT, `restrictions` TEXT, `endorsements` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "country",
+            "columnName": "country",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "docNumber",
+            "columnName": "docNumber",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "holderName",
+            "columnName": "holderName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "issueDate",
+            "columnName": "issueDate",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "expiryDate",
+            "columnName": "expiryDate",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "issuingAuthority",
+            "columnName": "issuingAuthority",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "metadata",
+            "columnName": "metadata",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "frontImagePath",
+            "columnName": "frontImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "backImagePath",
+            "columnName": "backImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "address",
+            "columnName": "address",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "dob",
+            "columnName": "dob",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sex",
+            "columnName": "sex",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "eyeColor",
+            "columnName": "eyeColor",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "height",
+            "columnName": "height",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "licenseClass",
+            "columnName": "licenseClass",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "restrictions",
+            "columnName": "restrictions",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "endorsements",
+            "columnName": "endorsements",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "passports",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `passportNumber` TEXT NOT NULL, `countryCode` TEXT NOT NULL, `surname` TEXT, `givenNames` TEXT, `nationality` TEXT, `dob` TEXT, `placeOfBirth` TEXT, `sex` TEXT, `dateOfIssue` TEXT, `dateOfExpiry` TEXT, `authority` TEXT, `endorsements` TEXT, `frontImagePath` TEXT, `backImagePath` TEXT, `fatherName` TEXT, `motherName` TEXT, `spouseName` TEXT, `address` TEXT, `placeOfIssue` TEXT, `fileNumber` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "passportNumber",
+            "columnName": "passportNumber",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "countryCode",
+            "columnName": "countryCode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "surname",
+            "columnName": "surname",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "givenNames",
+            "columnName": "givenNames",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "nationality",
+            "columnName": "nationality",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "dob",
+            "columnName": "dob",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "placeOfBirth",
+            "columnName": "placeOfBirth",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sex",
+            "columnName": "sex",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "dateOfIssue",
+            "columnName": "dateOfIssue",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "dateOfExpiry",
+            "columnName": "dateOfExpiry",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "authority",
+            "columnName": "authority",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "endorsements",
+            "columnName": "endorsements",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "frontImagePath",
+            "columnName": "frontImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "backImagePath",
+            "columnName": "backImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fatherName",
+            "columnName": "fatherName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "motherName",
+            "columnName": "motherName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "spouseName",
+            "columnName": "spouseName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "address",
+            "columnName": "address",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "placeOfIssue",
+            "columnName": "placeOfIssue",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fileNumber",
+            "columnName": "fileNumber",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "green_cards",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `surname` TEXT NOT NULL, `givenName` TEXT NOT NULL, `uscisNumber` TEXT NOT NULL, `category` TEXT NOT NULL, `countryOfBirth` TEXT NOT NULL, `dob` TEXT NOT NULL, `sex` TEXT NOT NULL, `expiryDate` TEXT NOT NULL, `residentSince` TEXT NOT NULL, `frontImagePath` TEXT, `backImagePath` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "surname",
+            "columnName": "surname",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "givenName",
+            "columnName": "givenName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uscisNumber",
+            "columnName": "uscisNumber",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "countryOfBirth",
+            "columnName": "countryOfBirth",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dob",
+            "columnName": "dob",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sex",
+            "columnName": "sex",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expiryDate",
+            "columnName": "expiryDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "residentSince",
+            "columnName": "residentSince",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frontImagePath",
+            "columnName": "frontImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "backImagePath",
+            "columnName": "backImagePath",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "aadhar_cards",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `referenceId` TEXT NOT NULL, `holderName` TEXT NOT NULL, `dob` TEXT NOT NULL, `gender` TEXT NOT NULL, `address` TEXT NOT NULL, `pincode` TEXT, `maskedAadhaarNumber` TEXT NOT NULL, `uid` TEXT, `vid` TEXT, `photoBase64` TEXT, `timestamp` TEXT, `digitalSignature` TEXT, `certificateId` TEXT, `enrollmentNumber` TEXT, `email` TEXT, `mobile` TEXT, `frontImagePath` TEXT, `backImagePath` TEXT, `qrData` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "referenceId",
+            "columnName": "referenceId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "holderName",
+            "columnName": "holderName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dob",
+            "columnName": "dob",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gender",
+            "columnName": "gender",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "address",
+            "columnName": "address",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pincode",
+            "columnName": "pincode",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "maskedAadhaarNumber",
+            "columnName": "maskedAadhaarNumber",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uid",
+            "columnName": "uid",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "vid",
+            "columnName": "vid",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "photoBase64",
+            "columnName": "photoBase64",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "digitalSignature",
+            "columnName": "digitalSignature",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "certificateId",
+            "columnName": "certificateId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "enrollmentNumber",
+            "columnName": "enrollmentNumber",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "email",
+            "columnName": "email",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "mobile",
+            "columnName": "mobile",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "frontImagePath",
+            "columnName": "frontImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "backImagePath",
+            "columnName": "backImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "qrData",
+            "columnName": "qrData",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "gift_cards",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `providerName` TEXT NOT NULL, `cardNumber` TEXT NOT NULL, `pin` TEXT, `frontImagePath` TEXT, `backImagePath` TEXT, `barcode` TEXT, `barcodeFormat` INTEGER, `logoImagePath` TEXT, `notes` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "providerName",
+            "columnName": "providerName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cardNumber",
+            "columnName": "cardNumber",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pin",
+            "columnName": "pin",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "frontImagePath",
+            "columnName": "frontImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "backImagePath",
+            "columnName": "backImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "barcode",
+            "columnName": "barcode",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "barcodeFormat",
+            "columnName": "barcodeFormat",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "logoImagePath",
+            "columnName": "logoImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '278e619a5cb063d2b9eeeb4569f514dd')"
+    ]
+  }
+}

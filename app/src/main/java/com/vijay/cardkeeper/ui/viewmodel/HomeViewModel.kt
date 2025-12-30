@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vijay.cardkeeper.data.entity.AadharCard
 import com.vijay.cardkeeper.data.entity.FinancialAccount
+import com.vijay.cardkeeper.data.entity.GiftCard
 import com.vijay.cardkeeper.data.entity.GreenCard
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.data.entity.Passport
 import com.vijay.cardkeeper.data.repository.AadharCardRepository
 import com.vijay.cardkeeper.data.repository.FinancialRepository
+import com.vijay.cardkeeper.data.repository.GiftCardRepository
 import com.vijay.cardkeeper.data.repository.GreenCardRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
 import com.vijay.cardkeeper.data.repository.PassportRepository
@@ -22,7 +24,8 @@ class HomeViewModel(
         identityRepository: IdentityRepository,
         passportRepository: PassportRepository,
         greenCardRepository: GreenCardRepository,
-        aadharCardRepository: AadharCardRepository
+        aadharCardRepository: AadharCardRepository,
+        giftCardRepository: GiftCardRepository
 ) : ViewModel() {
 
         val bankAccounts: StateFlow<List<FinancialAccount>> =
@@ -78,6 +81,13 @@ class HomeViewModel(
 
         val aadharCards: StateFlow<List<AadharCard>> =
                 aadharCardRepository.allAadharCards.stateIn(
+                        viewModelScope,
+                        SharingStarted.WhileSubscribed(5000),
+                        emptyList()
+                )
+
+        val giftCards: StateFlow<List<GiftCard>> =
+                giftCardRepository.getAllGiftCards().stateIn(
                         viewModelScope,
                         SharingStarted.WhileSubscribed(5000),
                         emptyList()

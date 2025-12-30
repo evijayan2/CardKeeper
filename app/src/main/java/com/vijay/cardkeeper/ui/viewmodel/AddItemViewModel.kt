@@ -8,9 +8,11 @@ import com.vijay.cardkeeper.data.entity.BankAccountSubType
 import com.vijay.cardkeeper.data.entity.DocumentType
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.GreenCard
+import com.vijay.cardkeeper.data.entity.GiftCard
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.data.repository.AadharCardRepository
 import com.vijay.cardkeeper.data.repository.FinancialRepository
+import com.vijay.cardkeeper.data.repository.GiftCardRepository
 import com.vijay.cardkeeper.data.repository.GreenCardRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
 import kotlinx.coroutines.flow.emitAll
@@ -21,7 +23,8 @@ class AddItemViewModel(
         private val identityRepository: IdentityRepository,
         private val passportRepository: com.vijay.cardkeeper.data.repository.PassportRepository,
         private val greenCardRepository: GreenCardRepository,
-        private val aadharCardRepository: AadharCardRepository
+        private val aadharCardRepository: AadharCardRepository,
+        private val giftCardRepository: GiftCardRepository
 ) : ViewModel() {
 
         fun saveFinancialAccount(
@@ -115,6 +118,8 @@ class AddItemViewModel(
         suspend fun getGreenCard(id: Int) = greenCardRepository.getGreenCard(id)
 
         suspend fun getAadharCard(id: Int) = aadharCardRepository.getAadharCard(id)
+
+        suspend fun getGiftCard(id: Int) = giftCardRepository.getGiftCardById(id)
 
         fun saveIdentityDocument(
                 id: Int = 0,
@@ -212,6 +217,20 @@ class AddItemViewModel(
                 viewModelScope.launch { aadharCardRepository.delete(aadharCard) }
         }
 
+        fun saveGiftCard(giftCard: GiftCard) {
+                viewModelScope.launch {
+                        if (giftCard.id > 0) {
+                                giftCardRepository.updateGiftCard(giftCard)
+                        } else {
+                                giftCardRepository.insertGiftCard(giftCard)
+                        }
+                }
+        }
+
+        fun deleteGiftCard(giftCard: GiftCard) {
+                viewModelScope.launch { giftCardRepository.deleteGiftCard(giftCard) }
+        }
+
         fun getItem(id: Int?, type: String?): kotlinx.coroutines.flow.Flow<Any?> =
                 kotlinx.coroutines.flow.flow {
                         if (id == null || id == 0) {
@@ -227,6 +246,8 @@ class AddItemViewModel(
                                         emitAll(greenCardRepository.getGreenCard(id))
                                 } else if (type == "aadhar") {
                                         emitAll(aadharCardRepository.getAadharCard(id))
+                                } else if (type == "giftcard") {
+                                        emit(giftCardRepository.getGiftCardById(id))
                                 }
                         }
                 }

@@ -14,7 +14,8 @@ object AppViewModelProvider {
                     cardKeeperApplication().container.identityRepository,
                     cardKeeperApplication().container.passportRepository,
                     cardKeeperApplication().container.greenCardRepository,
-                    cardKeeperApplication().container.aadharCardRepository
+                    cardKeeperApplication().container.aadharCardRepository,
+                    cardKeeperApplication().container.giftCardRepository
             )
         }
         initializer {
@@ -23,10 +24,16 @@ object AppViewModelProvider {
                     cardKeeperApplication().container.identityRepository,
                     cardKeeperApplication().container.passportRepository,
                     cardKeeperApplication().container.greenCardRepository,
-                    cardKeeperApplication().container.aadharCardRepository
+                    cardKeeperApplication().container.aadharCardRepository,
+                    cardKeeperApplication().container.giftCardRepository
             )
         }
-        initializer { ViewItemViewModel(cardKeeperApplication().container.financialRepository) }
+        initializer { 
+            ViewItemViewModel(
+                cardKeeperApplication().container.financialRepository,
+                cardKeeperApplication().container.giftCardRepository
+            ) 
+        }
 
         initializer { SearchViewModel(cardKeeperApplication().container.searchRepository) }
         initializer {

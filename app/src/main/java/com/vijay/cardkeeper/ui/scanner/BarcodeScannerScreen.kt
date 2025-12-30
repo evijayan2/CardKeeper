@@ -65,7 +65,7 @@ import java.util.concurrent.Executors
  */
 @Composable
 fun BarcodeScannerScreen(
-        onBarcodeScanned: (barcodeData: String, capturedImage: Bitmap?) -> Unit,
+        onBarcodeScanned: (barcodeData: String, format: Int, capturedImage: Bitmap?) -> Unit,
         onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -214,6 +214,7 @@ fun BarcodeScannerScreen(
 
                                                                 onBarcodeScanned(
                                                                         rawValue,
+                                                                        barcode.format,
                                                                         capturedBitmap
                                                                 )
                                                             }

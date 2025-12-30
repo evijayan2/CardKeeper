@@ -5,6 +5,7 @@ import com.vijay.cardkeeper.data.AppDatabase
 import com.vijay.cardkeeper.data.repository.AadharCardRepository
 import com.vijay.cardkeeper.data.repository.FinancialRepository
 import com.vijay.cardkeeper.data.repository.GreenCardRepository
+import com.vijay.cardkeeper.data.repository.GiftCardRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
 import com.vijay.cardkeeper.data.repository.SearchRepository
 
@@ -14,6 +15,7 @@ interface AppContainer {
     val identityRepository: IdentityRepository
     val passportRepository: com.vijay.cardkeeper.data.repository.PassportRepository
     val greenCardRepository: GreenCardRepository
+    val giftCardRepository: GiftCardRepository
     val aadharCardRepository: AadharCardRepository
     val searchRepository: SearchRepository
     val userPreferencesRepository: com.vijay.cardkeeper.data.repository.UserPreferencesRepository
@@ -45,6 +47,10 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     }
     override val greenCardRepository: GreenCardRepository by lazy {
         GreenCardRepository(database.greenCardDao())
+    }
+
+    override val giftCardRepository: GiftCardRepository by lazy {
+        com.vijay.cardkeeper.data.repository.GiftCardRepositoryImpl(database.giftCardDao())
     }
 
     override val aadharCardRepository: AadharCardRepository by lazy {

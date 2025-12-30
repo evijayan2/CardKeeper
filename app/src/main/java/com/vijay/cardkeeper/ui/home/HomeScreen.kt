@@ -44,6 +44,7 @@ import com.vijay.cardkeeper.data.entity.AccountType
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.data.entity.Passport
+import com.vijay.cardkeeper.data.entity.GiftCard
 import com.vijay.cardkeeper.ui.viewmodel.AppViewModelProvider
 import com.vijay.cardkeeper.ui.viewmodel.HomeViewModel
 import com.vijay.cardkeeper.util.LogoUtils
@@ -59,6 +60,7 @@ fun HomeScreen(
         navigateToPassportView: (Int) -> Unit = {},
         navigateToGreenCardView: (Int) -> Unit = {},
         navigateToAadharView: (Int) -> Unit = {},
+        navigateToGiftCardView: (Int) -> Unit = {},
         navigateToRewardsView: (Int) -> Unit = {},
         navigateToSearch: () -> Unit = {},
         navigateToSettings: () -> Unit = {},
@@ -70,6 +72,7 @@ fun HomeScreen(
     val passportState by viewModel.passports.collectAsState(initial = emptyList())
     val greenCardState by viewModel.greenCards.collectAsState(initial = emptyList())
     val aadharCardState by viewModel.aadharCards.collectAsState(initial = emptyList())
+    val giftCards by viewModel.giftCards.collectAsState(initial = emptyList())
     var selectedTab by remember { mutableStateOf(0) }
     // Update tabs list
     val tabs = listOf("Finance", "Identity", "Passports", "Rewards")
@@ -134,6 +137,16 @@ fun HomeScreen(
                                     // or keep 0 and just set type.
                                     // Let's use 3 to match the tabs 0,1,2,3
                                     navigateToItemEntry(3, "REWARDS_CARD")
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Filled.CardGiftcard, contentDescription = null)
+                                }
+                        )
+                        DropdownMenuItem(
+                                text = { Text("Gift Card") },
+                                onClick = {
+                                    showMenu = false
+                                    navigateToItemEntry(6, "GIFT_CARD")
                                 },
                                 leadingIcon = {
                                     Icon(Icons.Filled.CardGiftcard, contentDescription = null)
@@ -235,7 +248,7 @@ fun HomeScreen(
                                 navigateToAadharView
                         )
                 2 -> PassportList(passportState, navigateToPassportView)
-                3 -> RewardsList(rewardsCards, navigateToRewardsView)
+                3 -> RewardsList(rewardsCards, giftCards, navigateToRewardsView, navigateToGiftCardView)
             }
         }
     }
@@ -250,11 +263,84 @@ fun FinancialList(list: List<FinancialAccount>, onItemClick: (Int) -> Unit) {
 }
 
 @Composable
-fun RewardsList(list: List<FinancialAccount>, onItemClick: (Int) -> Unit) {
+fun RewardsList(
+    list: List<FinancialAccount>, 
+    giftCards: List<GiftCard>,
+    onItemClick: (Int) -> Unit,
+    onGiftCardClick: (Int) -> Unit
+) {
     LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) { items(list, key = { it.id }) { account -> RewardsCardItem(account, onItemClick) } }
+    ) { 
+        if (giftCards.isNotEmpty()) {
+            item {
+                Text("Gift Cards", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+            }
+            items(giftCards, key = { "gc_${it.id}" }) { card -> GiftCardItem(card, onGiftCardClick) }
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Rewards Cards", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+            }
+        }
+        items(list, key = { "rc_${it.id}" }) { account -> RewardsCardItem(account, onItemClick) } 
+    }
+}
+
+@Composable
+fun GiftCardItem(giftCard: GiftCard, onItemClick: (Int) -> Unit) {
+    Card(
+            modifier = Modifier.fillMaxWidth().clickable { onItemClick(giftCard.id) },
+            colors =
+                    CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+    ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Document Icon or Image (Front Image or Logo)
+            val imagePath = giftCard.logoImagePath ?: giftCard.frontImagePath
+            if (imagePath != null) {
+                AsyncImage(
+                        model = File(imagePath),
+                        contentDescription = null,
+                        modifier =
+                                Modifier.size(60.dp)
+                                        .clip(
+                                                androidx.compose.foundation.shape
+                                                        .RoundedCornerShape(8.dp)
+                                        ),
+                        contentScale = ContentScale.Crop,
+                        fallback = painterResource(R.drawable.placeholder_image)
+                )
+            } else {
+                Icon(
+                        imageVector = Icons.Default.CardGiftcard,
+                        contentDescription = null,
+                        modifier = Modifier.size(60.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            val rawNumber = giftCard.qrCode.takeIf { !it.isNullOrEmpty() } ?: giftCard.cardNumber
+            val cardNumber = rawNumber.trim().takeLast(4).padStart(rawNumber.trim().length, '*')
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                        text = giftCard.providerName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                )
+                Text(
+                        text = "Card #: " + cardNumber, 
+                        style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    }
 }
 
 @Composable

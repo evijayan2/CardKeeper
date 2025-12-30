@@ -31,6 +31,7 @@ import com.vijay.cardkeeper.data.entity.AccountType
 import com.vijay.cardkeeper.data.entity.DocumentType
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.IdentityDocument
+import com.vijay.cardkeeper.data.entity.GiftCard
 import com.vijay.cardkeeper.data.entity.Passport
 import com.vijay.cardkeeper.scanning.AadharQrScanner
 import com.vijay.cardkeeper.scanning.ChequeScanner
@@ -42,11 +43,13 @@ import com.vijay.cardkeeper.scanning.PaymentCardScanner
 import com.vijay.cardkeeper.scanning.RewardsScanner
 import com.vijay.cardkeeper.ui.item.forms.AadharCardForm
 import com.vijay.cardkeeper.ui.item.forms.FinancialForm
+import com.vijay.cardkeeper.ui.item.forms.GiftCardForm
 import com.vijay.cardkeeper.ui.item.forms.GreenCardForm
 import com.vijay.cardkeeper.ui.item.forms.IdentityForm
 import com.vijay.cardkeeper.ui.item.forms.PassportForm
 import com.vijay.cardkeeper.ui.item.forms.rememberAadharCardFormState
 import com.vijay.cardkeeper.ui.item.forms.rememberFinancialFormState
+import com.vijay.cardkeeper.ui.item.forms.rememberGiftCardFormState
 import com.vijay.cardkeeper.ui.item.forms.rememberGreenCardFormState
 import com.vijay.cardkeeper.ui.item.forms.rememberIdentityFormState
 import com.vijay.cardkeeper.ui.item.forms.rememberPassportFormState
@@ -77,6 +80,7 @@ fun AddItemScreen(
                                 2 -> "passport"
                                 4 -> "greencard"
                                 5 -> "aadhar"
+                                6 -> "giftcard"
                                 else -> "financial"
                         }
         // Load existing item if editing
@@ -104,6 +108,7 @@ fun AddItemScreen(
                         selectedCategory = 4
                 else if (currentItem is com.vijay.cardkeeper.data.entity.AadharCard)
                         selectedCategory = 5
+                else if (currentItem is GiftCard) selectedCategory = 6
         }
 
         // Parse initialType from documentType string for financial accounts
@@ -139,6 +144,7 @@ fun AddItemScreen(
                 rememberGreenCardFormState(item as? com.vijay.cardkeeper.data.entity.GreenCard)
         val aadharCardState =
                 rememberAadharCardFormState(item as? com.vijay.cardkeeper.data.entity.AadharCard)
+        val giftCardState = rememberGiftCardFormState(item as? GiftCard)
 
         // Scanners
         val paymentScanner = remember { PaymentCardScanner() }
@@ -936,6 +942,34 @@ fun AddItemScreen(
                                                                                         .frontPath =
                                                                                         savedPath
                                                                         }
+                                                                        }
+                                                                6 -> {
+                                                                        // Gift Card
+                                                                        if (scanningBack) {
+                                                                                giftCardState.backBitmap = bitmap
+                                                                                giftCardState.backImagePath = savedPath
+                                                                                // Optional: scan barcode from back image
+                                                                                val res = rewardsScanner.scan(bitmap)
+                                                                                res.barcode?.let { 
+                                                                                    giftCardState.barcode = it
+                                                                                }
+                                                                                res.barcodeFormat?.let { giftCardState.barcodeFormat = it }
+                                                                                res.shopName?.let {
+                                                                                     if (giftCardState.providerName.isBlank()) {
+                                                                                        giftCardState.providerName = it
+                                                                                    }
+                                                                                }
+                                                                        } else {
+                                                                                giftCardState.frontBitmap = bitmap
+                                                                                giftCardState.frontImagePath = savedPath
+                                                                                // Scan front image for provider name (OCR)
+                                                                                val res = rewardsScanner.scan(bitmap)
+                                                                                res.shopName?.let {
+                                                                                    if (giftCardState.providerName.isBlank()) {
+                                                                                        giftCardState.providerName = it
+                                                                                    }
+                                                                                }
+                                                                        }
                                                                 }
                                                         }
                                                 }
@@ -1009,6 +1043,7 @@ fun AddItemScreen(
                                 2 -> "Update Passport"
                                 4 -> "Update Green Card"
                                 5 -> "Update Aadhar"
+                                6 -> "Update Gift Card"
                                 else -> {
                                         when (identityState.type) {
                                                 DocumentType.DRIVER_LICENSE ->
@@ -1040,6 +1075,7 @@ fun AddItemScreen(
                                 2 -> "Add Passport"
                                 4 -> "Add Green Card"
                                 5 -> "Add Aadhar"
+                                6 -> "Add Gift Card"
                                 else -> {
                                         when (identityState.type) {
                                                 DocumentType.DRIVER_LICENSE -> "Add Driver License"
@@ -1064,6 +1100,7 @@ fun AddItemScreen(
                                 }
                         }
                         2, 4 -> Icons.Filled.AccountBox
+                        6 -> Icons.Filled.CardGiftcard
                         else -> {
                                 when (identityState.type) {
                                         DocumentType.DRIVER_LICENSE -> Icons.Filled.DirectionsCar
@@ -1073,10 +1110,18 @@ fun AddItemScreen(
                 }
 
         // Barcode result handler - captures data only (image is handled by Scan Back)
-        val handleBarcodeResult: (String, android.graphics.Bitmap?) -> Unit = { rawData, _ ->
+        val handleBarcodeResult: (String, Int, android.graphics.Bitmap?) -> Unit = { rawData, format, _ ->
                 showBarcodeScanner = false
 
-                scope.launch {
+                if (selectedCategory == 6) {
+                    if (format == com.google.mlkit.vision.barcode.common.Barcode.FORMAT_QR_CODE) {
+                         giftCardState.qrCode = rawData
+                    } else {
+                         giftCardState.barcode = rawData
+                         giftCardState.barcodeFormat = format
+                    }
+                } else {
+                    scope.launch {
                         val details = driverLicenseScanner.parseAAMVAData(rawData)
 
                         // Populate form fields from barcode data
@@ -1102,6 +1147,7 @@ fun AddItemScreen(
                         if (details.issuingAuthority.isNotEmpty())
                                 identityState.issuingAuthority = details.issuingAuthority
                         if (details.country.isNotEmpty()) identityState.country = details.country
+                    }
                 }
         }
 
@@ -1540,6 +1586,40 @@ fun AddItemScreen(
                                                         onNavigateBack = navigateBack
                                                 )
                                         }
+                                        6 -> {
+                                                GiftCardForm(
+                                                        state = giftCardState,
+                                                        onScanFront = { scanDocument(false) },
+                                                        onScanBack = { scanDocument(true) },
+                                                        onScanBarcode = { showBarcodeScanner = true }
+                                                )
+                                                
+                                                Button(
+                                                        onClick = {
+                                                                if (giftCardState.validate()) {
+                                                                        viewModel.saveGiftCard(
+                                                                                GiftCard(
+                                                                                        id = documentId ?: 0,
+                                                                                        providerName = giftCardState.providerName,
+                                                                                        cardNumber = giftCardState.cardNumber,
+                                                                                        pin = giftCardState.pin,
+                                                                                        frontImagePath = giftCardState.frontImagePath,
+                                                                                        backImagePath = giftCardState.backImagePath,
+                                                                                        logoImagePath = giftCardState.logoImagePath,
+                                                                                        barcode = giftCardState.barcode,
+                                                                                        barcodeFormat = giftCardState.barcodeFormat,
+                                                                                        qrCode = giftCardState.qrCode,
+                                                                                        notes = giftCardState.notes
+                                                                                )
+                                                                        )
+                                                                        navigateBack()
+                                                                }
+                                                        },
+                                                        modifier = Modifier.fillMaxWidth()
+                                                ) {
+                                                        Text("Save Gift Card")
+                                                }
+                                        }
                                         else -> {
                                                 Text("Unsupported category: $selectedCategory")
                                         }
@@ -1558,7 +1638,7 @@ fun AddItemScreen(
                 // Aadhar QR Scanner Overlay
                 if (showAadharQrScanner) {
                         BarcodeScannerScreen(
-                                onBarcodeScanned = { qrData, _ ->
+                                onBarcodeScanned = { qrData, _, _ ->
                                         showAadharQrScanner = false
                                         scope.launch {
                                                 val result = aadharQrScanner.parse(qrData)

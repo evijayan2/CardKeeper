@@ -10,6 +10,7 @@ import kotlinx.coroutines.tasks.await
 data class RewardsScanResult(
         val barcode: String? = null,
         val barcodeFormat: Int? = null,
+        val qrCode: String? = null,
         val shopName: String? = null
 )
 
@@ -23,14 +24,21 @@ class RewardsScanner {
 
         var barcode: String? = null
         var format: Int? = null
+        var qrCode: String? = null
         var shopName: String? = null
 
         // 1. Scan Barcode
         try {
             val barcodes = barcodeScanner.process(image).await()
             barcodes.firstOrNull()?.let {
-                barcode = it.rawValue
-                format = it.format
+                val rawValue = it.rawValue
+                val fmt = it.format
+                if (fmt == com.google.mlkit.vision.barcode.common.Barcode.FORMAT_QR_CODE) {
+                    qrCode = rawValue
+                } else {
+                    barcode = rawValue
+                    format = fmt
+                }
             }
         } catch (e: Exception) {
             // Ignore error
@@ -45,6 +53,6 @@ class RewardsScanner {
             // Ignore error
         }
 
-        return RewardsScanResult(barcode, format, shopName)
+        return RewardsScanResult(barcode, format, qrCode, shopName)
     }
 }

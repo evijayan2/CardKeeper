@@ -9,6 +9,7 @@ import com.vijay.cardkeeper.data.dao.FinancialAccountDao
 import com.vijay.cardkeeper.data.dao.IdentityDocumentDao
 import com.vijay.cardkeeper.data.entity.AadharCard
 import com.vijay.cardkeeper.data.entity.FinancialAccount
+import com.vijay.cardkeeper.data.entity.GiftCard
 import com.vijay.cardkeeper.data.entity.GreenCard
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 
@@ -19,8 +20,9 @@ import com.vijay.cardkeeper.data.entity.IdentityDocument
                         IdentityDocument::class,
                         com.vijay.cardkeeper.data.entity.Passport::class,
                         GreenCard::class,
-                        AadharCard::class],
-        version = 14,
+                        AadharCard::class,
+                        GiftCard::class],
+        version = 16,
         exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -29,6 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun passportDao(): com.vijay.cardkeeper.data.dao.PassportDao
     abstract fun greenCardDao(): com.vijay.cardkeeper.data.dao.GreenCardDao
     abstract fun aadharCardDao(): AadharCardDao
+    abstract fun giftCardDao(): com.vijay.cardkeeper.data.dao.GiftCardDao
 
     companion object {
         val MIGRATION_11_12 =
@@ -93,6 +96,35 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                 }
 
+        val MIGRATION_14_15 =
+                object : androidx.room.migration.Migration(14, 15) {
+                    override fun migrate(database: androidx.sqlite.db.SupportSQLiteDatabase) {
+                        database.execSQL(
+                                """
+                    CREATE TABLE IF NOT EXISTS `gift_cards` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `providerName` TEXT NOT NULL,
+                        `cardNumber` TEXT NOT NULL,
+                        `pin` TEXT,
+                        `frontImagePath` TEXT,
+                        `backImagePath` TEXT,
+                        `barcode` TEXT,
+                        `barcodeFormat` INTEGER,
+                        `logoImagePath` TEXT,
+                        `notes` TEXT
+                    )
+                """.trimIndent()
+                        )
+                    }
+                }
+
+        val MIGRATION_15_16 =
+                object : androidx.room.migration.Migration(15, 16) {
+                    override fun migrate(database: androidx.sqlite.db.SupportSQLiteDatabase) {
+                        database.execSQL("ALTER TABLE `gift_cards` ADD COLUMN `qrCode` TEXT")
+                    }
+                }
+
         @Volatile private var INSTANCE: AppDatabase? = null
 
         fun getDatabase(context: Context, passphrase: ByteArray): AppDatabase {
@@ -110,7 +142,9 @@ abstract class AppDatabase : RoomDatabase() {
                                         .addMigrations(
                                                 MIGRATION_11_12,
                                                 MIGRATION_12_13,
-                                                MIGRATION_13_14
+                                                MIGRATION_13_14,
+                                                MIGRATION_14_15,
+                                                MIGRATION_15_16
                                         )
                                         .fallbackToDestructiveMigration(false)
                                         .build()
