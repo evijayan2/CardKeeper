@@ -6,3 +6,5 @@ build/
 **.hprof
 .DS_Store
 **.log
+**.jks
+certs/
