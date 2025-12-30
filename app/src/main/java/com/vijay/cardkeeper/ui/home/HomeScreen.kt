@@ -51,6 +51,8 @@ import com.vijay.cardkeeper.util.LogoUtils
 import com.vijay.cardkeeper.util.StateUtils
 import java.io.File
 
+import androidx.compose.runtime.saveable.rememberSaveable
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -73,7 +75,7 @@ fun HomeScreen(
     val greenCardState by viewModel.greenCards.collectAsState(initial = emptyList())
     val aadharCardState by viewModel.aadharCards.collectAsState(initial = emptyList())
     val giftCards by viewModel.giftCards.collectAsState(initial = emptyList())
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by rememberSaveable { mutableStateOf(0) }
     // Update tabs list
     val tabs = listOf("Finance", "Identity", "Passports", "Rewards")
 
