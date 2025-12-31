@@ -96,8 +96,8 @@ dependencies {
     implementation("com.google.zxing:core:3.5.4")
     
     // Testing
-    testImplementation("org.junit.jupiter:junit-jupiter-api:6.0.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.0.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
     testImplementation("io.mockk:mockk:1.14.7")
     testImplementation("com.google.truth:truth:1.4.5")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
@@ -174,3 +174,7 @@ tasks.named("preBuild") {
     dependsOn("downloadUidaiCertificates")
 }
 
+
+tasks.withType<Test> {
+    useJUnitPlatform()
+}

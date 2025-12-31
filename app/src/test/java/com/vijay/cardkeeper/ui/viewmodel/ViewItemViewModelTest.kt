@@ -5,13 +5,14 @@ import com.google.common.truth.Truth.assertThat
 import com.vijay.cardkeeper.data.entity.AccountType
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.repository.FinancialRepository
+import com.vijay.cardkeeper.data.repository.GiftCardRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -21,15 +22,16 @@ class ViewItemViewModelTest {
 
     private lateinit var viewModel: ViewItemViewModel
     private val repository: FinancialRepository = mockk(relaxed = true)
+    private val giftCardRepository: GiftCardRepository = mockk(relaxed = true)
 
     @BeforeEach
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        viewModel = ViewItemViewModel(repository)
+        viewModel = ViewItemViewModel(repository, giftCardRepository)
     }
 
     @Test
-    fun `loadAccount should update selectedAccount`() = runBlocking {
+    fun `loadAccount should update selectedAccount`() = runTest {
         val account = FinancialAccount(id = 1, institutionName = "Test Bank", type = AccountType.BANK_ACCOUNT, accountName = "Test Account", holderName = "John Doe", number = "12345")
         coEvery { repository.getAccountById(1) } returns account
 
@@ -41,7 +43,7 @@ class ViewItemViewModelTest {
     }
 
     @Test
-    fun `setFullScreenImage should update fullScreenImage`() = runBlocking {
+    fun `setFullScreenImage should update fullScreenImage`() = runTest {
         val path = "/path/to/image.jpg"
         viewModel.setFullScreenImage(path)
 
@@ -51,7 +53,7 @@ class ViewItemViewModelTest {
     }
 
     @Test
-    fun `deleteAccount should call repository`() = runBlocking {
+    fun `deleteAccount should call repository`() = runTest {
         val account = FinancialAccount(id = 1, institutionName = "Test Bank", type = AccountType.BANK_ACCOUNT, accountName = "Test Account", holderName = "John Doe", number = "12345")
         viewModel.deleteAccount(account)
         coVerify { repository.deleteAccount(account) }

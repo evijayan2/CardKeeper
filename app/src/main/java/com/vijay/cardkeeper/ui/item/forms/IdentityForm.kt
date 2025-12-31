@@ -16,6 +16,7 @@ import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.ui.common.DateFormatType
 import com.vijay.cardkeeper.ui.common.DateUtils
 import com.vijay.cardkeeper.ui.common.DateVisualTransformation
+import com.vijay.cardkeeper.util.DateNormalizer
 
 class IdentityFormState(initialDoc: IdentityDocument?, initialType: DocumentType? = null) {
     var type by mutableStateOf(initialDoc?.type ?: initialType ?: DocumentType.DRIVER_LICENSE)
@@ -58,9 +59,9 @@ class IdentityFormState(initialDoc: IdentityDocument?, initialType: DocumentType
     // Helper to determine date format based on country
     val dateFormatType: DateFormatType
         get() = when (country.trim().uppercase()) {
-            "USA", "UNITED STATES", "US" -> DateFormatType.USA
-            "INDIA", "IN", "BHARAT" -> DateFormatType.INDIA
-            else -> if (country.contains("United States", ignoreCase = true)) DateFormatType.USA else DateFormatType.GENERIC
+            "USA", "UNITED STATES", "US" -> com.vijay.cardkeeper.ui.common.DateFormatType.USA
+            "INDIA", "IN", "BHARAT" -> com.vijay.cardkeeper.ui.common.DateFormatType.INDIA
+            else -> if (country.contains("United States", ignoreCase = true)) com.vijay.cardkeeper.ui.common.DateFormatType.USA else com.vijay.cardkeeper.ui.common.DateFormatType.GENERIC
         }
 }
 
@@ -175,13 +176,14 @@ fun IdentityForm(
                 modifier = Modifier.fillMaxWidth()
             )
         
-            val dateLabel = if (state.dateFormatType == DateFormatType.USA) "Expires (MM/DD/YYYY)" else "Expires (DD/MM/YYYY)"
+            val dateLabel = if (state.dateFormatType == com.vijay.cardkeeper.ui.common.DateFormatType.USA) "Expires (MM/DD/YYYY)" else "Expires (DD/MM/YYYY)"
             OutlinedTextField(
                 value = state.rawExpiry,
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                         state.rawExpiry = it
-                        state.expiryError = !DateUtils.isValidDate(it, state.dateFormatType) && it.length == 8
+                        val expiry = DateNormalizer.normalize(it, state.dateFormatType)
+                        state.expiryError = !DateUtils.isValidDate(expiry, state.dateFormatType) && expiry.length == 8
                     }
                 },
                 label = { Text(dateLabel) },
@@ -214,13 +216,14 @@ fun IdentityForm(
                 minLines = 2
             )
 
-            val dobLabel = if (state.dateFormatType == DateFormatType.USA) "Date of Birth (MM/DD/YYYY)" else "Date of Birth (DD/MM/YYYY)"
+            val dobLabel = if (state.dateFormatType == com.vijay.cardkeeper.ui.common.DateFormatType.USA) "Date of Birth (MM/DD/YYYY)" else "Date of Birth (DD/MM/YYYY)"
             OutlinedTextField(
                 value = state.rawDob,
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                         state.rawDob = it
-                        state.dobError = !DateUtils.isValidDate(it, state.dateFormatType) && it.length == 8
+                        val dob = DateNormalizer.normalize(it, state.dateFormatType)
+                        state.dobError = !DateUtils.isValidDate(dob, state.dateFormatType) && dob.length == 8
                     }
                 },
                 label = { Text(dobLabel) },

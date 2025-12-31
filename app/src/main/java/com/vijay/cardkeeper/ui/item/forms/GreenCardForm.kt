@@ -14,6 +14,7 @@ import com.vijay.cardkeeper.data.entity.GreenCard
 import com.vijay.cardkeeper.ui.common.DateFormatType
 import com.vijay.cardkeeper.ui.common.DateUtils
 import com.vijay.cardkeeper.ui.common.DateVisualTransformation
+import com.vijay.cardkeeper.util.DateNormalizer
 
 class GreenCardFormState(initialDoc: GreenCard?) {
     var surname by mutableStateOf(initialDoc?.surname ?: "")
@@ -159,7 +160,8 @@ fun GreenCardForm(
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                         state.rawDob = it
-                        state.dobError = !DateUtils.isValidDate(it, DateFormatType.USA) && it.length == 8
+                        val dob = DateNormalizer.normalize(it, DateFormatType.USA)
+                        state.dobError = !DateUtils.isValidDate(dob, DateFormatType.USA) && dob.length == 8
                     }
                 },
                 label = { Text("Date of Birth (MM/DD/YYYY)") },
@@ -174,7 +176,8 @@ fun GreenCardForm(
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                         state.rawExpiryDate = it
-                        state.expiryError = !DateUtils.isValidDate(it, DateFormatType.USA) && it.length == 8
+                        val dob = DateNormalizer.normalize(it, DateFormatType.USA)
+                        state.expiryError = !DateUtils.isValidDate(dob, DateFormatType.USA) && dob.length == 8
                     }
                 },
                 label = { Text("Card Expires (MM/DD/YYYY)") },
@@ -189,7 +192,8 @@ fun GreenCardForm(
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                         state.rawResidentSince = it
-                        state.residentSinceError = !DateUtils.isValidDate(it, DateFormatType.USA) && it.length == 8
+                        val dob = DateNormalizer.normalize(it, DateFormatType.USA)
+                        state.residentSinceError = !DateUtils.isValidDate(dob, DateFormatType.USA) && dob.length == 8
                     }
                 },
                 label = { Text("Resident Since (MM/DD/YYYY)") },

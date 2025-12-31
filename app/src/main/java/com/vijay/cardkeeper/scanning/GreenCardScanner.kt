@@ -6,6 +6,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.vijay.cardkeeper.data.model.GreenCardMrz
+import com.vijay.cardkeeper.util.DateNormalizer
 import com.vijay.cardkeeper.util.IdentityDetails
 import kotlinx.coroutines.tasks.await
 
@@ -42,11 +43,14 @@ class GreenCardScanner {
         var mrzParsedSuccessfully = false
 
         // 1. Try MRZ Parsing - look for lines with < characters (MRZ separator)
+
         val mrzLines =
-                lines.filter { line ->
-                    val cleaned = line.replace(" ", "")
-                    cleaned.length >= 20 && cleaned.contains("<")
+            lines
+                .map { it.replace(" ", "") }
+                .filter { cleanedLine ->
+                    cleanedLine.length >= 20 && cleanedLine.contains("<")
                 }
+                .map { it.padEnd(30, '<')  }
 
         Log.d(TAG, "Found ${mrzLines.size} potential MRZ lines")
 
@@ -96,12 +100,13 @@ class GreenCardScanner {
                 } catch (e: Exception) {
                     "20"
                 }
-        return "${yearPrefix}${yy}-${mm}-${dd}"
+        val dmt = "${yearPrefix}${yy}-${mm}-${dd}"
+        return DateNormalizer.normalize(dmt, com.vijay.cardkeeper.ui.common.DateFormatType.USA)
     }
 
     fun parseGreenCardMrz(lines: List<String>): GreenCardMrz {
         require(lines.size == 3) { "MRZ must have exactly 3 lines" }
-        require(lines.all { it.length == 30 }) { "Each MRZ line must be exactly 30 characters" }
+        require(lines.all { it.length >= 30 }) { "Each MRZ line must be exactly 30 characters" }
 
         val line1 = lines[0]
         val line2 = lines[1]

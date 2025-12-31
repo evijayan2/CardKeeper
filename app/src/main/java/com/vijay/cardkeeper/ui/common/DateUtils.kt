@@ -5,10 +5,10 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 
-enum class DateFormatType {
-    USA, // MM/DD/YYYY
-    INDIA, // DD/MM/YYYY
-    GENERIC // DD/MM/YYYY
+enum class DateFormatType(val formatPattern: String) {
+    USA("MM/dd/yyyy"), // MM/DD/YYYY
+    INDIA("dd/MM/yyyy"), // DD/MM/YYYY
+    GENERIC("dd/MM/yyyy") // DD/MM/YYYY
 }
 
 object DateUtils {

@@ -29,7 +29,13 @@ class AddItemViewModelTest {
     @BeforeEach
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        viewModel = AddItemViewModel(financialRepository, identityRepository)
+        viewModel = AddItemViewModel(
+            financialRepository, identityRepository,
+            passportRepository = TODO(),
+            greenCardRepository = TODO(),
+            aadharCardRepository = TODO(),
+            giftCardRepository = TODO()
+        )
     }
 
     @Test

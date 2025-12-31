@@ -26,6 +26,7 @@ import com.vijay.cardkeeper.data.entity.AadharCard
 import com.vijay.cardkeeper.ui.common.DateFormatType
 import com.vijay.cardkeeper.ui.common.DateUtils
 import com.vijay.cardkeeper.ui.common.DateVisualTransformation
+import com.vijay.cardkeeper.util.DateNormalizer
 
 class AadharCardFormState(initialCard: AadharCard?) {
         // QR data fields
@@ -345,7 +346,8 @@ fun AadharCardForm(
                                 onValueChange = {
                                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                                         state.rawDob = it
-                                        state.dobError = !DateUtils.isValidDate(it, DateFormatType.INDIA) && it.length == 8
+                                        val dob = DateNormalizer.normalize(it, DateFormatType.INDIA)
+                                        state.dobError = !DateUtils.isValidDate(dob, DateFormatType.INDIA) && dob.length == 8
                                     }
                                 },
                                 label = { Text("DOB (DD/MM/YYYY)") },
