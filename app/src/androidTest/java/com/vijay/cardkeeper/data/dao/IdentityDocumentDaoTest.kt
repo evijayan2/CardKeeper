@@ -41,7 +41,7 @@ class IdentityDocumentDaoTest {
     @Test
     fun insertDocument_and_getDocumentById_should_work_correctly() {
         runBlocking {
-            val doc = IdentityDocument(id = 1, type = DocumentType.PASSPORT, docNumber = "123", issueDate = 0, expiryDate = 1000, holderName = "John Doe", country = "US")
+            val doc = IdentityDocument(id = 1, type = DocumentType.PASSPORT, docNumber = "123", issueDate = "0", expiryDate = "1000", holderName = "John Doe", country = "US")
             dao.insertDocument(doc)
             val retrieved = dao.getDocumentById(1)
             assertThat(retrieved).isEqualTo(doc)
@@ -69,9 +69,9 @@ class IdentityDocumentDaoTest {
             val in40Days = now + TimeUnit.DAYS.toMillis(40)
             val expired = now - TimeUnit.DAYS.toMillis(1)
 
-            val expiringDoc = IdentityDocument(id = 1, type = DocumentType.PASSPORT, expiryDate = in20Days, holderName = "John Doe", country = "US", docNumber = "123")
-            val futureDoc = IdentityDocument(id = 2, type = DocumentType.PASSPORT, expiryDate = in40Days, holderName = "John Doe", country = "US", docNumber = "456")
-            val expiredDoc = IdentityDocument(id = 3, type = DocumentType.PASSPORT, expiryDate = expired, holderName = "John Doe", country = "US", docNumber = "789")
+            val expiringDoc = IdentityDocument(id = 1, type = DocumentType.PASSPORT, expiryDate = in20Days.toString(), holderName = "John Doe", country = "US", docNumber = "123")
+            val futureDoc = IdentityDocument(id = 2, type = DocumentType.PASSPORT, expiryDate = in40Days.toString(), holderName = "John Doe", country = "US", docNumber = "456")
+            val expiredDoc = IdentityDocument(id = 3, type = DocumentType.PASSPORT, expiryDate = expired.toString(), holderName = "John Doe", country = "US", docNumber = "789")
 
             dao.insertDocument(expiringDoc)
             dao.insertDocument(futureDoc)

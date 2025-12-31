@@ -34,7 +34,7 @@ class AppDatabaseTest {
     @Test
     fun getDatabase_should_return_a_non_null_instance() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        val instance = AppDatabase.getDatabase(context)
+        val instance = AppDatabase.getDatabase(context, ByteArray(0))
         assertThat(instance).isNotNull()
     }
 
