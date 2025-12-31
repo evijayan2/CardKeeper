@@ -25,7 +25,8 @@ object AppViewModelProvider {
                     cardKeeperApplication().container.passportRepository,
                     cardKeeperApplication().container.greenCardRepository,
                     cardKeeperApplication().container.aadharCardRepository,
-                    cardKeeperApplication().container.giftCardRepository
+                    cardKeeperApplication().container.giftCardRepository,
+                    androidx.work.WorkManager.getInstance(cardKeeperApplication())
             )
         }
         initializer { 

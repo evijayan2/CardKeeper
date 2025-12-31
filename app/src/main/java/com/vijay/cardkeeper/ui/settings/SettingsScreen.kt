@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vijay.cardkeeper.ui.viewmodel.AppViewModelProvider
@@ -26,7 +28,11 @@ fun SettingsScreen(
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val dateFormat by viewModel.dateFormat.collectAsState()
+
     val notificationsEnabled by viewModel.notificationsEnabled.collectAsState()
+    val reminder1Days by viewModel.reminder1Days.collectAsState()
+    val reminder2Days by viewModel.reminder2Days.collectAsState()
+    val reminder3Days by viewModel.reminder3Days.collectAsState()
     val scrollState = rememberScrollState()
 
     Scaffold(
@@ -118,6 +124,39 @@ fun SettingsScreen(
                         onCheckedChange = { viewModel.toggleNotifications(it) }
                     )
                 }
+                
+                if (notificationsEnabled) {
+                     Spacer(modifier = Modifier.height(16.dp))
+                     Text("Reminder Schedule (Days Before)", style = MaterialTheme.typography.titleSmall)
+                     Spacer(modifier = Modifier.height(8.dp))
+                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                         OutlinedTextField(
+                             value = reminder1Days.toString(),
+                             onValueChange = { viewModel.updateReminder1Days(it) },
+                             label = { Text("1st") },
+                             modifier = Modifier.weight(1f),
+                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                             singleLine = true
+                         )
+                         OutlinedTextField(
+                             value = reminder2Days.toString(),
+                             onValueChange = { viewModel.updateReminder2Days(it) },
+                             label = { Text("2nd") },
+                             modifier = Modifier.weight(1f),
+                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                             singleLine = true
+                         )
+                         OutlinedTextField(
+                             value = reminder3Days.toString(),
+                             onValueChange = { viewModel.updateReminder3Days(it) },
+                             label = { Text("3rd") },
+                             modifier = Modifier.weight(1f),
+                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                             singleLine = true
+                         )
+                     }
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
                 // General Notifications (reuse same preference for now or stub)
                Row(

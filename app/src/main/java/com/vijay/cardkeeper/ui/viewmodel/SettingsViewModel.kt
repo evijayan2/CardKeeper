@@ -31,6 +31,28 @@ class SettingsViewModel(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = true
+
+        )
+
+    val reminder1Days: StateFlow<Int> = userPreferencesRepository.reminder1Days
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = 21
+        )
+
+    val reminder2Days: StateFlow<Int> = userPreferencesRepository.reminder2Days
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = 11
+        )
+
+    val reminder3Days: StateFlow<Int> = userPreferencesRepository.reminder3Days
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = 1
         )
 
     fun selectTheme(theme: String) {
@@ -48,6 +70,27 @@ class SettingsViewModel(
     fun toggleNotifications(enabled: Boolean) {
         viewModelScope.launch {
             userPreferencesRepository.saveNotificationsEnabled(enabled)
+        }
+    }
+
+    fun updateReminder1Days(days: String) {
+        val daysInt = days.toIntOrNull() ?: return
+        viewModelScope.launch {
+            userPreferencesRepository.saveReminder1Days(daysInt)
+        }
+    }
+
+    fun updateReminder2Days(days: String) {
+        val daysInt = days.toIntOrNull() ?: return
+        viewModelScope.launch {
+            userPreferencesRepository.saveReminder2Days(daysInt)
+        }
+    }
+
+    fun updateReminder3Days(days: String) {
+        val daysInt = days.toIntOrNull() ?: return
+        viewModelScope.launch {
+            userPreferencesRepository.saveReminder3Days(daysInt)
         }
     }
 }

@@ -160,8 +160,7 @@ fun GreenCardForm(
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                         state.rawDob = it
-                        val dob = DateNormalizer.normalize(it, DateFormatType.USA)
-                        state.dobError = !DateUtils.isValidDate(dob, DateFormatType.USA) && dob.length == 8
+                        state.dobError = !DateUtils.isValidDate(it, DateFormatType.USA) && it.length == 8
                     }
                 },
                 label = { Text("Date of Birth (MM/DD/YYYY)") },
@@ -176,8 +175,7 @@ fun GreenCardForm(
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                         state.rawExpiryDate = it
-                        val dob = DateNormalizer.normalize(it, DateFormatType.USA)
-                        state.expiryError = !DateUtils.isValidDate(dob, DateFormatType.USA) && dob.length == 8
+                        state.expiryError = !DateUtils.isValidDate(it, DateFormatType.USA) && it.length == 8
                     }
                 },
                 label = { Text("Card Expires (MM/DD/YYYY)") },
@@ -192,8 +190,7 @@ fun GreenCardForm(
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                         state.rawResidentSince = it
-                        val dob = DateNormalizer.normalize(it, DateFormatType.USA)
-                        state.residentSinceError = !DateUtils.isValidDate(dob, DateFormatType.USA) && dob.length == 8
+                        state.residentSinceError = !DateUtils.isValidDate(it, DateFormatType.USA) && it.length == 8
                     }
                 },
                 label = { Text("Resident Since (MM/DD/YYYY)") },

@@ -128,6 +128,9 @@ dependencies {
     
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.7")
+
+    // WorkManager
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
 }
 
 // Task to download UIDAI certificates for Aadhar QR signature verification

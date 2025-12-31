@@ -119,11 +119,15 @@ fun PassportItem(passport: Passport, onClick: () -> Unit) {
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         if (!passport.dateOfExpiry.isNullOrEmpty()) {
-                                                Text(
-                                                        text = "Expires: ${passport.dateOfExpiry}",
-                                                        style = MaterialTheme.typography.labelSmall,
-                                                        color = MaterialTheme.colorScheme.error
-                                                )
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                        Text(
+                                                                text = "Expires: ${passport.dateOfExpiry}",
+                                                                style = MaterialTheme.typography.labelSmall,
+                                                                color = MaterialTheme.colorScheme.error
+                                                        )
+                                                        Spacer(modifier = Modifier.width(8.dp))
+                                                        ExpirationBadge(expiryDateStr = passport.dateOfExpiry)
+                                                }
                                         }
                                 }
 

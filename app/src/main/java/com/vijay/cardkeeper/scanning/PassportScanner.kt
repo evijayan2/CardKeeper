@@ -5,6 +5,8 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.vijay.cardkeeper.data.entity.Passport
+import com.vijay.cardkeeper.ui.common.DateFormatType
+import com.vijay.cardkeeper.util.DateNormalizer
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
 
@@ -208,7 +210,8 @@ class PassportScanner {
         val dd = yymmdd.substring(4, 6)
         // Simple pivot for year: if > 50 assume 19xx, else 20xx
         val yearPrefix = if (yy.toInt() > 50) "19" else "20"
-        return "${yearPrefix}${yy}-${mm}-${dd}"
+        val dmt = "${yearPrefix}${yy}-${mm}-${dd}"
+        return DateNormalizer.normalize(dmt, dateFormatType = DateFormatType.USA)
     }
 
     private fun parseBackSide(lines: List<String>): Passport {

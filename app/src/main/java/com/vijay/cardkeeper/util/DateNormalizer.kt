@@ -55,7 +55,7 @@ object DateNormalizer {
         return a.toInt() <= 12 && b.toInt() <= 12
     }
 
-    private fun parseStrict(input: String): LocalDate? {
+    fun parseStrict(input: String): LocalDate? {
         for (formatter in strictFormatters) {
             try {
                 return LocalDate.parse(input, formatter)

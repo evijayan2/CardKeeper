@@ -59,4 +59,11 @@ class DateNormalizerTest {
             DateNormalizer.normalize("1979-99-99", DateFormatType.GENERIC)
         }
     }
+    @Test
+    fun `parseStrict handles 01-01-2026`() {
+        val input = "01/01/2026"
+        val parsed = DateNormalizer.parseStrict(input)
+        assertNotNull(parsed, "Failed to parse 01/01/2026")
+        assertEquals(java.time.LocalDate.of(2026, 1, 1), parsed)
+    }
 }

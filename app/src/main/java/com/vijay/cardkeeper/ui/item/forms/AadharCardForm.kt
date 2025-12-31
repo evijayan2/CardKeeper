@@ -346,8 +346,7 @@ fun AadharCardForm(
                                 onValueChange = {
                                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                                         state.rawDob = it
-                                        val dob = DateNormalizer.normalize(it, DateFormatType.INDIA)
-                                        state.dobError = !DateUtils.isValidDate(dob, DateFormatType.INDIA) && dob.length == 8
+                                        state.dobError = !DateUtils.isValidDate(it, DateFormatType.INDIA) && it.length == 8
                                     }
                                 },
                                 label = { Text("DOB (DD/MM/YYYY)") },

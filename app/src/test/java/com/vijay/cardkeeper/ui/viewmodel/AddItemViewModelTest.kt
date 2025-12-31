@@ -23,18 +23,24 @@ import org.junit.jupiter.api.Test
 class AddItemViewModelTest {
 
     private lateinit var viewModel: AddItemViewModel
-    private val financialRepository: FinancialRepository = mockk(relaxed = true)
+    private val accountRepository: FinancialRepository = mockk(relaxed = true)
     private val identityRepository: IdentityRepository = mockk(relaxed = true)
+    private val passportRepository: com.vijay.cardkeeper.data.repository.PassportRepository = mockk(relaxed = true)
+    private val greenCardRepository: com.vijay.cardkeeper.data.repository.GreenCardRepository = mockk(relaxed = true)
+    private val aadharCardRepository: com.vijay.cardkeeper.data.repository.AadharCardRepository = mockk(relaxed = true)
+    private val giftCardRepository: com.vijay.cardkeeper.data.repository.GiftCardRepository = mockk(relaxed = true)
+    private val workManager: androidx.work.WorkManager = mockk(relaxed = true)
 
     @BeforeEach
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         viewModel = AddItemViewModel(
             financialRepository, identityRepository,
-            passportRepository = TODO(),
-            greenCardRepository = TODO(),
-            aadharCardRepository = TODO(),
-            giftCardRepository = TODO()
+            passportRepository,
+            greenCardRepository,
+            aadharCardRepository,
+            giftCardRepository,
+            workManager
         )
     }
 

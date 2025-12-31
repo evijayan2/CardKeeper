@@ -25,6 +25,27 @@ class MainActivity : ComponentActivity() {
                 else -> isSystemInDarkTheme()
             }
 
+            // Notification Permission Request for Android 13+
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                val permission = android.Manifest.permission.POST_NOTIFICATIONS
+                val context = androidx.compose.ui.platform.LocalContext.current
+                val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
+                    androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
+                ) { isGranted ->
+                    // Handle outcome if needed, e.g. update state
+                }
+
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    if (androidx.core.content.ContextCompat.checkSelfPermission(
+                            context,
+                            permission
+                        ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                    ) {
+                        launcher.launch(permission)
+                    }
+                }
+            }
+
             CardKeeperTheme(darkTheme = darkTheme) {
                 // A surface container using the 'background' color from the theme
                 Surface(

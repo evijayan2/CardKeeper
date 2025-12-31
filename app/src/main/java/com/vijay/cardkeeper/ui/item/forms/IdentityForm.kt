@@ -182,8 +182,7 @@ fun IdentityForm(
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                         state.rawExpiry = it
-                        val expiry = DateNormalizer.normalize(it, state.dateFormatType)
-                        state.expiryError = !DateUtils.isValidDate(expiry, state.dateFormatType) && expiry.length == 8
+                        state.expiryError = !DateUtils.isValidDate(it, state.dateFormatType) && it.length == 8
                     }
                 },
                 label = { Text(dateLabel) },
@@ -222,8 +221,7 @@ fun IdentityForm(
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                         state.rawDob = it
-                        val dob = DateNormalizer.normalize(it, state.dateFormatType)
-                        state.dobError = !DateUtils.isValidDate(dob, state.dateFormatType) && dob.length == 8
+                        state.dobError = !DateUtils.isValidDate(it, state.dateFormatType) && it.length == 8
                     }
                 },
                 label = { Text(dobLabel) },

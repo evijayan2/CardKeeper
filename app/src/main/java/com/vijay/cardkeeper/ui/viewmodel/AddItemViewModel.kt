@@ -24,8 +24,15 @@ class AddItemViewModel(
         private val passportRepository: com.vijay.cardkeeper.data.repository.PassportRepository,
         private val greenCardRepository: GreenCardRepository,
         private val aadharCardRepository: AadharCardRepository,
-        private val giftCardRepository: GiftCardRepository
+        private val giftCardRepository: GiftCardRepository,
+        private val workManager: androidx.work.WorkManager
 ) : ViewModel() {
+
+        private fun scheduleExpirationCheck() {
+                val request = androidx.work.OneTimeWorkRequestBuilder<com.vijay.cardkeeper.worker.ExpirationCheckWorker>()
+                        .build()
+                workManager.enqueue(request)
+        }
 
         fun saveFinancialAccount(
                 id: Int = 0,
@@ -96,6 +103,7 @@ class AddItemViewModel(
                         } else {
                                 financialRepository.insertAccount(account)
                         }
+                        scheduleExpirationCheck()
                 }
         }
 
@@ -106,6 +114,7 @@ class AddItemViewModel(
                         } else {
                                 financialRepository.insertAccount(account)
                         }
+                        scheduleExpirationCheck()
                 }
         }
 
@@ -168,6 +177,7 @@ class AddItemViewModel(
                         } else {
                                 identityRepository.insertDocument(doc)
                         }
+                        scheduleExpirationCheck()
                 }
         }
 
@@ -178,15 +188,22 @@ class AddItemViewModel(
                         } else {
                                 passportRepository.insert(passport)
                         }
+                        scheduleExpirationCheck()
                 }
         }
 
         fun deleteIdentityDocument(document: IdentityDocument) {
-                viewModelScope.launch { identityRepository.deleteDocument(document) }
+                viewModelScope.launch { 
+                    identityRepository.deleteDocument(document)
+                    scheduleExpirationCheck()
+                }
         }
 
         fun deletePassport(passport: com.vijay.cardkeeper.data.entity.Passport) {
-                viewModelScope.launch { passportRepository.delete(passport) }
+                viewModelScope.launch { 
+                    passportRepository.delete(passport)
+                    scheduleExpirationCheck()
+                }
         }
 
         fun saveGreenCard(greenCard: GreenCard) {
@@ -196,11 +213,15 @@ class AddItemViewModel(
                         } else {
                                 greenCardRepository.insert(greenCard)
                         }
+                        scheduleExpirationCheck()
                 }
         }
 
         fun deleteGreenCard(greenCard: GreenCard) {
-                viewModelScope.launch { greenCardRepository.delete(greenCard) }
+                viewModelScope.launch { 
+                    greenCardRepository.delete(greenCard)
+                    scheduleExpirationCheck()
+                }
         }
 
         fun saveAadharCard(aadharCard: AadharCard) {
@@ -210,11 +231,15 @@ class AddItemViewModel(
                         } else {
                                 aadharCardRepository.insert(aadharCard)
                         }
+                        scheduleExpirationCheck()
                 }
         }
 
         fun deleteAadharCard(aadharCard: AadharCard) {
-                viewModelScope.launch { aadharCardRepository.delete(aadharCard) }
+                viewModelScope.launch { 
+                    aadharCardRepository.delete(aadharCard)
+                    scheduleExpirationCheck()
+                }
         }
 
         fun saveGiftCard(giftCard: GiftCard) {
@@ -224,11 +249,15 @@ class AddItemViewModel(
                         } else {
                                 giftCardRepository.insertGiftCard(giftCard)
                         }
+                        scheduleExpirationCheck()
                 }
         }
 
         fun deleteGiftCard(giftCard: GiftCard) {
-                viewModelScope.launch { giftCardRepository.deleteGiftCard(giftCard) }
+                viewModelScope.launch { 
+                    giftCardRepository.deleteGiftCard(giftCard)
+                    scheduleExpirationCheck()
+                }
         }
 
         fun getItem(id: Int?, type: String?): kotlinx.coroutines.flow.Flow<Any?> =

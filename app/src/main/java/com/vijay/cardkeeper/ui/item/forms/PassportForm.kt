@@ -182,8 +182,7 @@ fun PassportForm(
                     onValueChange = { 
                         if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                             state.rawDob = it
-                            val dob = DateNormalizer.normalize(it, state.dateFormatType)
-                            state.dobError = !DateUtils.isValidDate(dob, state.dateFormatType) && dob.length == 8
+                            state.dobError = !DateUtils.isValidDate(it, state.dateFormatType) && it.length == 8
                         }
                     },
                     label = { Text(dobLabel) },
@@ -219,8 +218,7 @@ fun PassportForm(
                     onValueChange = { 
                         if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                             state.rawDateOfIssue = it
-                            val doi = DateNormalizer.normalize(it, state.dateFormatType)
-                            state.issueError = !DateUtils.isValidDate(doi, state.dateFormatType) && doi.length == 8
+                            state.issueError = !DateUtils.isValidDate(it, state.dateFormatType) && it.length == 8
                         }
                     },
                     label = { Text(dateLabel) },
@@ -237,8 +235,7 @@ fun PassportForm(
                     onValueChange = { 
                         if (it.length <= 8 && it.all { char -> char.isDigit() }) {
                             state.rawDateOfExpiry = it
-                            val doe = DateNormalizer.normalize(it, state.dateFormatType)
-                            state.expiryError = !DateUtils.isValidDate(doe, state.dateFormatType) && doe.length == 8
+                            state.expiryError = !DateUtils.isValidDate(it, state.dateFormatType) && it.length == 8
                         }
                     },
                     label = { Text(dateExpiryLabel) },

@@ -256,6 +256,8 @@ fun HomeScreen(
     }
 }
 
+// --- Helper Functions ---
+
 @Composable
 fun FinancialList(list: List<FinancialAccount>, onItemClick: (Int) -> Unit) {
     LazyColumn(
@@ -563,6 +565,7 @@ fun FinancialAccountItem(account: FinancialAccount, onItemClick: (Int) -> Unit) 
                                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
                                 color = contentColor.copy(alpha = 0.8f)
                         )
+                        ExpirationBadge(expiryDateStr = account.expiryDate)
                     }
                 }
             }
@@ -719,11 +722,15 @@ fun GreenCardItem(gc: com.vijay.cardkeeper.data.entity.GreenCard, onItemClick: (
                     Text(text = "DOB: ${gc.dob}", style = MaterialTheme.typography.bodyMedium)
                 }
                 if (gc.expiryDate.isNotEmpty()) {
-                    Text(
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
                             text = "Expires: ${gc.expiryDate}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.error
-                    )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        ExpirationBadge(expiryDateStr = gc.expiryDate)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -972,11 +979,15 @@ fun IdentityItem(doc: IdentityDocument, onItemClick: (Int) -> Unit) {
                     Text(text = "DOB: ${doc.dob}", style = MaterialTheme.typography.bodyMedium)
                 }
                 if (!doc.expiryDate.isNullOrEmpty()) {
-                    Text(
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                         Text(
                             text = "Expires: ${doc.expiryDate}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.error
-                    )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        ExpirationBadge(expiryDateStr = doc.expiryDate)
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -991,6 +1002,54 @@ fun IdentityItem(doc: IdentityDocument, onItemClick: (Int) -> Unit) {
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun ExpirationBadge(expiryDateStr: String?) {
+    if (expiryDateStr.isNullOrBlank()) return
+
+    val status = remember(expiryDateStr) {
+        val today = java.time.LocalDate.now()
+        val date = try {
+            if (expiryDateStr.matches(Regex("\\d{2}/\\d{2}"))) {
+                // Handle MM/yy
+                val inputFormat = java.time.format.DateTimeFormatter.ofPattern("MM/yy")
+                val yearMonth = java.time.YearMonth.parse(expiryDateStr, inputFormat)
+                yearMonth.atEndOfMonth()
+            } else {
+                com.vijay.cardkeeper.util.DateNormalizer.parseStrict(expiryDateStr)
+            }
+        } catch (e: Exception) {
+            null
+        }
+
+        if (date != null) {
+            when {
+                date.isBefore(today) -> "EXPIRED" to androidx.compose.ui.graphics.Color.Red
+                date.isEqual(today) -> "EXPIRES TODAY" to androidx.compose.ui.graphics.Color(0xFFFF5722) // Deep Orange
+                date.isBefore(today.plusDays(30)) -> "EXPIRING SOON" to androidx.compose.ui.graphics.Color(0xFFFF9800) // Orange
+                else -> null
+            }
+        } else {
+            null
+        }
+    }
+
+    status?.let { (text, color) ->
+        Surface(
+            color = color,
+            shape = RoundedCornerShape(4.dp),
+            modifier = Modifier.padding(start = 4.dp)
+        ) {
+            Text(
+                text = text,
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                style = MaterialTheme.typography.labelSmall,
+                color = androidx.compose.ui.graphics.Color.White,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
