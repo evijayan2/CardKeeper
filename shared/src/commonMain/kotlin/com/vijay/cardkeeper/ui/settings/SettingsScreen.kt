@@ -23,7 +23,8 @@ import com.vijay.cardkeeper.ui.viewmodel.SettingsViewModel
 @Composable
 fun SettingsScreen(
     navigateBack: () -> Unit,
-    viewModel: SettingsViewModel
+    viewModel: SettingsViewModel,
+    onNotificationToggle: ((Boolean) -> Unit)? = null
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val dateFormat by viewModel.dateFormat.collectAsState()
@@ -120,7 +121,13 @@ fun SettingsScreen(
                     }
                     Switch(
                         checked = notificationsEnabled,
-                        onCheckedChange = { viewModel.toggleNotifications(it) }
+                        onCheckedChange = { 
+                            if (onNotificationToggle != null) {
+                                onNotificationToggle(it)
+                            } else {
+                                viewModel.toggleNotifications(it)
+                            }
+                        }
                     )
                 }
                 

@@ -28,9 +28,9 @@ class IdentityFormState(initialDoc: IdentityDocument?, initialType: DocumentType
 
     // Exposed properties for AddItemScreen to read during onSave
     val expiry: String
-        get() = DateUtils.formatRawDate(rawExpiry)
+        get() = DateNormalizer.normalize(DateUtils.formatRawDate(rawExpiry, dateFormatType), dateFormatType)
     val dob: String
-        get() = DateUtils.formatRawDate(rawDob)
+        get() = DateNormalizer.normalize(DateUtils.formatRawDate(rawDob, dateFormatType), dateFormatType)
 
     var expiryError by mutableStateOf(false)
     var dobError by mutableStateOf(false)
@@ -284,7 +284,6 @@ fun IdentityForm(
             Button(
                 onClick = {
                     onSave()
-                    onNavigateBack()
                 },
                 modifier = Modifier.fillMaxWidth()
             ) { Text("Save Driver License") }

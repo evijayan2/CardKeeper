@@ -39,9 +39,9 @@ class PassportFormState(initialDoc: Passport? = null) {
         var rawDateOfExpiry by mutableStateOf(initialDoc?.dateOfExpiry?.filter { it.isDigit() } ?: "")
 
         // Exposed Formatted Properties for AddItemScreen
-        val dob: String get() = DateUtils.formatRawDate(rawDob)
-        val dateOfIssue: String get() = DateUtils.formatRawDate(rawDateOfIssue)
-        val dateOfExpiry: String get() = DateUtils.formatRawDate(rawDateOfExpiry)
+        val dob: String get() = DateNormalizer.normalize(DateUtils.formatRawDate(rawDob, dateFormatType), dateFormatType)
+        val dateOfIssue: String get() = DateNormalizer.normalize(DateUtils.formatRawDate(rawDateOfIssue, dateFormatType), dateFormatType)
+        val dateOfExpiry: String get() = DateNormalizer.normalize(DateUtils.formatRawDate(rawDateOfExpiry, dateFormatType), dateFormatType)
 
         // Error States
         var dobError by mutableStateOf(false)
@@ -298,7 +298,6 @@ fun PassportForm(
             Button(
                     onClick = {
                         onSave()
-                        onNavigateBack()
                     },
                     modifier = Modifier.fillMaxWidth()
             ) { Text("Save Passport") }

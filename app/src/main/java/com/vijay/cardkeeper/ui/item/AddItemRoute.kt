@@ -46,6 +46,7 @@ fun AddItemRoute(
             0 -> "financial"
             1 -> "identity"
             2 -> "passport"
+            3 -> "financial" // Rewards Card is stored as FinancialAccount
             4 -> "greencard"
             5 -> "aadhar"
             6 -> "giftcard"
@@ -72,8 +73,19 @@ fun AddItemRoute(
         }
     }
 
+    // Map initialType string to enum if possible
+    val initialAccountType = remember(documentType) {
+        when (documentType?.uppercase()) {
+            "CREDIT_CARD" -> AccountType.CREDIT_CARD
+            "DEBIT_CARD" -> AccountType.DEBIT_CARD
+            "BANK_ACCOUNT" -> AccountType.BANK_ACCOUNT
+            "REWARDS_CARD" -> AccountType.REWARDS_CARD
+            else -> null
+        }
+    }
+
     // Form States
-    val financialState = rememberFinancialFormState(item as? FinancialAccount, null)
+    val financialState = rememberFinancialFormState(item as? FinancialAccount, initialAccountType)
     val identityState = rememberIdentityFormState(item as? IdentityDocument, null)
     val passportState = rememberPassportFormState(item as? Passport)
     val greenCardState = rememberGreenCardFormState(item as? GreenCard)
@@ -97,6 +109,7 @@ fun AddItemRoute(
     val chequeScanner = remember { ChequeScanner() }
     val passportScanner = remember { PassportScanner() }
     val greenCardScanner = remember { GreenCardScanner() }
+    val aadharScanner = remember { AadharScanner() }
     val aadharQrScanner = remember { AadharQrScanner(context) }
 
     // State for Camera/Barcode logic
@@ -119,7 +132,7 @@ fun AddItemRoute(
                         val path = saveImageToInternalStorage(context, b, "scan_${System.currentTimeMillis()}")
                         processScanResult(b, path, selectedCategory, scanningBack, 
                             financialState, identityState, passportState, greenCardState, aadharCardState, giftCardState,
-                            paymentScanner, rewardsScanner, identityScanner, driverLicenseScanner, chequeScanner, passportScanner, greenCardScanner, context)
+                            paymentScanner, rewardsScanner, identityScanner, driverLicenseScanner, chequeScanner, passportScanner, greenCardScanner, aadharScanner, context)
                     }
                 }
             }
@@ -410,6 +423,10 @@ fun AddItemRoute(
                                 if (details.issuingAuthority.isNotEmpty()) identityState.issuingAuthority = details.issuingAuthority
                             }
                         }
+                        0, 3 -> { // Financial or Rewards
+                            financialState.barcode = barcode
+                            financialState.barcodeFormat = format
+                        }
                         5 -> { // Aadhaar
                             val result = aadharQrScanner.parse(barcode)
                             if (result.name.isNotEmpty()) {
@@ -461,6 +478,7 @@ private suspend fun processScanResult(
     chequeScanner: ChequeScanner,
     passportScanner: PassportScanner,
     greenCardScanner: GreenCardScanner,
+    aadharScanner: AadharScanner,
     context: android.content.Context
 ) {
     if (isBack) {
@@ -470,7 +488,13 @@ private suspend fun processScanResult(
                 financialState.hasBackImage = true
                 if (financialState.type == AccountType.REWARDS_CARD || category == 3) {
                     val res = rewardsScanner.scan(bitmap)
-                    res.barcode?.let { financialState.barcode = it }
+                    android.util.Log.d("AddItemRoute", "Rewards Card Back Scan Result: barcode=${res.barcode}, cardNumber=${res.cardNumber}, format=${res.barcodeFormat}, qrCode=${res.qrCode}, shopName=${res.shopName}")
+                    
+                    // Prioritize actual barcode for the barcode field, use OCR number as fallback if barcode is null or better
+                    val newBarcode = res.barcode ?: res.cardNumber
+                    if (newBarcode != null && (financialState.barcode.isEmpty() || newBarcode.length > financialState.barcode.length)) {
+                        financialState.barcode = newBarcode
+                    }
                     res.barcodeFormat?.let { financialState.barcodeFormat = it }
                     res.shopName?.let { financialState.institution = it }
                 } else {
@@ -536,12 +560,20 @@ private suspend fun processScanResult(
             5 -> {
                 aadharCardState.backPath = path
                 aadharCardState.hasBackImage = true
+                val details = aadharScanner.scan(bitmap)
+                if (details.docNumber.isNotEmpty() && aadharCardState.uid.isEmpty()) {
+                    aadharCardState.uid = details.docNumber
+                }
             }
             6 -> {
                 giftCardState.backPath = path
                 giftCardState.hasBackImage = true
                 val res = rewardsScanner.scan(bitmap)
-                res.barcode?.let { giftCardState.barcode = it }
+                android.util.Log.d("AddItemRoute", "Gift Card Back Scan Result: barcode=${res.barcode}, cardNumber=${res.cardNumber}, format=${res.barcodeFormat}, qrCode=${res.qrCode}, shopName=${res.shopName}")
+                
+                // Separate fields for Gift Cards - allow overwrite if new detection is longer
+                res.barcode?.let { if (giftCardState.barcode.orEmpty().isEmpty() || it.length > giftCardState.barcode.orEmpty().length) giftCardState.barcode = it }
+                res.cardNumber?.let { if (giftCardState.cardNumber.isEmpty() || it.length > giftCardState.cardNumber.length) giftCardState.cardNumber = it }
                 res.barcodeFormat?.let { giftCardState.barcodeFormat = it }
             }
         }
@@ -552,7 +584,13 @@ private suspend fun processScanResult(
                 financialState.hasFrontImage = true
                 if (financialState.type == AccountType.REWARDS_CARD || category == 3) {
                     val res = rewardsScanner.scan(bitmap)
-                    res.barcode?.let { financialState.barcode = it }
+                    android.util.Log.d("AddItemRoute", "Rewards Card Front Scan Result: barcode=${res.barcode}, cardNumber=${res.cardNumber}, format=${res.barcodeFormat}, qrCode=${res.qrCode}, shopName=${res.shopName}")
+                    
+                    // Prioritize actual barcode for the barcode field, use OCR number as fallback if barcode is null or better
+                    val newBarcode = res.barcode ?: res.cardNumber
+                    if (newBarcode != null && (financialState.barcode.isEmpty() || newBarcode.length > financialState.barcode.length)) {
+                        financialState.barcode = newBarcode
+                    }
                     res.barcodeFormat?.let { financialState.barcodeFormat = it }
                     res.shopName?.let { financialState.institution = it }
                     if (financialState.logoPath == null) financialState.logoPath = path
@@ -591,6 +629,11 @@ private suspend fun processScanResult(
                 details.sex?.let { passportState.sex = it }
                 details.dateOfExpiry?.let { passportState.rawDateOfExpiry = it.filter { c -> c.isDigit() } }
                 details.dateOfIssue?.let { passportState.rawDateOfIssue = it.filter { c -> c.isDigit() } }
+                details.nationality?.let { passportState.nationality = it }
+                details.placeOfBirth?.let { passportState.placeOfBirth = it }
+                details.placeOfIssue?.let { passportState.placeOfIssue = it }
+                details.authority?.let { passportState.authority = it }
+                if (details.countryCode.isNotBlank()) passportState.countryCode = details.countryCode
             }
             4 -> {
                 greenCardState.frontPath = path
@@ -606,11 +649,31 @@ private suspend fun processScanResult(
             5 -> {
                 aadharCardState.frontPath = path
                 aadharCardState.hasFrontImage = true
+                val details = aadharScanner.scan(bitmap)
+                if (details.docNumber.isNotEmpty() && aadharCardState.uid.isEmpty()) {
+                    aadharCardState.uid = details.docNumber
+                }
+                if (details.name.isNotEmpty() && aadharCardState.holderName.isEmpty()) {
+                    aadharCardState.holderName = details.name
+                }
+                if (details.dob.isNotEmpty() && aadharCardState.rawDob.isEmpty()) {
+                    // Aadhar scanner returns DD/MM/YYYY
+                    aadharCardState.rawDob = details.dob.filter { it.isDigit() }
+                }
+                if (details.sex.isNotEmpty() && aadharCardState.gender.isEmpty()) {
+                    aadharCardState.gender = details.sex
+                }
             }
             6 -> {
                 giftCardState.frontPath = path
                 giftCardState.hasFrontImage = true
                 val res = rewardsScanner.scan(bitmap)
+                android.util.Log.d("AddItemRoute", "Gift Card Front Scan Result: barcode=${res.barcode}, cardNumber=${res.cardNumber}, format=${res.barcodeFormat}, qrCode=${res.qrCode}, shopName=${res.shopName}")
+                
+                // Separate fields for Gift Cards - allow overwrite if new detection is longer
+                res.barcode?.let { if (giftCardState.barcode.orEmpty().isEmpty() || it.length > giftCardState.barcode.orEmpty().length) giftCardState.barcode = it }
+                res.cardNumber?.let { if (giftCardState.cardNumber.isEmpty() || it.length > giftCardState.cardNumber.length) giftCardState.cardNumber = it }
+                res.barcodeFormat?.let { giftCardState.barcodeFormat = it }
                 res.shopName?.let { if (giftCardState.providerName.isEmpty()) giftCardState.providerName = it }
             }
         }

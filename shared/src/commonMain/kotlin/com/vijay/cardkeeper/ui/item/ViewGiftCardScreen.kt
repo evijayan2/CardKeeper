@@ -244,9 +244,23 @@ fun ViewGiftCardScreen(
                     OutlinedCard(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             if (card.cardNumber.isNotBlank()) {
-                                DetailRow("Gift Card Code", card.cardNumber)
+                                DetailRow(
+                                    label = "Gift Card Code",
+                                    value = card.cardNumber,
+                                    isCopyable = true,
+                                    onCopy = { onCopyContent(card.cardNumber, "Gift Card Code") },
+                                    fontFamily = FontFamily.Monospace
+                                )
                             }
-                            if (!card.pin.isNullOrEmpty()) DetailRow("PIN", card.pin)
+                            if (!card.pin.isNullOrEmpty()) {
+                                DetailRow(
+                                    label = "PIN",
+                                    value = card.pin,
+                                    isCopyable = true,
+                                    onCopy = { onCopyContent(card.pin!!, "PIN") },
+                                    fontFamily = FontFamily.Monospace
+                                )
+                            }
                         }
                     }
                 }

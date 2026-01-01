@@ -137,7 +137,9 @@ fun AddItemScreen(
                          state = giftCardState,
                          onScanFront = { onScanRequest(6, ScanRequestType.FRONT) },
                          onScanBack = { onScanRequest(6, ScanRequestType.BACK) },
-                         onScanBarcode = { onScanRequest(6, ScanRequestType.BARCODE) } // Code scan
+                         onScanBarcode = { onScanRequest(6, ScanRequestType.BARCODE) }, // Code scan
+                         onSave = onSave,
+                         onNavigateBack = onNavigateBack
                      )
                 }
             }

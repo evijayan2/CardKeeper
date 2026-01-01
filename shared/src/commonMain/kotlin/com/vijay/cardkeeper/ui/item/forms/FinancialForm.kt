@@ -490,14 +490,18 @@ fun FinancialForm(
                         maxLines = 5
                 )
 
+                val saveButtonText = when (state.type) {
+                    AccountType.REWARDS_CARD -> "Save Rewards Card"
+                    AccountType.LIBRARY_CARD -> "Save Library Card"
+                    AccountType.BANK_ACCOUNT -> "Save Bank Account"
+                    else -> "Save Card"
+                }
+
                 Button(
                         onClick = {
-                                onSave()
-                                onNavigateBack()
-                        },
+                        onSave()
+                },
                         modifier = Modifier.fillMaxWidth()
-                ) { Text("Save Financial Account") }
+                ) { Text(saveButtonText) }
         }
 }
-
-

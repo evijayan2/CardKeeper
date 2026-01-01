@@ -4,9 +4,13 @@ import kotlinx.datetime.*
 import kotlinx.datetime.format.*
 
 object DateUtils {
-    private val DISPLAY_FORMAT = LocalDate.Format {
+    private val DISPLAY_FORMAT_USA = LocalDate.Format {
         monthNumber(); char('/'); dayOfMonth(); char('/'); year()
     } // MM/dd/yyyy
+
+    private val DISPLAY_FORMAT_INDIA = LocalDate.Format {
+        dayOfMonth(); char('/'); monthNumber(); char('/'); year()
+    } // dd/MM/yyyy
     
     private val PARSE_FORMATS = listOf(
         LocalDate.Format { monthNumber(); char('/'); dayOfMonth(); char('/'); year() },
@@ -30,12 +34,16 @@ object DateUtils {
         return null
     }
 
-    fun formatDate(timestamp: Long?): String {
+    fun formatDate(timestamp: Long?, type: com.vijay.cardkeeper.ui.common.DateFormatType = com.vijay.cardkeeper.ui.common.DateFormatType.USA): String {
         if (timestamp == null) return ""
         return try {
             val instant = Instant.fromEpochMilliseconds(timestamp)
             val date = instant.toLocalDateTime(TimeZone.currentSystemDefault()).date
-            date.format(DISPLAY_FORMAT)
+            val format = when (type) {
+                com.vijay.cardkeeper.ui.common.DateFormatType.USA -> DISPLAY_FORMAT_USA
+                com.vijay.cardkeeper.ui.common.DateFormatType.INDIA, com.vijay.cardkeeper.ui.common.DateFormatType.GENERIC -> DISPLAY_FORMAT_INDIA
+            }
+            date.format(format)
         } catch (e: Exception) {
             ""
         }
@@ -76,8 +84,11 @@ object DateUtils {
      * Formats raw digits "12345678" to "12/34/5678".
      * Does not validate, just formats.
      */
-    fun formatRawDate(raw: String): String {
+    fun formatRawDate(raw: String, type: com.vijay.cardkeeper.ui.common.DateFormatType = com.vijay.cardkeeper.ui.common.DateFormatType.USA): String {
         if (raw.length != 8) return raw
+        // Just format the raw digits with slashes based on the type (DD/MM/YYYY or MM/DD/YYYY)
+        // This is primarily for the VisualTransformation and preview.
+        // The actual order of digits in `raw` should match the expected format for that type.
         return "${raw.substring(0, 2)}/${raw.substring(2, 4)}/${raw.substring(4, 8)}"
     }
 }

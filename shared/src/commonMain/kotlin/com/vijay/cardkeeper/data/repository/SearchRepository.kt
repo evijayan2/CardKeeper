@@ -217,11 +217,13 @@ class SearchRepository(
                                 val key = "aadhar_${aadhar.id}"
                                 if (key !in addedIds) {
                                         addedIds.add(key)
+                                        val last4 = (aadhar.uid ?: aadhar.maskedAadhaarNumber).takeLast(4)
+                                        val maskedNumber = if (last4.isNotEmpty()) "XXXX XXXX $last4" else ""
                                         searchResults.add(
                                                 SearchResult(
                                                         id = aadhar.id,
                                                         title = "Aadhaar Card",
-                                                        subtitle = aadhar.holderName,
+                                                        subtitle = if (maskedNumber.isNotEmpty()) "${aadhar.holderName} • $maskedNumber" else aadhar.holderName,
                                                         type = "Aadhar",
                                                         originalType = "AADHAR"
                                                 )

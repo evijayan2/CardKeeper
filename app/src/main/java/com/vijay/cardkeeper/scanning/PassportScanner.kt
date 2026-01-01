@@ -1,6 +1,7 @@
 package com.vijay.cardkeeper.scanning
 
 import android.graphics.Bitmap
+import android.util.Log
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -19,6 +20,7 @@ class PassportScanner {
                 .process(image)
                 .addOnSuccessListener { visionText ->
                     val text = visionText.text
+                    Log.d("PassportScanner", "Raw OCR Text: $text")
 
                     // 1. Try MRZ Parsing
                     var passport =
@@ -32,11 +34,18 @@ class PassportScanner {
                     // 2. Try Visual Parsing for additional fields
                     val lines = text.split("\n")
                     val visualData = parseFrontVisualFields(lines)
+                    Log.d("PassportScanner", "Visual Data Extracted: $visualData")
+
+                    val countryCode = passport.countryCode
+                    val dateFormatType = if (countryCode.uppercase() == "IND") DateFormatType.INDIA else DateFormatType.USA
 
                     // 3. Merge Data
                     passport =
                             passport.copy(
-                                    dateOfIssue = visualData["dateOfIssue"] ?: passport.dateOfIssue,
+                                    nationality = visualData["nationality"] ?: passport.nationality,
+                                    dateOfIssue = visualData["dateOfIssue"]?.let { 
+                                        DateNormalizer.normalize(it, dateFormatType) 
+                                    } ?: passport.dateOfIssue,
                                     placeOfBirth = visualData["placeOfBirth"]
                                                     ?: passport.placeOfBirth,
                                     placeOfIssue = visualData["placeOfIssue"]
@@ -44,6 +53,7 @@ class PassportScanner {
                                     authority = visualData["authority"] ?: passport.authority
                             )
 
+                    Log.d("PassportScanner", "Final Passport: $passport")
                     if (cont.isActive) cont.resume(passport)
                 }
                 .addOnFailureListener {
@@ -54,70 +64,105 @@ class PassportScanner {
     private fun parseFrontVisualFields(lines: List<String>): Map<String, String> {
         val data = mutableMapOf<String, String>()
 
-        var expectingPlaceOfBirth = false
-        var expectingPlaceOfIssue = false
-        var expectingDateOfIssue = false
-        var expectingAuthority = false
+        var pendingKey: String? = null
 
         for (line in lines) {
             val cleanLine = line.trim()
             val upper = cleanLine.uppercase()
             if (cleanLine.isBlank()) continue
 
-            // 1. Check expectations
-            if (expectingPlaceOfBirth) {
-                data["placeOfBirth"] = cleanLine
-                expectingPlaceOfBirth = false
-                continue
-            }
-            if (expectingPlaceOfIssue) {
-                data["placeOfIssue"] = cleanLine
-                expectingPlaceOfIssue = false
-                continue
-            }
-            if (expectingDateOfIssue) {
-                data["dateOfIssue"] = cleanLine
-                expectingDateOfIssue = false
-                continue
-            }
-            if (expectingAuthority) {
-                data["authority"] = cleanLine
-                expectingAuthority = false
-                continue
+            // 1. If we have a pending key, this line is likely the value
+            if (pendingKey != null) {
+                // Heuristic: values are usually all caps or contain digits, and shouldn't contains label keywords
+                if (!isLikelyKeyword(upper)) {
+                    // If it was a date field, we expect digits
+                    if (pendingKey.contains("date", ignoreCase = true)) {
+                        val digits = cleanLine.filter { it.isDigit() }
+                        if (digits.length >= 6) {
+                            data[pendingKey] = cleanLine
+                            pendingKey = null
+                            continue
+                        }
+                    } else {
+                        data[pendingKey] = cleanLine
+                        pendingKey = null
+                        continue
+                    }
+                }
+                
+                // If we hit another keyword or noise, cancel current pending
+                if (isLikelyKeyword(upper)) {
+                    pendingKey = null 
+                }
             }
 
-            // 2. Check Keywords
-            if (upper.contains("PLACE OF BIRTH")) {
-                val valInLine = extractNameValue(line)
-                if (valInLine.isNotEmpty()) {
-                    data["placeOfBirth"] = valInLine
+            // 2. Check for keywords and extract value if present on same line
+            // Indian labels often contain Hindi translations, so we check for presence of both key English terms
+            // Values are often on the NEXT line, so extractValueAfterKeyword returning empty is expected.
+            
+            if (upper.contains("NATIONALITY")) {
+                val value = extractValueAfterKeyword(line, "NATIONALITY")
+                if (value.isNotEmpty()) data["nationality"] = value else pendingKey = "nationality"
+            }
+            // Use specific checks to avoid double-matching
+            if (upper.contains("PLACE") && (upper.contains("BIRTH") || upper.contains("BIRTHDATE"))) {
+                val value = extractValueAfterKeyword(line, if (upper.contains("BIRTHDATE")) "BIRTHDATE" else "BIRTH")
+                if (value.isNotEmpty()) data["placeOfBirth"] = value.substringBefore(" ").trim() else pendingKey = "placeOfBirth"
+            }
+            if (upper.contains("PLACE") && upper.contains("ISSUE")) {
+                val kw = if (upper.indexOf("ISSUE") > upper.indexOf("PLACE")) "ISSUE" else "PLACE"
+                val value = extractValueAfterKeyword(line, kw)
+                if (value.isNotEmpty()) {
+                    // Try to isolate place from potential date on same line
+                    val cleanValue = value.substringBefore("DATE").trim()
+                    if (cleanValue.isNotEmpty()) data["placeOfIssue"] = cleanValue
                 } else {
-                    expectingPlaceOfBirth = true
+                    pendingKey = "placeOfIssue"
                 }
-            } else if (upper.contains("PLACE OF ISSUE")) {
-                val valInLine = extractNameValue(line)
-                if (valInLine.isNotEmpty()) {
-                    data["placeOfIssue"] = valInLine
+            }
+            if (upper.contains("DATE") && upper.contains("ISSUE")) {
+                val kw = if (upper.indexOf("ISSUE") > upper.indexOf("DATE")) "ISSUE" else "DATE"
+                val value = extractValueAfterKeyword(line, kw)
+                if (value.isNotEmpty()) {
+                    val cleanValue = value.substringBefore("PLACE").trim()
+                    if (cleanValue.isNotEmpty()) data["dateOfIssue"] = cleanValue
                 } else {
-                    expectingPlaceOfIssue = true
+                    pendingKey = "dateOfIssue"
                 }
-            } else if (upper.contains("DATE OF ISSUE")) {
-                val valInLine = extractNameValue(line)
-                if (valInLine.isNotEmpty()) {
-                    data["dateOfIssue"] = valInLine
-                } else {
-                    expectingDateOfIssue = true
-                }
-            } else if (upper.contains("AUTHORITY") || upper.contains("ISSUING AUTHORITY")) {
-                val valInLine = extractNameValue(line)
-                if (valInLine.isNotEmpty()) {
-                    data["authority"] = valInLine
-                } else {
-                    expectingAuthority = true
-                }
+            }
+            if (upper.contains("AUTHORITY")) {
+                val value = extractValueAfterKeyword(line, "AUTHORITY")
+                if (value.isNotEmpty()) data["authority"] = value else pendingKey = "authority"
             }
         }
         return data
+    }
+
+    private fun isLikelyKeyword(text: String): Boolean {
+        val keywords = listOf("PLACE", "DATE", "AUTHORITY", "NATIONALITY", "PASSPORT", "SURNAME", "GIVEN")
+        return keywords.any { text.contains(it) }
+    }
+
+    private fun extractValueAfterKeyword(line: String, keyword: String): String {
+        val upper = line.uppercase()
+        val index = upper.indexOf(keyword)
+        if (index == -1) return ""
+
+        // Find the end of the label section (looking for : or long space or Hindi suffix)
+        // In Indian passports: "Nationality / <Hindi> : INDIAN"
+        val remaining = line.substring(index + keyword.length)
+        
+        // Split by colon or prominent space
+        val parts = remaining.split(Regex("[:\\s/\\u0900-\\u097F]+"))
+        // Recover the part that looks like actual data (usually last few parts if separated by Hindi)
+        // Or just rejoin everything after the colon if present
+        if (remaining.contains(":")) {
+            return remaining.substringAfter(":").trim()
+        }
+        
+        // Fallback: take the last non-Hindi word if it's long enough or looks like a value
+        return parts.filter { it.isNotBlank() && !it.any { c -> c in '\u0900'..'\u097F' } }
+                    .joinToString(" ").trim()
     }
 
     suspend fun scanBack(bitmap: Bitmap): Passport = suspendCancellableCoroutine { cont ->
@@ -174,6 +219,7 @@ class PassportScanner {
             // 1: Type
             // 2-4: Country
             val countryCode = line1.substring(2, 5).replace("<", "")
+            val dateFormatType = if (countryCode.uppercase() == "IND") DateFormatType.INDIA else DateFormatType.USA
             val nameSection = line1.substring(5).split("<<")
             val surname = nameSection.getOrNull(0)?.replace("<", " ")?.trim() ?: ""
             val givenNames = nameSection.getOrNull(1)?.replace("<", " ")?.trim() ?: ""
@@ -194,16 +240,16 @@ class PassportScanner {
                     surname = surname,
                     givenNames = givenNames,
                     nationality = nationality,
-                    dob = formatDate(dobRaw),
+                    dob = formatDate(dobRaw, dateFormatType),
                     sex = sex,
-                    dateOfExpiry = formatDate(expiryRaw)
+                    dateOfExpiry = formatDate(expiryRaw, dateFormatType)
             )
         } catch (e: Exception) {
             return null
         }
     }
 
-    private fun formatDate(yymmdd: String): String {
+    private fun formatDate(yymmdd: String, dateFormatType: DateFormatType): String {
         if (yymmdd.length != 6) return yymmdd
         val yy = yymmdd.substring(0, 2)
         val mm = yymmdd.substring(2, 4)
@@ -211,7 +257,7 @@ class PassportScanner {
         // Simple pivot for year: if > 50 assume 19xx, else 20xx
         val yearPrefix = if (yy.toInt() > 50) "19" else "20"
         val dmt = "${yearPrefix}${yy}-${mm}-${dd}"
-        return DateNormalizer.normalize(dmt, dateFormatType = DateFormatType.USA)
+        return DateNormalizer.normalize(dmt, dateFormatType = dateFormatType)
     }
 
     private fun parseBackSide(lines: List<String>): Passport {

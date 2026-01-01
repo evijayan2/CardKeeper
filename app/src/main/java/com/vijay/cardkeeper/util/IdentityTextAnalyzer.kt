@@ -1,5 +1,6 @@
 package com.vijay.cardkeeper.util
 
+import android.util.Log
 import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -35,65 +36,15 @@ class IdentityTextAnalyzer(
     private val classPattern = Regex("\\b(?:CLASS|C)[:\\s]+([A-Z0-9]+)\\b")
     private val endPattern = Regex("\\b(?:END|E)[:\\s]*([A-Z0-9]+)\\b") // Endorsements
     private val restrPattern = Regex("\\b(?:RESTR|R)[:\\s]*([A-Z0-9]+)\\b") // Restrictions
-    // private val issPattern =
-    //         Regex(
-    //                 "\\b(?:ISS|ISSUED\\s+BY|AUTH|ISS)[:\\.]?\\s*([A-Za-z0-9\\s,]+)\\b",
-    //                 RegexOption.IGNORE_CASE
-    //         )
 
     // States (Simplified list of 2-letter codes for heuristic)
     private val stateCodes =
             setOf(
-                    "AL",
-                    "AK",
-                    "AZ",
-                    "AR",
-                    "CA",
-                    "CO",
-                    "CT",
-                    "DE",
-                    "FL",
-                    "GA",
-                    "HI",
-                    "ID",
-                    "IL",
-                    "IN",
-                    "IA",
-                    "KS",
-                    "KY",
-                    "LA",
-                    "ME",
-                    "MD",
-                    "MA",
-                    "MI",
-                    "MN",
-                    "MS",
-                    "MO",
-                    "MT",
-                    "NE",
-                    "NV",
-                    "NH",
-                    "NJ",
-                    "NM",
-                    "NY",
-                    "NC",
-                    "ND",
-                    "OH",
-                    "OK",
-                    "OR",
-                    "PA",
-                    "RI",
-                    "SC",
-                    "SD",
-                    "TN",
-                    "TX",
-                    "UT",
-                    "VT",
-                    "VA",
-                    "WA",
-                    "WV",
-                    "WI",
-                    "WY"
+                    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+                    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+                    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+                    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+                    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
             )
 
     @ExperimentalGetImage
@@ -103,26 +54,7 @@ class IdentityTextAnalyzer(
             val rotationDegrees = imageProxy.imageInfo.rotationDegrees
             val inputImage = InputImage.fromMediaImage(mediaImage, rotationDegrees)
 
-            // For identity, we also sometimes need the bitmap itself for "capturedImage"
-            // But if we are using document scanner, we already have the bitmap.
-            // When using CameraX ImageAnalysis, we convert proxy to bitmap.
-
             analyze(inputImage) { details ->
-                // Re-attach the bitmap from proxy if the analysis didn't provide it (it won't,
-                // since InputImage doesn't carry it easily)
-                // Wait, existing logic: `val bitmap = imageProxy.toBitmap()`
-                // It does that inside onSuccess.
-                // Refactoring to keep it clean: pass a bitmap provider or just the bitmap?
-                // ImageProxy.toBitmap() needs the proxy open.
-
-                // If I pass InputImage, I lose the ability to call imageProxy.toBitmap().
-                // However, the new flow (Doc Scanner) provides a Bitmap directly.
-                // The old flow (Analyzer) provides an ImageProxy.
-
-                // Solution: The internal analyze method shouldn't worry about the bitmap for the
-                // Result *unless* it's needed for analysis (it's not).
-                // It should return the text details. The caller can attach the bitmap.
-
                 val finalDetails = details.copy(capturedImage = imageProxy.toBitmap())
                 onResult(finalDetails)
                 imageProxy.close()
@@ -137,6 +69,7 @@ class IdentityTextAnalyzer(
                 .process(image)
                 .addOnSuccessListener { visionText ->
                     val text = visionText.text
+                    Log.d("IdentityTextAnalyzer", "Raw OCR Text: $text")
 
                     if (isBackSide) {
                         if (text.length > 20) {
@@ -167,22 +100,20 @@ class IdentityTextAnalyzer(
                             // State (Top 1/3 usually)
                             if (foundState.isEmpty()) {
                                 for (code in stateCodes) {
-                                    // Very loose check: Line is just "CA" or "CA USA" or
-                                    // matches "CALIFORNIA"
                                     if (lineText == code || lineText == "$code USA") {
                                         foundState = code
+                                        Log.d("IdentityTextAnalyzer", "Found State: $foundState")
                                     }
                                 }
                             }
 
                             // Doc ID
                             if (foundDocId.isEmpty()) {
-                                // 1. Try keyword match first (stronger signal)
                                 val keywordMatch = dlKeywordPattern.find(line.text)
                                 if (keywordMatch != null) {
                                     foundDocId = keywordMatch.groupValues[1].trim()
+                                    Log.d("IdentityTextAnalyzer", "Found DocID (Keyword): $foundDocId")
                                 } else {
-                                    // 2. Fallback to generic pattern
                                     val match = idNumberPattern.find(line.text)
                                     if (match != null &&
                                                     !lineText.contains("DL") &&
@@ -190,6 +121,7 @@ class IdentityTextAnalyzer(
                                                     !lineText.contains("LIC")
                                     ) {
                                         foundDocId = match.value.trim()
+                                        Log.d("IdentityTextAnalyzer", "Found DocID (Pattern): $foundDocId")
                                     }
                                 }
                             }
@@ -198,15 +130,17 @@ class IdentityTextAnalyzer(
                             val dateMatches = datePattern.findAll(line.text)
                             for (match in dateMatches) {
                                 val valDate = match.value
-                                // context?
                                 if (lineText.contains("DOB") || lineText.contains("BIRTH")) {
                                     foundDob = valDate
+                                    Log.d("IdentityTextAnalyzer", "Found DOB: $foundDob")
                                 } else if (lineText.contains("EXP") || valDate.startsWith("202")) {
                                     foundExp = valDate
+                                    Log.d("IdentityTextAnalyzer", "Found Expiry: $foundExp")
                                 } else if (lineText.contains("ISS")) {
                                     foundIss = valDate
+                                    Log.d("IdentityTextAnalyzer", "Found IssueDate: $foundIss")
                                 } else if (foundDob.isEmpty()) {
-                                    foundDob = valDate // Fallback
+                                    foundDob = valDate 
                                 }
                             }
 
@@ -217,15 +151,6 @@ class IdentityTextAnalyzer(
                             classPattern.find(lineText)?.let { foundClass = it.groupValues[1] }
                             endPattern.find(lineText)?.let { foundEnd = it.groupValues[1] }
                             restrPattern.find(lineText)?.let { foundRestr = it.groupValues[1] }
-                            // ISS might be mixed case on some cards, but we UpperCased
-                            // lineText.
-                            // Re-run find on original text if needed, or just rely on Upper.
-                            // issPattern.find(line.text)?.let {
-                            //     // Clean up common noise
-                            //     var v = it.groupValues[1].trim()
-                            //     if (v.length > 20) v = v.take(20)
-                            //     foundIss = v
-                            // }
                         }
                     }
 
@@ -241,14 +166,14 @@ class IdentityTextAnalyzer(
                             ) {
                                 if (foundState.isNotEmpty() && t.contains(foundState)) continue
                                 foundName = t
+                                Log.d("IdentityTextAnalyzer", "Found Name: $foundName")
                             }
                         }
                     }
 
                     if (foundDocId.isNotEmpty() || (foundName.isNotEmpty() && foundDob.isNotEmpty())
                     ) {
-                        onResult(
-                                IdentityDetails(
+                        val details = IdentityDetails(
                                         docNumber = foundDocId,
                                         name = foundName,
                                         firstName = foundName.substringBefore(" ").trim(),
@@ -263,13 +188,13 @@ class IdentityTextAnalyzer(
                                         restrictions = foundRestr,
                                         endorsements = foundEnd,
                                         issueDate = foundIss
-                                        // caller attaches capturedImage
                                         )
-                        )
+                        Log.d("IdentityTextAnalyzer", "Final Details: $details")
+                        onResult(details)
                     }
                 }
                 .addOnFailureListener {
-                    // handle failure
+                    Log.e("IdentityTextAnalyzer", "OCR Processing failed", it)
                 }
     }
 }

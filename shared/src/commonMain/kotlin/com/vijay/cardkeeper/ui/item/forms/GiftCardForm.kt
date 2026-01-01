@@ -75,7 +75,9 @@ fun GiftCardForm(
     state: GiftCardFormState,
     onScanFront: () -> Unit,
     onScanBack: () -> Unit,
-    onScanBarcode: () -> Unit
+    onScanBarcode: () -> Unit,
+    onSave: () -> Unit,
+    onNavigateBack: () -> Unit
 ) {
 
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -189,14 +191,14 @@ fun GiftCardForm(
             modifier = Modifier.fillMaxWidth(),
             minLines = 2
         )
-        // But for verification, let's keep small thumbnails or just rely on 'Wrapped' status?
-        // FinancialForm does NOT show previews. So to be "similar", we can hide them or make them small.
-        // However, user might like to see them. I'll keep previews but make them collapsible or smaller?
-        // Actually, let's keep it simple and match FinancialForm: Buttons show status.
-        // But GiftCardForm already had previews. Removing them might be a regression in UX unless requested.
-        // I will keep the previews below as they verify the scan.
         
-        // Note: Image Previews are removed as per user request to be like Rewards/Financial form
-        // Buttons at the top already indicate status ("Front Captured", "Back Captured")
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = {
+                onSave()
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) { Text("Save Gift Card") }
     }
 }

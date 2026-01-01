@@ -36,7 +36,7 @@ class AadharCardFormState(initialCard: AadharCard?) {
         
         // Exposed formatted property for AddItemScreen
         val dob: String
-            get() = DateUtils.formatRawDate(rawDob)
+            get() = DateNormalizer.normalize(DateUtils.formatRawDate(rawDob, DateFormatType.INDIA), DateFormatType.INDIA)
             
         var dobError by mutableStateOf(false)
 
@@ -283,6 +283,9 @@ fun AadharCardForm(
                         value = state.uid,
                         onValueChange = { state.uid = it },
                         label = { Text("Aadhaar Number") },
+                        placeholder = if (state.maskedAadhaarNumber.isNotEmpty()) {
+                            { Text(state.maskedAadhaarNumber) }
+                        } else null,
                         modifier = Modifier.fillMaxWidth(),
                         visualTransformation =
                                 if (isUidVisible)
@@ -294,6 +297,11 @@ fun AadharCardForm(
                                                 androidx.compose.ui.text.input.KeyboardType
                                                         .NumberPassword
                                 ),
+                        supportingText = {
+                            if (state.uid.isEmpty() && state.maskedAadhaarNumber.isNotEmpty()) {
+                                Text("Full UID not found in QR. Please enter 12 digits or scan front/back.")
+                            }
+                        },
                         trailingIcon = {
                                 val image =
                                         if (isUidVisible) Icons.Filled.Visibility
@@ -306,17 +314,6 @@ fun AadharCardForm(
                                 }
                         }
                 )
-
-                // Show Masked Number separately only if UID is empty (e.g. Secure QR scan)
-                if (state.uid.isEmpty() && state.maskedAadhaarNumber.isNotEmpty()) {
-                        OutlinedTextField(
-                                value = state.maskedAadhaarNumber,
-                                onValueChange = { state.maskedAadhaarNumber = it },
-                                label = { Text("Scanned Masked Aadhaar") },
-                                readOnly = true,
-                                modifier = Modifier.fillMaxWidth()
-                        )
-                }
 
                 OutlinedTextField(
                         value = state.vid,
@@ -422,7 +419,6 @@ fun AadharCardForm(
                 Button(
                         onClick = {
                                 onSave()
-                                onNavigateBack()
                         },
                         modifier = Modifier.fillMaxWidth()
                 ) { Text("Save Aadhaar Card") }

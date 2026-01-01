@@ -209,14 +209,6 @@ fun HomeScreen(
                                 },
                                 leadingIcon = { Icon(Icons.Filled.Face, contentDescription = null) }
                         )
-                        DropdownMenuItem(
-                                text = { Text("Other Identity") },
-                                onClick = {
-                                    showMenu = false
-                                    navigateToItemEntry(1, null)
-                                },
-                                leadingIcon = { Icon(Icons.Filled.Face, contentDescription = null) }
-                        )
                     }
                 }
             }
@@ -796,10 +788,14 @@ fun AadharCardItem(
                             modifier = Modifier.size(24.dp).clip(RoundedCornerShape(2.dp))
                     )
 
-                    // Masked Aadhaar number
-                    if (aadhar.maskedAadhaarNumber.isNotEmpty()) {
+                    val last4 = if (aadhar.uid?.isNotEmpty() == true) {
+                        aadhar.uid.takeLast(4)
+                    } else {
+                        aadhar.maskedAadhaarNumber.takeLast(4)
+                    }
+                    if (last4.isNotEmpty()) {
                         Text(
-                                text = aadhar.maskedAadhaarNumber,
+                                text = "XXXX XXXX $last4",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                         )

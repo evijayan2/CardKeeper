@@ -162,11 +162,12 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                         // Map category to tab: 0=Finance, 1=Identity, 2=Passport, 3=Rewards
                         val targetTab = when (savedCategory) {
                             0 -> 0  // Finance → Finance tab
-                            1 -> 1  // Identity (Driver's License) → Identity tab  
+                            1 -> 1  // Identity → Identity tab
                             2 -> 2  // Passport → Passports tab
-                            3 -> 1  // Green Card → Identity tab
-                            4 -> 1  // Aadhar → Identity tab
-                            5 -> 3  // Gift Card → Rewards tab
+                            3 -> 3  // Rewards Card → Rewards tab
+                            4 -> 1  // Green Card → Identity tab
+                            5 -> 1  // Aadhar → Identity tab
+                            6 -> 3  // Gift Card → Rewards tab
                             else -> 0
                         }
                         navController.navigate("home?tab=$targetTab") {

@@ -203,7 +203,6 @@ fun GreenCardForm(
         Button(
                 onClick = {
                     onSave()
-                    onNavigateBack()
                 },
                 modifier = Modifier.fillMaxWidth()
         ) { Text("Save Green Card") }

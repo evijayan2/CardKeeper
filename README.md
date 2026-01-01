@@ -14,10 +14,13 @@ It allows you to digitize, organize, and quickly access your **Financial Account
 
 ## Why Kards? (Benefits)
 
-*   **🔒 Uncompromised Security**: Your data never leaves your device. It is stored in a local, AES-256 encrypted database.
+> [!IMPORTANT]
+> **Data Privacy Promise**: Your personal information **never** leaves your device. While the app uses internet access to fetch UI assets like institution logos and flags, it **never** uploads, syncs, or transmits your sensitive data to any server.
+
+*   **🔒 Uncompromised Security**: Every byte of your sensitive data is stored in a local, AES-256 encrypted vault, protected by hardware-backed keys.
 *   **⚡ Instant Access**: Stop digging through your gallery or emails. Find your passport number or bank routing number in seconds.
-*   **📵 Offline First**: Works completely offline. No reliance on cloud servers means no risk of remote data breaches.
-*   **🧠 Intelligent Integration**: Automatically scans and extracts data from Passports (MRZ), Driver Licenses (Barcode), and Aadhar Cards (QR), reducing manual entry errors.
+*   **� Private by Design**: Your database is strictly local. No reliance on cloud storage means no risk of remote data breaches or account hijacking.
+*   **🧠 Intelligent Integration**: Automatically scans and extracts data from Passports, Driver Licenses, and Aadhar Cards, reducing manual entry errors.
 
 ## Release Notes
 
@@ -29,22 +32,26 @@ View the full history of changes:
 
 ## Key Features
 
--   **Biometric Authentication**: Access is protected by your device's biometric security (Fingerprint/Face Unlock). The app cannot be opened without you.
+-   **Biometric Authentication**: Secure access via Fingerprint, Face Unlock, or Device PIN (Android 11+).
 -   **Smart Scanning**:
     -   **MRZ Scanner**: Instantly reads Machine Readable Zones on Passports and Green Cards.
-    -   **Barcode/QR Scanner**: Decodes PDF417 barcodes on US Driver Licenses and QR codes on Aadhar cards.
--   **Unified Search**: deeply search across all your documents. Find a card by its last 4 digits, or find all "Financial" items with a single tap.
--   **Visual Reference**: Store high-quality front and back images of your physical cards for visual verification.
+    -   **Barcode/QR Scanner**: Decodes PDF417 barcodes on US Driver Licenses, QR codes on Aadhar cards, and various retail barcodes.
+-   **Expiration Alerts**: Receive proactive notifications for expiring documents (30 days, 7 days, 1 day) and stay organized with app icon badges.
+-   **Customizable Settings**: Personalize your experience with Theme selection (Light/Dark/System) and flexible Date Format options.
+-   **Unified Search**: Deep search across all documents. Find cards by institution, last 4 digits, holder name, or document type.
+-   **Quick Copy**: One-tap copying for sensitive fields like Gift Card codes and PINs.
 -   **Masking & Privacy**: Sensitive fields (like Account Numbers) are masked by default in the UI to prevent shoulder-surfing.
+-   **Visual Reference**: Store high-quality front and back images of your physical cards for visual verification.
 
 ## Security Architecture
 
-Kards is built with a "Security by Desgin" philosophy:
+Kards is built with a "Security by Design" philosophy:
 
 1.  **Hardware-Backed Encryption**: The Master Encryption Key is generated and stored in the **Android Keystore System** (a hardware-enforced secure container).
 2.  **User Authentication Binding**: This Master Key is cryptographically bound to your biometrics. It **cannot** be used to decrypt your data unless you have successfully authenticated with your fingerprint or face.
 3.  **Full Database Encryption**: The application uses **SQLCipher** to encrypt the entire SQLite database with 256-bit AES encryption.
-4.  **Zero-Knowledge**: The developer has no access to your data. There is no backend server, no tracking, and no analytics.
+4.  **Zero-Knowledge Architecture**: The developer (or anyone else) has zero access to your data. There is no telemetry, no tracking, and no outbound data collection.
+5.  **Strict Data Residency**: Your sensitive documents stay exactly where you put them—on your phone. Internet access is utilized solely for enhancing the UI (e.g., downloading institution logos and flags) and never for transmitting user data.
 
 ---
 
@@ -56,6 +63,7 @@ Kards is built with a "Security by Desgin" philosophy:
 | **Identity** | Driver Licenses (US), Aadhar Cards (India), Voter IDs |
 | **Immigration** | Green Cards (US Permanent Resident Cards) |
 | **Travel** | Passports (Global MRZ Support) |
+| **Gift Cards** | Store Card Numbers and PINs with Quick Copy |
 | **Other** | Loyalty/Rewards Cards, Library Cards |
 
 ---
@@ -65,6 +73,16 @@ Kards is built with a "Security by Desgin" philosophy:
 - **JDK 17** or higher (required for AGP 8.0+).
 - **Android Studio** (Koala or newer recommended).
 - **Android SDK** (API 34/35 recommended).
+
+## Android Compatibility
+
+Kards is optimized for modern Android devices.
+
+| Android Version | Compatibility Level | Notes |
+| :--- | :--- | :--- |
+| **Android 11+** (API 30+) | **Full Support** | Recommended for the best experience. Supports Biometrics and PIN/Pattern fallback. |
+| **Android 8.0 - 10** | **Partial Support** | Requires a fingerprint sensor. Device PIN/Pattern fallback is not supported on these versions. |
+| **Android 13+** (API 33+) | **Full Support** | Requires runtime notification permission for expiration reminders. |
 
 ## Building the Code
 
@@ -194,12 +212,18 @@ Search by category to see all items of a specific type:
 | `identity`, `id`, `document`, `driver`, `license`, `dl`, `driver license` | All identity documents |
 | `finance`, `financial`, `bank`, `credit`, `debit`, `atm`, `credit card`, `debit card` | All financial accounts |
 | `rewards`, `reward`, `library` | All rewards & library cards |
+| `gift card`, `giftcard`, `gift` | All gift cards |
 
 > [!TIP]
 > Search requires at least 2 characters. Results are displayed with type badges for easy identification.
 
 ## Project Structure
 
-- `app/`: Main application module containing source code and resources.
+- `app/`: Android-specific application module.
+  - `src/main/java/`: Main Android source code including Activities, WorkManager workers, and platform-specific Scanning implementations.
+  - `src/main/res/`: Android resources and XML layouts.
+- `shared/`: Kotlin Multiplatform (KMP) module containing core app logic.
+  - `src/commonMain/`: Shared UI components (Compose), Data repositories, Room entities, and ViewModels.
+- `releases/`: Detailed release notes for each version.
+- `docs/`: Project specifications and manual testing documentation.
 - `build.gradle.kts`: Project-level build configuration.
-- `app/build.gradle.kts`: App-module build configuration.

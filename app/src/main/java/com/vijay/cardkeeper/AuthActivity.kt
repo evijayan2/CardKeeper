@@ -1,11 +1,15 @@
 
 package com.vijay.cardkeeper
 
+import android.Manifest
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.layout.Box
@@ -29,6 +33,13 @@ class AuthActivity : FragmentActivity() {
     private lateinit var executor: Executor
     private lateinit var biometricPrompt: BiometricPrompt
     private lateinit var promptInfo: BiometricPrompt.PromptInfo
+
+    private val requestNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { _ ->
+            // We don't strictly need to check if granted here, we just want to prompt.
+            // Even if denied, we proceed to Main Activity.
+            proceedToMain()
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,7 +65,7 @@ class AuthActivity : FragmentActivity() {
                 override fun onAuthenticationSucceeded(
                     result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
-                    unlockAndProceed()
+                    checkNotificationPermissionAndProceed()
                 }
 
                 override fun onAuthenticationFailed() {
@@ -133,11 +144,27 @@ class AuthActivity : FragmentActivity() {
         }
     }
 
-    private fun unlockAndProceed() {
+    private fun checkNotificationPermissionAndProceed() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    proceedToMain()
+                }
+                else -> {
+                    requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        } else {
+            proceedToMain()
+        }
+    }
+
+    private fun proceedToMain() {
         try {
             // This will either generate new key or fetch existing one
-            // It might throw if auth was required but not present/valid (logic key)
-            // But since we just authenticated or device has no auth, we try.
             KeyManager.getOrCreatePassphrase(applicationContext)
             
             startActivity(Intent(this, MainActivity::class.java))
@@ -146,6 +173,11 @@ class AuthActivity : FragmentActivity() {
             Toast.makeText(this, "Failed to unlock storage: ${e.message}", Toast.LENGTH_LONG).show()
             e.printStackTrace()
         }
+    }
+
+    private fun unlockAndProceed() {
+        // This is now handled by checkNotificationPermissionAndProceed
+        checkNotificationPermissionAndProceed()
     }
 
     private fun showSecurityRequiredDialog() {

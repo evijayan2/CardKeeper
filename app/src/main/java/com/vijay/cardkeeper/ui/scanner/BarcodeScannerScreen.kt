@@ -116,18 +116,19 @@ fun BarcodeScannerScreen(
     val barcodeScanner = remember {
         val options =
                 BarcodeScannerOptions.Builder()
-                        .setBarcodeFormats(
-                                Barcode.FORMAT_PDF417,
-                                Barcode.FORMAT_DATA_MATRIX,
-                                Barcode.FORMAT_QR_CODE
-                        )
+                        .setBarcodeFormats(Barcode.FORMAT_ALL_FORMATS)
                         .build()
         BarcodeScanning.getClient(options)
     }
-
+    val executor = remember { Executors.newSingleThreadExecutor() }
     var isScanning by remember { mutableStateOf(true) }
 
-    DisposableEffect(Unit) { onDispose { barcodeScanner.close() } }
+    DisposableEffect(Unit) {
+        onDispose {
+            executor.shutdown()
+            barcodeScanner.close()
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Camera Preview
@@ -139,7 +140,6 @@ fun BarcodeScannerScreen(
                             }
 
                     val cameraProviderFuture = ProcessCameraProvider.getInstance(ctx)
-                    val executor = Executors.newSingleThreadExecutor()
 
                     cameraProviderFuture.addListener(
                             {

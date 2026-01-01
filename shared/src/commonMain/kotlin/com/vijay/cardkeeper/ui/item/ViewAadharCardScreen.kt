@@ -210,8 +210,12 @@ fun ViewAadharCardScreen(
                                     if (!card.uid.isNullOrEmpty()) formatAadhaarNumber(card.uid!!)
                                     else card.maskedAadhaarNumber
                                 } else {
-                                    if (card.maskedAadhaarNumber.isNotEmpty()) card.maskedAadhaarNumber
-                                    else "XXXX XXXX ${card.uid?.takeLast(4) ?: ""}"
+                                    val last4 = if (!card.uid.isNullOrEmpty()) {
+                                        card.uid!!.takeLast(4)
+                                    } else {
+                                        card.maskedAadhaarNumber.takeLast(4)
+                                    }
+                                    "XXXX XXXX $last4"
                                 }
 
                                 Text(

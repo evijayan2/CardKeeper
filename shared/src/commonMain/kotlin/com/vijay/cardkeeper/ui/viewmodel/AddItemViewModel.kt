@@ -258,11 +258,11 @@ class AddItemViewModel(
                         if (id == null || id == 0) {
                                 emit(null)
                         } else {
-                                if (type == "financial") {
+                                if (type == "financial" || type == "REWARDS_CARD") {
                                         emit(financialRepository.getAccountById(id))
-                                } else if (type == "identity") {
+                                } else if (type == "identity" || type == "DRIVER_LICENSE") {
                                         emit(identityRepository.getDocumentById(id))
-                                } else if (type == "passport") {
+                                } else if (type == "passport" || type == "PASSPORT") {
                                         emitAll(passportRepository.getPassport(id))
                                 } else if (type == "greencard") {
                                         emitAll(greenCardRepository.getGreenCard(id))

@@ -58,6 +58,7 @@ class CardTextAnalyzer(private val onCardFound: (CardDetails) -> Unit) : ImageAn
         recognizer
                 .process(image)
                 .addOnSuccessListener { visionText ->
+                    android.util.Log.d("CardTextAnalyzer", "Raw OCR Text: ${visionText.text}")
                     var foundNumber = ""
                     var foundExpiry = ""
                     var foundOwner = ""
