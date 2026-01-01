@@ -15,7 +15,13 @@ import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.data.entity.Passport
 import com.vijay.cardkeeper.util.DateNormalizer
 import kotlinx.coroutines.flow.first
-import java.time.LocalDate
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
+import kotlinx.datetime.toKotlinLocalDate
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.plus
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -30,6 +36,15 @@ class ExpirationCheckWorker(
 
     override suspend fun doWork(): Result {
         Log.d(TAG, "Starting ExpirationCheckWorker")
+
+        // Critical Security Check:
+        // The AppContainer lazily initializes the Database, which throws if KeyManager.cachedPassphrase is null.
+        // If this worker runs after a process kill (or in background) where the key is lost, we cannot access the DB.
+        if (com.vijay.cardkeeper.util.KeyManager.cachedPassphrase == null) {
+            Log.w(TAG, "Secure key missing. Cannot access database. Worker returning failure.")
+            return Result.failure()
+        }
+
         val appContainer = (applicationContext as CardKeeperApplication).container
         val userPrefs = appContainer.userPreferencesRepository
 
@@ -52,7 +67,7 @@ class ExpirationCheckWorker(
         val passports = appContainer.passportRepository.allPassports.first()
         val financialAccounts = appContainer.financialRepository.allAccounts.first()
 
-        val today = LocalDate.now()
+        val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
         Log.d(TAG, "Today is: $today")
         val expiringItems = mutableListOf<String>()
 
@@ -96,7 +111,7 @@ class ExpirationCheckWorker(
                  if (expiryDateStr.matches(Regex("\\d{2}/\\d{2}"))) {
                     val inputFormat = DateTimeFormatter.ofPattern("MM/yy")
                     val yearMonth = YearMonth.parse(expiryDateStr, inputFormat)
-                    yearMonth.atEndOfMonth()
+                    yearMonth.atEndOfMonth().toKotlinLocalDate()
                 } else {
                     DateNormalizer.parseStrict(expiryDateStr)
                 }
@@ -104,12 +119,8 @@ class ExpirationCheckWorker(
                 null
             }
 
-            if (date != null) {
-                 // Check if date is today or in the future (not expired)
-                 // AND within the threshold
-                 if (!date.isBefore(today) && (date.isBefore(today.plusDays(badgeThreshold)) || date.isEqual(today.plusDays(badgeThreshold)))) {
-                     badgeCount++
-                 }
+            if (date != null && date >= today && date <= today.plus(badgeThreshold, kotlinx.datetime.DateTimeUnit.DAY)) {
+                badgeCount++
             }
         }
 
@@ -156,13 +167,13 @@ class ExpirationCheckWorker(
             null
         } ?: return null
         
-        if (expiryDate.isEqual(today)) {
+        if (expiryDate == today) {
              return "$itemName expires TODAY"
         }
 
         for (days in reminders) {
-            val targetDate = today.plusDays(days.toLong())
-            if (expiryDate.isEqual(targetDate)) {
+            val targetDate = today.plus(days, kotlinx.datetime.DateTimeUnit.DAY)
+            if (expiryDate == targetDate) {
                  return "$itemName expires in $days days"
             }
         }
@@ -178,7 +189,7 @@ class ExpirationCheckWorker(
             if (parts.size == 2) {
                 val inputFormat = DateTimeFormatter.ofPattern("MM/yy")
                 val yearMonth = YearMonth.parse(expiryDateStr, inputFormat)
-                yearMonth.atEndOfMonth()
+                yearMonth.atEndOfMonth().toKotlinLocalDate()
             } else {
                  DateNormalizer.parseStrict(expiryDateStr)
             }
@@ -187,13 +198,13 @@ class ExpirationCheckWorker(
             null
         } ?: return null
 
-        if (expiryDate.isEqual(today)) {
+        if (expiryDate == today) {
              return "$itemName expires TODAY"
         }
 
         for (days in reminders) {
-            val targetDate = today.plusDays(days.toLong())
-             if (expiryDate.isEqual(targetDate)) {
+            val targetDate = today.plus(days, kotlinx.datetime.DateTimeUnit.DAY)
+             if (expiryDate == targetDate) {
                  return "$itemName expires in $days days"
             }
         }

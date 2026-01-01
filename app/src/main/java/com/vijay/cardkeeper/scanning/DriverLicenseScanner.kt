@@ -152,6 +152,8 @@ class DriverLicenseScanner {
         val issuingAuthority = state // For DL, the state IS the issuing authority
         val issueDate = fields["DBD"] ?: "" // Issue date
 
+        Log.d("DriverLicenseScanner", "Extracted - State: $state, Eye Color: $eyeColor, Endorsements: $endorsements, Restrictions: $restrictions")
+
         // Format dates if they're in MMDDYYYY or YYYYMMDD format
         val formattedDob = formatDate(dob)
         val formattedExpiry = formatDate(expiryDate)

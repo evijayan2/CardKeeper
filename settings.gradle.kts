@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Kards"
 include(":app")
+include(":shared")

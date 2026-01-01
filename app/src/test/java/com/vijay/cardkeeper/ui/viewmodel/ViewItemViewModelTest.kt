@@ -23,11 +23,22 @@ class ViewItemViewModelTest {
     private lateinit var viewModel: ViewItemViewModel
     private val repository: FinancialRepository = mockk(relaxed = true)
     private val giftCardRepository: GiftCardRepository = mockk(relaxed = true)
+    private val identityRepository: com.vijay.cardkeeper.data.repository.IdentityRepository = mockk(relaxed = true)
+    private val passportRepository: com.vijay.cardkeeper.data.repository.PassportRepository = mockk(relaxed = true)
+    private val greenCardRepository: com.vijay.cardkeeper.data.repository.GreenCardRepository = mockk(relaxed = true)
+    private val aadharCardRepository: com.vijay.cardkeeper.data.repository.AadharCardRepository = mockk(relaxed = true)
 
     @BeforeEach
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        viewModel = ViewItemViewModel(repository, giftCardRepository)
+        viewModel = ViewItemViewModel(
+            repository, 
+            giftCardRepository, 
+            identityRepository, 
+            passportRepository, 
+            greenCardRepository, 
+            aadharCardRepository
+        )
     }
 
     @Test

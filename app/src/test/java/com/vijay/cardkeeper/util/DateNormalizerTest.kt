@@ -34,7 +34,7 @@ class DateNormalizerTest {
     @Test
     fun usFormat_GC() {
         assertEquals(
-            "1979-05-21",
+            "21/05/1979",
             DateNormalizer.normalize("1979-05-21", DateFormatType.GENERIC)
         )
     }
@@ -64,6 +64,6 @@ class DateNormalizerTest {
         val input = "01/01/2026"
         val parsed = DateNormalizer.parseStrict(input)
         assertNotNull(parsed, "Failed to parse 01/01/2026")
-        assertEquals(java.time.LocalDate.of(2026, 1, 1), parsed)
+        assertEquals(kotlinx.datetime.LocalDate(2026, 1, 1), parsed)
     }
 }

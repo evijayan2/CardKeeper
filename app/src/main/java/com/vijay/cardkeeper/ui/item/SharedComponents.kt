@@ -1,82 +1,51 @@
 package com.vijay.cardkeeper.ui.item
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.widget.Toast
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
+import android.graphics.Bitmap
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.MultiFormatWriter
+import com.google.zxing.common.BitMatrix
+import com.google.mlkit.vision.barcode.common.Barcode
+import android.graphics.Color as AndroidColor
 
-@Composable
-fun SectionHeader(title: String) {
-    Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(top = 8.dp)
-    )
-}
-
-@Composable
-fun DetailRow(
-        label: String,
-        value: String?,
-        isCopyable: Boolean = false,
-        onCopy: (() -> Unit)? = null,
-        fontFamily: androidx.compose.ui.text.font.FontFamily? = null
-) {
-    if (value.isNullOrEmpty()) return
-
-    val context = LocalContext.current
-
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.secondary
-        )
-        Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                    text = value,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontFamily = fontFamily,
-                    modifier = Modifier.weight(1f)
-            )
-            if (isCopyable) {
-                IconButton(
-                        onClick = {
-                            if (onCopy != null) {
-                                onCopy()
-                            } else {
-                                val clipboard =
-                                        context.getSystemService(Context.CLIPBOARD_SERVICE) as
-                                                ClipboardManager
-                                val clip = ClipData.newPlainText(label, value)
-                                clipboard.setPrimaryClip(clip)
-                                Toast.makeText(context, "Copied $label", Toast.LENGTH_SHORT).show()
-                            }
-                        },
-                        modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                            imageVector = Icons.Default.ContentCopy,
-                            contentDescription = "Copy",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                    )
-                }
+fun generateBarcodeBitmap(content: String, format: Int?): Bitmap? {
+    return try {
+        val zxingFormat = if (format != null) mapToZXingFormat(format) else BarcodeFormat.CODE_128
+        val writer = MultiFormatWriter()
+        val bitMatrix: BitMatrix = writer.encode(content, zxingFormat, 600, 300)
+        val width = bitMatrix.width
+        val height = bitMatrix.height
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+        for (x in 0 until width) {
+            for (y in 0 until height) {
+                bitmap.setPixel(
+                    x,
+                    y,
+                    if (bitMatrix[x, y]) AndroidColor.BLACK else AndroidColor.WHITE
+                )
             }
         }
+        bitmap
+    } catch (e: Exception) {
+        null
     }
 }
+
+internal fun mapToZXingFormat(format: Int): BarcodeFormat {
+    return when (format) {
+        Barcode.FORMAT_QR_CODE -> BarcodeFormat.QR_CODE
+        Barcode.FORMAT_UPC_A -> BarcodeFormat.UPC_A
+        Barcode.FORMAT_UPC_E -> BarcodeFormat.UPC_E
+        Barcode.FORMAT_EAN_13 -> BarcodeFormat.EAN_13
+        Barcode.FORMAT_EAN_8 -> BarcodeFormat.EAN_8
+        Barcode.FORMAT_CODE_128 -> BarcodeFormat.CODE_128
+        Barcode.FORMAT_CODE_39 -> BarcodeFormat.CODE_39
+        Barcode.FORMAT_CODE_93 -> BarcodeFormat.CODE_93
+        Barcode.FORMAT_CODABAR -> BarcodeFormat.CODABAR
+        Barcode.FORMAT_DATA_MATRIX -> BarcodeFormat.DATA_MATRIX
+        Barcode.FORMAT_ITF -> BarcodeFormat.ITF
+        Barcode.FORMAT_PDF417 -> BarcodeFormat.PDF_417
+        Barcode.FORMAT_AZTEC -> BarcodeFormat.AZTEC
+        else -> BarcodeFormat.CODE_128
+    }
+}
+

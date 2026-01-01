@@ -32,6 +32,8 @@ class AuthActivity : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        android.util.Log.i("CardKeeperLifecycle", "AuthActivity: onCreate")
+        System.out.println("CardKeeperUI: AuthActivity: onCreate called")
         
         executor = ContextCompat.getMainExecutor(this)
         

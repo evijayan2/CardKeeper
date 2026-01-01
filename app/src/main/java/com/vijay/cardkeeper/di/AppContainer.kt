@@ -8,6 +8,7 @@ import com.vijay.cardkeeper.data.repository.GreenCardRepository
 import com.vijay.cardkeeper.data.repository.GiftCardRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
 import com.vijay.cardkeeper.data.repository.SearchRepository
+import androidx.datastore.preferences.preferencesDataStoreFile
 
 /** AppContainer for manual dependency injection. */
 interface AppContainer {
@@ -30,7 +31,22 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
         val key =
                 com.vijay.cardkeeper.util.KeyManager.cachedPassphrase
                         ?: throw IllegalStateException("Database accessed before authentication!")
-        AppDatabase.getDatabase(context, key)
+        val factory = net.zetetic.database.sqlcipher.SupportOpenHelperFactory(key)
+        androidx.room.Room.databaseBuilder(
+            context.applicationContext,
+            com.vijay.cardkeeper.data.AppDatabase::class.java,
+            "cardkeeper_database"
+        )
+        .openHelperFactory(factory)
+        .addMigrations(
+            com.vijay.cardkeeper.data.MIGRATION_11_12,
+            com.vijay.cardkeeper.data.MIGRATION_12_13,
+            com.vijay.cardkeeper.data.MIGRATION_13_14,
+            com.vijay.cardkeeper.data.MIGRATION_14_15,
+            com.vijay.cardkeeper.data.MIGRATION_15_16
+        )
+        .fallbackToDestructiveMigration(false)
+        .build()
     }
 
     override val financialRepository: FinancialRepository by lazy {
@@ -68,6 +84,9 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     }
 
     override val userPreferencesRepository: com.vijay.cardkeeper.data.repository.UserPreferencesRepository by lazy {
-        com.vijay.cardkeeper.data.repository.UserPreferencesRepository(context)
+        val dataStore = androidx.datastore.preferences.core.PreferenceDataStoreFactory.create {
+            context.preferencesDataStoreFile("user_preferences")
+        }
+        com.vijay.cardkeeper.data.repository.UserPreferencesRepository(dataStore)
     }
 }

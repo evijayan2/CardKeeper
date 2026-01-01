@@ -5,57 +5,58 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.navigation.compose.rememberNavController
+import com.vijay.cardkeeper.ui.navigation.CardKeeperNavHost
 import com.vijay.cardkeeper.ui.theme.CardKeeperTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val userPreferencesRepository = (application as CardKeeperApplication).container.userPreferencesRepository
-        setContent {
-            val themeMode by userPreferencesRepository.themeMode.collectAsState(initial = "SYSTEM")
+        
+        System.out.println("CardKeeperUI: MainActivity onCreate called")
 
-            val darkTheme = when (themeMode) {
-                "LIGHT" -> false
-                "DARK" -> true
-                else -> isSystemInDarkTheme()
-            }
-
-            // Notification Permission Request for Android 13+
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-                val permission = android.Manifest.permission.POST_NOTIFICATIONS
-                val context = androidx.compose.ui.platform.LocalContext.current
-                val launcher = androidx.activity.compose.rememberLauncherForActivityResult(
-                    androidx.activity.result.contract.ActivityResultContracts.RequestPermission()
-                ) { isGranted ->
-                    // Handle outcome if needed, e.g. update state
-                }
-
-                androidx.compose.runtime.LaunchedEffect(Unit) {
-                    if (androidx.core.content.ContextCompat.checkSelfPermission(
-                            context,
-                            permission
-                        ) != android.content.pm.PackageManager.PERMISSION_GRANTED
-                    ) {
-                        launcher.launch(permission)
-                    }
-                }
-            }
-
-            CardKeeperTheme(darkTheme = darkTheme) {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background
-                ) {
-                    val navController = androidx.navigation.compose.rememberNavController()
-                    com.vijay.cardkeeper.ui.navigation.CardKeeperNavHost(navController = navController)
-                }
+        if (com.vijay.cardkeeper.util.KeyManager.cachedPassphrase == null) {
+            if (com.vijay.cardkeeper.util.KeyManager.isKeyCreated(this)) {
+                System.out.println("CardKeeperUI: MainActivity: Redirection to AuthActivity")
+                startActivity(android.content.Intent(this, AuthActivity::class.java))
+                finish()
+                return
             }
         }
+
+        setContent {
+            CardKeeperApp()
+        }
+    }
+}
+
+@Composable
+private fun CardKeeperApp() {
+    val context = LocalContext.current
+    val userPreferencesRepository = (context.applicationContext as CardKeeperApplication).container.userPreferencesRepository
+    val themeMode by userPreferencesRepository.themeMode.collectAsState(initial = "SYSTEM")
+    
+    println("CardKeeperUI: CardKeeperApp Composing. Theme: $themeMode")
+
+    val useDarkTheme = when (themeMode) {
+        "DARK" -> true
+        "LIGHT" -> false
+        else -> isSystemInDarkTheme()
+    }
+
+    // Create NavController at this level so it survives theme changes
+    val navController = rememberNavController()
+
+    CardKeeperTheme(darkTheme = useDarkTheme) {
+        CardKeeperNavHost(
+            navController = navController,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
