@@ -50,6 +50,7 @@ fun AddItemRoute(
             4 -> "greencard"
             5 -> "aadhar"
             6 -> "giftcard"
+            7 -> "pancard"
             else -> "financial"
         }
 
@@ -69,6 +70,7 @@ fun AddItemRoute(
                 is GreenCard -> selectedCategory = 4
                 is AadharCard -> selectedCategory = 5
                 is GiftCard -> selectedCategory = 6
+                is PanCard -> selectedCategory = 7
             }
         }
     }
@@ -91,6 +93,7 @@ fun AddItemRoute(
     val greenCardState = rememberGreenCardFormState(item as? GreenCard)
     val aadharCardState = rememberAadharCardFormState(item as? AadharCard)
     val giftCardState = rememberGiftCardFormState(item as? GiftCard)
+    val panCardState = rememberPanCardFormState(item as? PanCard)
 
     // Scanners
     val scannerOptions = remember {
@@ -111,6 +114,7 @@ fun AddItemRoute(
     val greenCardScanner = remember { GreenCardScanner() }
     val aadharScanner = remember { AadharScanner() }
     val aadharQrScanner = remember { AadharQrScanner(context) }
+    val panCardScanner = remember { PanCardScanner() }
 
     // State for Camera/Barcode logic
     var scanningBack by remember { mutableStateOf(false) }
@@ -131,8 +135,8 @@ fun AddItemRoute(
                     bitmap?.let { b ->
                         val path = saveImageToInternalStorage(context, b, "scan_${System.currentTimeMillis()}")
                         processScanResult(b, path, selectedCategory, scanningBack, 
-                            financialState, identityState, passportState, greenCardState, aadharCardState, giftCardState,
-                            paymentScanner, rewardsScanner, identityScanner, driverLicenseScanner, chequeScanner, passportScanner, greenCardScanner, aadharScanner, context)
+                            financialState, identityState, passportState, greenCardState, aadharCardState, giftCardState, panCardState,
+                            paymentScanner, rewardsScanner, identityScanner, driverLicenseScanner, chequeScanner, passportScanner, greenCardScanner, aadharScanner, panCardScanner, context)
                     }
                 }
             }
@@ -342,6 +346,21 @@ fun AddItemRoute(
                         job.join()
                         println("CardKeeperUI: Gift Card saved successfully")
                     }
+                    7 -> {
+                        println("CardKeeperUI: Saving PAN Card")
+                        val pc = PanCard(
+                            id = if (documentId != null && typeForLookup == "pancard") documentId else 0,
+                            panNumber = panCardState.panNumber,
+                            holderName = panCardState.holderName,
+                            fatherName = panCardState.fatherName,
+                            dob = panCardState.dob,
+                            frontImagePath = panCardState.frontPath,
+                            backImagePath = panCardState.backPath
+                        )
+                        val job = viewModel.savePanCard(pc)
+                        job.join()
+                        println("CardKeeperUI: PAN Card saved successfully")
+                    }
                 }
                 println("CardKeeperUI: Save complete, navigating back")
                 navigateBack(selectedCategory) // Pass the category that was saved
@@ -364,6 +383,7 @@ fun AddItemRoute(
             4 -> "Edit Green Card"
             5 -> "Edit Aadhaar Card"
             6 -> "Edit Gift Card"
+            7 -> "Edit PAN Card"
             else -> "Edit Item"
         }
     } else {
@@ -375,6 +395,7 @@ fun AddItemRoute(
             4 -> "Add Green Card"
             5 -> "Add Aadhaar Card"
             6 -> "Add Gift Card"
+            7 -> "Add PAN Card"
             else -> "Add Item"
         }
     }
@@ -387,6 +408,7 @@ fun AddItemRoute(
             greenCardState = greenCardState,
             aadharCardState = aadharCardState,
             giftCardState = giftCardState,
+            panCardState = panCardState,
             selectedCategory = selectedCategory,
             onCategorySelected = { selectedCategory = it },
             onScanRequest = onScanRequest,
@@ -471,6 +493,7 @@ private suspend fun processScanResult(
     greenCardState: GreenCardFormState,
     aadharCardState: AadharCardFormState,
     giftCardState: GiftCardFormState,
+    panCardState: PanCardFormState,
     paymentScanner: PaymentCardScanner,
     rewardsScanner: RewardsScanner,
     identityScanner: IdentityScanner,
@@ -479,6 +502,7 @@ private suspend fun processScanResult(
     passportScanner: PassportScanner,
     greenCardScanner: GreenCardScanner,
     aadharScanner: AadharScanner,
+    panCardScanner: PanCardScanner,
     context: android.content.Context
 ) {
     if (isBack) {
@@ -571,10 +595,14 @@ private suspend fun processScanResult(
                 val res = rewardsScanner.scan(bitmap)
                 android.util.Log.d("AddItemRoute", "Gift Card Back Scan Result: barcode=${res.barcode}, cardNumber=${res.cardNumber}, format=${res.barcodeFormat}, qrCode=${res.qrCode}, shopName=${res.shopName}")
                 
-                // Separate fields for Gift Cards - allow overwrite if new detection is longer
-                res.barcode?.let { if (giftCardState.barcode.orEmpty().isEmpty() || it.length > giftCardState.barcode.orEmpty().length) giftCardState.barcode = it }
-                res.cardNumber?.let { if (giftCardState.cardNumber.isEmpty() || it.length > giftCardState.cardNumber.length) giftCardState.cardNumber = it }
                 res.barcodeFormat?.let { giftCardState.barcodeFormat = it }
+            }
+            7 -> {
+                panCardState.backPath = path
+                panCardState.hasBackImage = true
+                // Optionally scan back for any details, but usually front has all content.
+                // If back has address/QR, we could scan it here.
+                // For now, just save the image.
             }
         }
     } else {
@@ -675,6 +703,15 @@ private suspend fun processScanResult(
                 res.cardNumber?.let { if (giftCardState.cardNumber.isEmpty() || it.length > giftCardState.cardNumber.length) giftCardState.cardNumber = it }
                 res.barcodeFormat?.let { giftCardState.barcodeFormat = it }
                 res.shopName?.let { if (giftCardState.providerName.isEmpty()) giftCardState.providerName = it }
+            }
+            7 -> {
+                panCardState.frontPath = path
+                panCardState.hasFrontImage = true
+                val result = panCardScanner.scan(bitmap)
+                if (result.panNumber.isNotEmpty()) panCardState.panNumber = result.panNumber
+                if (result.holderName.isNotEmpty()) panCardState.holderName = result.holderName
+                if (result.fatherName.isNotEmpty()) panCardState.fatherName = result.fatherName
+                if (result.dob.isNotEmpty()) panCardState.rawDob = result.dob.filter { it.isDigit() }
             }
         }
     }

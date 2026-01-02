@@ -8,6 +8,7 @@ import com.vijay.cardkeeper.data.repository.GreenCardRepository
 import com.vijay.cardkeeper.data.repository.GiftCardRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
 import com.vijay.cardkeeper.data.repository.SearchRepository
+import com.vijay.cardkeeper.data.repository.PanCardRepository
 import androidx.datastore.preferences.preferencesDataStoreFile
 
 /** AppContainer for manual dependency injection. */
@@ -18,6 +19,7 @@ interface AppContainer {
     val greenCardRepository: GreenCardRepository
     val giftCardRepository: GiftCardRepository
     val aadharCardRepository: AadharCardRepository
+    val panCardRepository: PanCardRepository
     val searchRepository: SearchRepository
     val userPreferencesRepository: com.vijay.cardkeeper.data.repository.UserPreferencesRepository
 }
@@ -43,7 +45,8 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
             com.vijay.cardkeeper.data.MIGRATION_12_13,
             com.vijay.cardkeeper.data.MIGRATION_13_14,
             com.vijay.cardkeeper.data.MIGRATION_14_15,
-            com.vijay.cardkeeper.data.MIGRATION_15_16
+            com.vijay.cardkeeper.data.MIGRATION_15_16,
+            com.vijay.cardkeeper.data.MIGRATION_16_17
         )
         .fallbackToDestructiveMigration(false)
         .build()
@@ -71,6 +74,10 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val aadharCardRepository: AadharCardRepository by lazy {
         AadharCardRepository(database.aadharCardDao())
+    }
+
+    override val panCardRepository: PanCardRepository by lazy {
+        PanCardRepository(database.panCardDao())
     }
 
     override val searchRepository: SearchRepository by lazy {

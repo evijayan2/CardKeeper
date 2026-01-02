@@ -15,6 +15,8 @@ import com.vijay.cardkeeper.data.repository.FinancialRepository
 import com.vijay.cardkeeper.data.repository.GiftCardRepository
 import com.vijay.cardkeeper.data.repository.GreenCardRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
+import com.vijay.cardkeeper.data.entity.PanCard
+import com.vijay.cardkeeper.data.repository.PanCardRepository
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.launch
 
@@ -24,7 +26,9 @@ class AddItemViewModel(
         private val passportRepository: com.vijay.cardkeeper.data.repository.PassportRepository,
         private val greenCardRepository: GreenCardRepository,
         private val aadharCardRepository: AadharCardRepository,
+
         private val giftCardRepository: GiftCardRepository,
+        private val panCardRepository: PanCardRepository,
         private val expirationScheduler: com.vijay.cardkeeper.domain.ExpirationScheduler
 ) : ViewModel() {
 
@@ -253,6 +257,22 @@ class AddItemViewModel(
                 }
         }
 
+        fun savePanCard(panCard: PanCard) = viewModelScope.launch {
+                if (panCard.id > 0) {
+                        panCardRepository.updatePanCard(panCard)
+                } else {
+                        panCardRepository.insertPanCard(panCard)
+                }
+                scheduleExpirationCheck()
+        }
+
+        fun deletePanCard(panCard: PanCard) {
+                viewModelScope.launch { 
+                    panCardRepository.deletePanCard(panCard)
+                    scheduleExpirationCheck()
+                }
+        }
+
         fun getItem(id: Int?, type: String?): kotlinx.coroutines.flow.Flow<Any?> =
                 kotlinx.coroutines.flow.flow {
                         if (id == null || id == 0) {
@@ -270,6 +290,8 @@ class AddItemViewModel(
                                         emitAll(aadharCardRepository.getAadharCard(id))
                                 } else if (type == "giftcard") {
                                         emit(giftCardRepository.getGiftCardById(id))
+                                } else if (type == "pancard") {
+                                        emitAll(panCardRepository.getPanCardById(id))
                                 }
                         }
                 }

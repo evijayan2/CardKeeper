@@ -44,6 +44,8 @@ import kards.shared.generated.resources.ic_brand_visa
 import kards.shared.generated.resources.placeholder_image
 import com.vijay.cardkeeper.data.entity.AccountType
 import com.vijay.cardkeeper.data.entity.FinancialAccount
+import com.vijay.cardkeeper.data.entity.PanCard
+
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.data.entity.Passport
 import com.vijay.cardkeeper.data.entity.GiftCard
@@ -62,6 +64,7 @@ fun HomeScreen(
         navigateToPassportView: (Int) -> Unit = {},
         navigateToGreenCardView: (Int) -> Unit = {},
         navigateToAadharView: (Int) -> Unit = {},
+        navigateToPanCardView: (Int) -> Unit = {},
         navigateToGiftCardView: (Int) -> Unit = {},
         navigateToRewardsView: (Int) -> Unit = {},
         navigateToSearch: () -> Unit = {},
@@ -76,6 +79,7 @@ fun HomeScreen(
     val passportState by viewModel.passports.collectAsState()
     val greenCardState by viewModel.greenCards.collectAsState()
     val aadharCardState by viewModel.aadharCards.collectAsState()
+    val panCardState by viewModel.panCards.collectAsState()
     val giftCards by viewModel.giftCards.collectAsState()
     var selectedTab by rememberSaveable { mutableStateOf(initialTab ?: 0) }
     
@@ -209,6 +213,14 @@ fun HomeScreen(
                                 },
                                 leadingIcon = { Icon(Icons.Filled.Face, contentDescription = null) }
                         )
+                        DropdownMenuItem(
+                                text = { Text("PAN Card") },
+                                onClick = {
+                                    showMenu = false
+                                    navigateToItemEntry(7, "PAN")
+                                },
+                                leadingIcon = { Icon(Icons.Filled.Face, contentDescription = null) } // Using Face as placeholder
+                        )
                     }
                 }
             }
@@ -250,9 +262,11 @@ fun HomeScreen(
                                 identityState,
                                 greenCardState,
                                 aadharCardState,
+                                panCardState,
                                 navigateToIdentityView,
                                 navigateToGreenCardView,
-                                navigateToAadharView
+                                navigateToAadharView,
+                                navigateToPanCardView
                         )
                 2 -> PassportList(passportState, navigateToPassportView)
                 3 -> RewardsList(rewardsCards, giftCards, navigateToRewardsView, navigateToGiftCardView)
@@ -634,9 +648,11 @@ fun IdentityList(
         identityList: List<IdentityDocument>,
         greenCardList: List<com.vijay.cardkeeper.data.entity.GreenCard>,
         aadharCardList: List<com.vijay.cardkeeper.data.entity.AadharCard>,
+        panCardList: List<PanCard>,
         onIdentityClick: (Int) -> Unit,
         onGreenCardClick: (Int) -> Unit,
-        onAadharClick: (Int) -> Unit
+        onAadharClick: (Int) -> Unit,
+        onPanCardClick: (Int) -> Unit
 ) {
     LazyColumn(
             contentPadding = PaddingValues(16.dp),
@@ -645,8 +661,11 @@ fun IdentityList(
         items(identityList, key = { "id_${it.id}" }) { doc -> IdentityItem(doc, onIdentityClick) }
         items(greenCardList, key = { "gc_${it.id}" }) { gc -> GreenCardItem(gc, onGreenCardClick) }
         items(aadharCardList, key = { "ad_${it.id}" }) { aadhar -> AadharCardItem(aadhar, onAadharClick) }
+        items(panCardList, key = { "pan_${it.id}" }) { pan -> PanCardItem(pan, onPanCardClick) }
     }
 }
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -844,7 +863,7 @@ fun IdentityItem(doc: IdentityDocument, onItemClick: (Int) -> Unit) {
     Card(
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color.Red), // DEBUG BORDER
+
             onClick = { onItemClick(doc.id) }
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -1072,5 +1091,98 @@ fun DashboardImageThumbnail(
                 contentScale = ContentScale.Crop
         )
         Text(text = label, style = MaterialTheme.typography.labelSmall, color = textColor)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PanCardItem(pan: PanCard, onItemClick: (Int) -> Unit) {
+    Card(
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            onClick = { onItemClick(pan.id) }
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // Background India Flag
+            val backgroundUrl = "https://flagcdn.com/w320/in.png"
+
+            AsyncImage(
+                    model = backgroundUrl,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    alpha = 0.15f,
+                    modifier = Modifier.matchParentSize()
+            )
+
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                                text = "PAN CARD",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                                text = "GOVT OF INDIA",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // Flag Icon
+                    AsyncImage(
+                            model = "https://flagcdn.com/w160/in.png",
+                            contentDescription = "India Flag",
+                            modifier = Modifier.size(24.dp).clip(RoundedCornerShape(2.dp))
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Masked PAN: XXXXX 1234 X
+                val maskedPan = if (pan.panNumber.length == 10) {
+                     "XXXXX " + pan.panNumber.substring(5, 9) + " " + pan.panNumber.last()
+                } else {
+                     pan.panNumber
+                }
+
+                Text(
+                        text = maskedPan,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                         fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Details
+                Text(
+                        text = "Name: ${pan.holderName.uppercase()}",
+                        style = MaterialTheme.typography.bodyMedium
+                )
+                
+                if (!pan.dob.isNullOrEmpty()) {
+                    Text(
+                            text = "DOB: ${pan.dob}",
+                            style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Images
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    pan.frontImagePath?.let { path ->
+                        DashboardImageThumbnail(path = path, label = "Front")
+                    }
+                    pan.backImagePath?.let { path ->
+                        DashboardImageThumbnail(path = path, label = "Back")
+                    }
+                }
+            }
+        }
     }
 }

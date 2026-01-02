@@ -14,6 +14,8 @@ import com.vijay.cardkeeper.data.repository.GiftCardRepository
 import com.vijay.cardkeeper.data.repository.GreenCardRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
 import com.vijay.cardkeeper.data.repository.PassportRepository
+import com.vijay.cardkeeper.data.entity.PanCard
+import com.vijay.cardkeeper.data.repository.PanCardRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -25,7 +27,8 @@ class HomeViewModel(
         passportRepository: PassportRepository,
         greenCardRepository: GreenCardRepository,
         aadharCardRepository: AadharCardRepository,
-        giftCardRepository: GiftCardRepository
+        giftCardRepository: GiftCardRepository,
+        panCardRepository: PanCardRepository
 ) : ViewModel() {
 
         val bankAccounts: StateFlow<List<FinancialAccount>> =
@@ -88,6 +91,13 @@ class HomeViewModel(
 
         val giftCards: StateFlow<List<GiftCard>> =
                 giftCardRepository.getAllGiftCards().stateIn(
+                        viewModelScope,
+                        SharingStarted.Eagerly,
+                        emptyList()
+                )
+
+        val panCards: StateFlow<List<PanCard>> =
+                panCardRepository.getAllPanCards().stateIn(
                         viewModelScope,
                         SharingStarted.Eagerly,
                         emptyList()

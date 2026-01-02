@@ -22,6 +22,7 @@ fun AddItemScreen(
     greenCardState: GreenCardFormState,
     aadharCardState: AadharCardFormState,
     giftCardState: GiftCardFormState,
+    panCardState: PanCardFormState,
     selectedCategory: Int,
     onCategorySelected: (Int) -> Unit,
     onScanRequest: (category: Int, requestType: ScanRequestType) -> Unit,
@@ -65,6 +66,7 @@ fun AddItemScreen(
                     Tab(selected = selectedCategory == 4, onClick = { onCategorySelected(4) }, text = { Text("Green Card") })
                     Tab(selected = selectedCategory == 5, onClick = { onCategorySelected(5) }, text = { Text("Aadhaar") })
                     Tab(selected = selectedCategory == 6, onClick = { onCategorySelected(6) }, text = { Text("Gift Card") })
+                    Tab(selected = selectedCategory == 7, onClick = { onCategorySelected(7) }, text = { Text("PAN Card") })
                 }
             } else if (isEditing) {
                  // If editing, show the category title as a locked header or just rely on TopBar
@@ -76,6 +78,7 @@ fun AddItemScreen(
                      4 -> "Green Card"
                      5 -> "Aadhaar Card"
                      6 -> "Gift Card"
+                     7 -> "PAN Card"
                      else -> "Item"
                  }
                  Text(title, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(vertical = 8.dp))
@@ -138,6 +141,16 @@ fun AddItemScreen(
                          onScanFront = { onScanRequest(6, ScanRequestType.FRONT) },
                          onScanBack = { onScanRequest(6, ScanRequestType.BACK) },
                          onScanBarcode = { onScanRequest(6, ScanRequestType.BARCODE) }, // Code scan
+                         onSave = onSave,
+                         onNavigateBack = onNavigateBack
+                     )
+                }
+                7 -> { // PAN Card
+                     PanCardForm(
+                         state = panCardState,
+                         onScanOcr = { onScanRequest(7, ScanRequestType.FRONT) }, // Use FRONT for OCR scan
+                         onScanFront = { onScanRequest(7, ScanRequestType.FRONT) },
+                         onScanBack = { onScanRequest(7, ScanRequestType.BACK) },
                          onSave = onSave,
                          onNavigateBack = onNavigateBack
                      )

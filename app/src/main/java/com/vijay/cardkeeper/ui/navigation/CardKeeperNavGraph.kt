@@ -30,6 +30,7 @@ object CardKeeperDestinations {
     const val VIEW_PASSPORT_ROUTE = "view_passport/{passportId}"
     const val VIEW_GREEN_CARD_ROUTE = "view_greencard/{gcId}"
     const val VIEW_AADHAR_ROUTE = "view_aadhar/{aadharId}"
+    const val VIEW_PAN_CARD_ROUTE = "view_pancard/{panCardId}"
     const val VIEW_GIFT_CARD_ROUTE = "view_gift_card/{giftCardId}"
     const val VIEW_REWARDS_ROUTE = "view_rewards/{accountId}"
     const val SEARCH_ROUTE = "search"
@@ -87,6 +88,9 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                         navigateToAadharView = { aadharId ->
                             navController.navigate("view_aadhar/$aadharId")
                         },
+                        navigateToPanCardView = { panCardId ->
+                            navController.navigate("view_pancard/$panCardId")
+                        },
                         navigateToGiftCardView = { giftCardId ->
                             navController.navigate("view_gift_card/$giftCardId")
                         },
@@ -118,7 +122,10 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                                     "Passport" -> "view_passport/$id"
                                     "Green Card" -> "view_greencard/$id"
                                     "Aadhar" -> "view_aadhar/$id"
+                                    "PAN" -> "view_pancard/$id"
+                                    "PAN Card" -> "view_pancard/$id"
                                     "Gift Card" -> "view_gift_card/$id"
+
                                     "Rewards" -> "view_rewards/$id"
                                     else -> null
                                 }
@@ -168,6 +175,7 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                             4 -> 1  // Green Card → Identity tab
                             5 -> 1  // Aadhar → Identity tab
                             6 -> 3  // Gift Card → Rewards tab
+                            7 -> 1  // PAN Card → Identity tab
                             else -> 0
                         }
                         navController.navigate("home?tab=$targetTab") {
@@ -234,6 +242,17 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                     aadharCardId = aadharId,
                     navigateBack = { navController.popBackStack() },
                     onEditClick = { id -> navController.navigate("add_item?category=5&itemId=$id") }
+            )
+        }
+        composable(
+                route = CardKeeperDestinations.VIEW_PAN_CARD_ROUTE,
+                arguments = listOf(navArgument("panCardId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val panCardId = backStackEntry.arguments?.getInt("panCardId") ?: 0
+            com.vijay.cardkeeper.ui.item.ViewPanCardRoute(
+                    panCardId = panCardId,
+                    navigateBack = { navController.popBackStack() },
+                    onEditClick = { id -> navController.navigate("add_item?category=7&itemId=$id") }
             )
         }
         composable(

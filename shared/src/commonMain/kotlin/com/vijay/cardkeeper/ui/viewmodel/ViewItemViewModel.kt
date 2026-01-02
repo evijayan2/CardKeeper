@@ -16,7 +16,8 @@ class ViewItemViewModel(
     private val identityRepository: IdentityRepository,
     private val passportRepository: PassportRepository,
     private val greenCardRepository: GreenCardRepository,
-    private val aadharCardRepository: AadharCardRepository
+    private val aadharCardRepository: AadharCardRepository,
+    private val panCardRepository: PanCardRepository
 ) : ViewModel() {
 
     private val _selectedAccount = MutableStateFlow<FinancialAccount?>(null)
@@ -36,6 +37,9 @@ class ViewItemViewModel(
 
     private val _selectedAadharCard = MutableStateFlow<AadharCard?>(null)
     val selectedAadharCard: StateFlow<AadharCard?> = _selectedAadharCard.asStateFlow()
+
+    private val _selectedPanCard = MutableStateFlow<PanCard?>(null)
+    val selectedPanCard: StateFlow<PanCard?> = _selectedPanCard.asStateFlow()
 
     private val _fullScreenImage = MutableStateFlow<String?>(null)
     val fullScreenImage: StateFlow<String?> = _fullScreenImage.asStateFlow()
@@ -90,5 +94,13 @@ class ViewItemViewModel(
 
     fun deleteAadharCard(aadharCard: AadharCard) {
         viewModelScope.launch { aadharCardRepository.delete(aadharCard) }
+    }
+
+    fun loadPanCard(id: Int) {
+        viewModelScope.launch { _selectedPanCard.value = panCardRepository.getPanCardById(id).firstOrNull() }
+    }
+
+    fun deletePanCard(panCard: PanCard) {
+        viewModelScope.launch { panCardRepository.deletePanCard(panCard) }
     }
 }

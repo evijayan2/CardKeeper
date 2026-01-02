@@ -88,3 +88,23 @@ val MIGRATION_15_16 = object : Migration(15, 16) {
         database.execSQL("ALTER TABLE `gift_cards` ADD COLUMN `qrCode` TEXT")
     }
 }
+
+val MIGRATION_16_17 = object : Migration(16, 17) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `pan_cards` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `panNumber` TEXT NOT NULL,
+                `holderName` TEXT NOT NULL,
+                `fatherName` TEXT,
+                `dob` TEXT,
+                `frontImagePath` TEXT,
+                `backImagePath` TEXT,
+                `issueDate` TEXT,
+                `acknowledgementNumber` TEXT
+            )
+            """.trimIndent()
+        )
+    }
+}

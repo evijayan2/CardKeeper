@@ -7,11 +7,13 @@ import androidx.room.RoomDatabaseConstructor
 import com.vijay.cardkeeper.data.dao.AadharCardDao
 import com.vijay.cardkeeper.data.dao.FinancialAccountDao
 import com.vijay.cardkeeper.data.dao.IdentityDocumentDao
+import com.vijay.cardkeeper.data.dao.PanCardDao
 import com.vijay.cardkeeper.data.entity.AadharCard
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.GiftCard
 import com.vijay.cardkeeper.data.entity.GreenCard
 import com.vijay.cardkeeper.data.entity.IdentityDocument
+import com.vijay.cardkeeper.data.entity.PanCard
 
 @Database(
     entities = [
@@ -20,9 +22,10 @@ import com.vijay.cardkeeper.data.entity.IdentityDocument
         com.vijay.cardkeeper.data.entity.Passport::class,
         GreenCard::class,
         AadharCard::class,
-        GiftCard::class
+        GiftCard::class,
+        PanCard::class
     ],
-    version = 16,
+    version = 17,
     exportSchema = true
 )
 @ConstructedBy(AppDatabaseConstructor::class)
@@ -33,6 +36,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun greenCardDao(): com.vijay.cardkeeper.data.dao.GreenCardDao
     abstract fun aadharCardDao(): AadharCardDao
     abstract fun giftCardDao(): com.vijay.cardkeeper.data.dao.GiftCardDao
+    abstract fun panCardDao(): PanCardDao
 }
 
 expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase>
