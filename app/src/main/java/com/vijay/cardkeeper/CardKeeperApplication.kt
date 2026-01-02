@@ -10,7 +10,13 @@ import com.vijay.cardkeeper.di.DefaultAppContainer
 import com.vijay.cardkeeper.worker.ExpirationCheckWorker
 import java.util.concurrent.TimeUnit
 
-class CardKeeperApplication : Application() {
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
+import coil3.util.DebugLogger
+import com.vijay.cardkeeper.util.EncryptedFileFetcher
+import com.vijay.cardkeeper.util.EncryptedImageDecoder
+
+class CardKeeperApplication : Application(), SingletonImageLoader.Factory {
 
     lateinit var container: AppContainer
 
@@ -30,5 +36,16 @@ class CardKeeperApplication : Application() {
             ExistingPeriodicWorkPolicy.KEEP,
             workRequest
         )
+    }
+
+    override fun newImageLoader(context: android.content.Context): ImageLoader {
+        return ImageLoader.Builder(context)
+            .components {
+                add(EncryptedFileFetcher.Factory())
+                add(EncryptedImageDecoder.Factory(context))
+            }
+            .diskCachePolicy(coil3.request.CachePolicy.DISABLED) // Disable disk cache for security
+            .logger(DebugLogger())
+            .build()
     }
 }

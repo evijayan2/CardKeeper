@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import com.vijay.cardkeeper.ui.navigation.CardKeeperNavHost
 import com.vijay.cardkeeper.ui.theme.CardKeeperTheme
 
@@ -28,6 +30,12 @@ class MainActivity : ComponentActivity() {
                 finish()
                 return
             }
+        }
+        
+        // Trigger background migration
+        val app = application as CardKeeperApplication
+        lifecycleScope.launch {
+           app.container.imageMigrationManager.performMigration()
         }
 
         setContent {

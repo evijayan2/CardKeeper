@@ -22,6 +22,7 @@ interface AppContainer {
     val panCardRepository: PanCardRepository
     val searchRepository: SearchRepository
     val userPreferencesRepository: com.vijay.cardkeeper.data.repository.UserPreferencesRepository
+    val imageMigrationManager: com.vijay.cardkeeper.util.ImageMigrationManager
 }
 
 class DefaultAppContainer(private val context: Context) : AppContainer {
@@ -95,5 +96,18 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
             context.preferencesDataStoreFile("user_preferences")
         }
         com.vijay.cardkeeper.data.repository.UserPreferencesRepository(dataStore)
+    }
+
+    override val imageMigrationManager: com.vijay.cardkeeper.util.ImageMigrationManager by lazy {
+        com.vijay.cardkeeper.util.ImageMigrationManager(
+            context = context,
+            financialRepository = financialRepository,
+            identityRepository = identityRepository,
+            passportRepository = passportRepository,
+            greenCardRepository = greenCardRepository,
+            aadharCardRepository = aadharCardRepository,
+            giftCardRepository = giftCardRepository,
+            panCardRepository = panCardRepository
+        )
     }
 }

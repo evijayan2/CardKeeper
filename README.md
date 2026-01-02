@@ -52,6 +52,7 @@ Kards is built with a "Security by Design" philosophy:
 3.  **Full Database Encryption**: The application uses **SQLCipher** to encrypt the entire SQLite database with 256-bit AES encryption.
 4.  **Zero-Knowledge Architecture**: The developer (or anyone else) has zero access to your data. There is no telemetry, no tracking, and no outbound data collection.
 5.  **Strict Data Residency**: Your sensitive documents stay exactly where you put them—on your phone. Internet access is utilized solely for enhancing the UI (e.g., downloading institution logos and flags) and never for transmitting user data.
+6.  **Encrypted Image Vault**: All card images (scanning results, photos) are encrypted on disk using AES-GCM with unique 12-byte IVs. They are decrypted only in memory using a custom, hardened decoder pipeline that bypasses standard system caches to prevent data leakage.
 
 ---
 
