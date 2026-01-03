@@ -10,7 +10,7 @@
 
 Kards is a privacy-first Android application designed to securely store and manage your most sensitive personal documents and financial information. In a world where digital identity is fragmented across emails and photos, Kards provides a single, encrypted secure enclave on your device.
 
-It allows you to digitize, organize, and quickly access your **Financial Accounts** (Credit/Debit/Bank), **Identity Documents** (Driver Licenses, Aadhar), and **Travel Documents** (Passports, Green Cards).
+It allows you to digitize, organize, and quickly access your **Financial Accounts** (Credit/Debit/Bank), **Identity Documents** (Driver Licenses, Aadhar, PAN), and **Travel Documents** (Passports, Green Cards).
 
 ## Why Kards? (Benefits)
 
@@ -36,6 +36,7 @@ View the full history of changes:
 -   **Smart Scanning**:
     -   **MRZ Scanner**: Instantly reads Machine Readable Zones on Passports and Green Cards.
     -   **Barcode/QR Scanner**: Decodes PDF417 barcodes on US Driver Licenses, QR codes on Aadhar cards, and various retail barcodes.
+    -   **PAN Card Support**: Text recognition for Indian PAN Cards.
 -   **Expiration Alerts**: Receive proactive notifications for expiring documents (30 days, 7 days, 1 day) and stay organized with app icon badges.
 -   **Customizable Settings**: Personalize your experience with Theme selection (Light/Dark/System) and flexible Date Format options.
 -   **Unified Search**: Deep search across all documents. Find cards by institution, last 4 digits, holder name, or document type.
@@ -49,7 +50,7 @@ Kards is built with a "Security by Design" philosophy:
 
 1.  **Hardware-Backed Encryption**: The Master Encryption Key is generated and stored in the **Android Keystore System** (a hardware-enforced secure container).
 2.  **User Authentication Binding**: This Master Key is cryptographically bound to your biometrics. It **cannot** be used to decrypt your data unless you have successfully authenticated with your fingerprint or face.
-3.  **Full Database Encryption**: The application uses **SQLCipher** to encrypt the entire SQLite database with 256-bit AES encryption.
+3.  **Full Database Encryption**: The application uses **SQLCipher** to encrypt the entire SQLite database (accessed via SQLDelight) with 256-bit AES encryption.
 4.  **Zero-Knowledge Architecture**: The developer (or anyone else) has zero access to your data. There is no telemetry, no tracking, and no outbound data collection.
 5.  **Strict Data Residency**: Your sensitive documents stay exactly where you put them—on your phone. Internet access is utilized solely for enhancing the UI (e.g., downloading institution logos and flags) and never for transmitting user data.
 6.  **Encrypted Image Vault**: All card images (scanning results, photos) are encrypted on disk using AES-GCM with unique 12-byte IVs. They are decrypted only in memory using a custom, hardened decoder pipeline that bypasses standard system caches to prevent data leakage.
@@ -61,7 +62,7 @@ Kards is built with a "Security by Design" philosophy:
 | Type | Features |
 | :--- | :--- |
 | **Financial Accounts** | Debit/Credit Cards, Bank Accounts, Wire Info |
-| **Identity** | Driver Licenses (US), Aadhar Cards (India), Voter IDs |
+| **Identity** | Driver Licenses (US), Aadhar Cards (India), PAN Cards (India), Voter IDs |
 | **Immigration** | Green Cards (US Permanent Resident Cards) |
 | **Travel** | Passports (Global MRZ Support) |
 | **Gift Cards** | Store Card Numbers and PINs with Quick Copy |
@@ -224,7 +225,7 @@ Search by category to see all items of a specific type:
   - `src/main/java/`: Main Android source code including Activities, WorkManager workers, and platform-specific Scanning implementations.
   - `src/main/res/`: Android resources and XML layouts.
 - `shared/`: Kotlin Multiplatform (KMP) module containing core app logic.
-  - `src/commonMain/`: Shared UI components (Compose), Data repositories, Room entities, and ViewModels.
+  - `src/commonMain/`: Shared UI components (Compose), Data repositories, SQLDelight database, and ViewModels.
 - `releases/`: Detailed release notes for each version.
 - `docs/`: Project specifications and manual testing documentation.
 - `build.gradle.kts`: Project-level build configuration.
