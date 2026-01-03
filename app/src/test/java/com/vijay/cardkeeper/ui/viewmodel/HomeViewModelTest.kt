@@ -10,6 +10,8 @@ import com.vijay.cardkeeper.data.repository.GiftCardRepository
 import com.vijay.cardkeeper.data.repository.GreenCardRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
 import com.vijay.cardkeeper.data.repository.PassportRepository
+import com.vijay.cardkeeper.data.repository.PanCardRepository
+import com.vijay.cardkeeper.data.repository.RewardCardRepository
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -47,7 +49,9 @@ class HomeViewModelTest {
             passportRepository = mockk(relaxed = true) { every { allPassports } returns flowOf(emptyList()) },
             greenCardRepository = mockk(relaxed = true) { every { allGreenCards } returns flowOf(emptyList()) },
             aadharCardRepository = mockk(relaxed = true) { every { allAadharCards } returns flowOf(emptyList()) },
-            giftCardRepository = mockk(relaxed = true) { every { getAllGiftCards() } returns flowOf(emptyList()) }
+            giftCardRepository = mockk(relaxed = true) { every { getAllGiftCards() } returns flowOf(emptyList()) },
+            panCardRepository = mockk(relaxed = true) { every { allPanCards } returns flowOf(emptyList()) },
+            rewardCardRepository = mockk(relaxed = true) { every { getAllRewardCards() } returns flowOf(emptyList()) }
         )
 
         // Then
@@ -62,10 +66,11 @@ class HomeViewModelTest {
     fun `rewardsCards emits only rewards and library cards`() = runTest {
          // Given
         val bankAccount = FinancialAccount(id = 1, institutionName = "Test Bank", type = AccountType.BANK_ACCOUNT, accountName = "Test Account", holderName = "John Doe", number = "12345")
-        val rewardsCard = FinancialAccount(id = 2, institutionName = "Test Rewards", type = AccountType.REWARDS_CARD, accountName = "Rewards", holderName = "John Doe", number = "67890")
+        // Use proper RewardCard entity
+        val rewardsCard = com.vijay.cardkeeper.data.entity.RewardCard(id = 2, name = "Rewards", type = AccountType.REWARDS_CARD)
         
         val financialRepository: FinancialRepository = mockk {
-            every { allAccounts } returns flowOf(listOf(bankAccount, rewardsCard))
+            every { allAccounts } returns flowOf(listOf(bankAccount))
         }
 
         // When
@@ -75,7 +80,9 @@ class HomeViewModelTest {
             passportRepository = mockk(relaxed = true) { every { allPassports } returns flowOf(emptyList()) },
             greenCardRepository = mockk(relaxed = true) { every { allGreenCards } returns flowOf(emptyList()) },
             aadharCardRepository = mockk(relaxed = true) { every { allAadharCards } returns flowOf(emptyList()) },
-            giftCardRepository = mockk(relaxed = true) { every { getAllGiftCards() } returns flowOf(emptyList()) }
+            giftCardRepository = mockk(relaxed = true) { every { getAllGiftCards() } returns flowOf(emptyList()) },
+            panCardRepository = mockk(relaxed = true) { every { allPanCards } returns flowOf(emptyList()) },
+            rewardCardRepository = mockk(relaxed = true) { every { getAllRewardCards() } returns flowOf(listOf(rewardsCard)) }
         )
 
         // Then

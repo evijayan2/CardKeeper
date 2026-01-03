@@ -29,6 +29,8 @@ class AddItemViewModelTest {
     private val greenCardRepository: com.vijay.cardkeeper.data.repository.GreenCardRepository = mockk(relaxed = true)
     private val aadharCardRepository: com.vijay.cardkeeper.data.repository.AadharCardRepository = mockk(relaxed = true)
     private val giftCardRepository: com.vijay.cardkeeper.data.repository.GiftCardRepository = mockk(relaxed = true)
+    private val panCardRepository: com.vijay.cardkeeper.data.repository.PanCardRepository = mockk(relaxed = true)
+    private val rewardCardRepository: com.vijay.cardkeeper.data.repository.RewardCardRepository = mockk(relaxed = true)
     private val expirationScheduler: com.vijay.cardkeeper.domain.ExpirationScheduler = mockk(relaxed = true)
 
     @BeforeEach
@@ -40,6 +42,8 @@ class AddItemViewModelTest {
             greenCardRepository,
             aadharCardRepository,
             giftCardRepository,
+            panCardRepository,
+            rewardCardRepository,
             expirationScheduler
         )
     }
