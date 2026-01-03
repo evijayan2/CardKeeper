@@ -54,10 +54,12 @@ class DateNormalizerTest {
     }
 
     @Test
-    fun `invalid date throws exception`() {
-        assertThrows<IllegalArgumentException> {
-            DateNormalizer.normalize("1979-99-99", DateFormatType.GENERIC)
-        }
+    fun `invalid date returns original string`() {
+        val input = "1979-99-99"
+        assertEquals(
+            input,
+            DateNormalizer.normalize(input, DateFormatType.GENERIC)
+        )
     }
     @Test
     fun `parseStrict handles 01-01-2026`() {
