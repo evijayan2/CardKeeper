@@ -16,8 +16,8 @@ android {
         applicationId = "com.vijay.cardkeeper"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "1.0.0-alpha.18"
+        versionCode = 17
+        versionName = "1.0.0-alpha.19"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
