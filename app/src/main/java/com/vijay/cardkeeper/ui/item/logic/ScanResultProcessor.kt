@@ -28,6 +28,7 @@ class ScanResultProcessor(
         category: Int,
         isBack: Boolean,
         financialState: FinancialFormState,
+        rewardsState: RewardsFormState,
         identityState: IdentityFormState,
         passportState: PassportFormState,
         greenCardState: GreenCardFormState,
@@ -38,13 +39,13 @@ class ScanResultProcessor(
         if (isBack) {
             processBackSide(
                 bitmap, path, category,
-                financialState, identityState, passportState, greenCardState, 
+                financialState, rewardsState, identityState, passportState, greenCardState, 
                 aadharCardState, giftCardState, panCardState
             )
         } else {
             processFrontSide(
                 bitmap, path, category,
-                financialState, identityState, passportState, greenCardState, 
+                financialState, rewardsState, identityState, passportState, greenCardState, 
                 aadharCardState, giftCardState, panCardState
             )
         }
@@ -55,6 +56,7 @@ class ScanResultProcessor(
         path: String,
         category: Int,
         financialState: FinancialFormState,
+        rewardsState: RewardsFormState,
         identityState: IdentityFormState,
         passportState: PassportFormState,
         greenCardState: GreenCardFormState,
@@ -63,24 +65,25 @@ class ScanResultProcessor(
         panCardState: PanCardFormState
     ) {
         when (category) {
-            0, 3 -> {
+            0 -> {
                 financialState.backPath = path
                 financialState.hasBackImage = true
-                if (financialState.type == AccountType.REWARDS_CARD || category == 3) {
-                    val res = rewardsScanner.scan(bitmap)
+                val details = paymentScanner.scan(bitmap)
+                if (financialState.number.isEmpty()) financialState.number = details.number
+                if (financialState.expiry.isEmpty()) financialState.expiry = details.expiryDate
+            }
+            3 -> {
+                rewardsState.backPath = path
+                rewardsState.hasBackImage = true
+                val res = rewardsScanner.scan(bitmap)
                     
-                    // Prioritize actual barcode for the barcode field, use OCR number as fallback if barcode is null or better
-                    val newBarcode = res.barcode ?: res.cardNumber
-                    if (newBarcode != null && (financialState.barcode.isEmpty() || newBarcode.length > financialState.barcode.length)) {
-                        financialState.barcode = newBarcode
-                    }
-                    res.barcodeFormat?.let { financialState.barcodeFormat = it }
-                    res.shopName?.let { financialState.institution = it }
-                } else {
-                    val details = paymentScanner.scan(bitmap)
-                    if (financialState.number.isEmpty()) financialState.number = details.number
-                    if (financialState.expiry.isEmpty()) financialState.expiry = details.expiryDate
+                // Prioritize actual barcode for the barcode field, use OCR number as fallback if barcode is null or better
+                val newBarcode = res.barcode ?: res.cardNumber
+                if (newBarcode != null && (rewardsState.barcode.isEmpty() || newBarcode.length > rewardsState.barcode.length)) {
+                    rewardsState.barcode = newBarcode
                 }
+                res.barcodeFormat?.let { rewardsState.barcodeFormat = it }
+                res.shopName?.let { rewardsState.institution = it }
             }
             1 -> {
                 identityState.backPath = path
@@ -163,6 +166,7 @@ class ScanResultProcessor(
         path: String,
         category: Int,
         financialState: FinancialFormState,
+        rewardsState: RewardsFormState,
         identityState: IdentityFormState,
         passportState: PassportFormState,
         greenCardState: GreenCardFormState,
@@ -171,20 +175,10 @@ class ScanResultProcessor(
         panCardState: PanCardFormState
     ) {
         when (category) {
-            0, 3 -> {
+            0 -> {
                 financialState.frontPath = path
                 financialState.hasFrontImage = true
-                if (financialState.type == AccountType.REWARDS_CARD || category == 3) {
-                    val res = rewardsScanner.scan(bitmap)
-                    
-                    val newBarcode = res.barcode ?: res.cardNumber
-                    if (newBarcode != null && (financialState.barcode.isEmpty() || newBarcode.length > financialState.barcode.length)) {
-                        financialState.barcode = newBarcode
-                    }
-                    res.barcodeFormat?.let { financialState.barcodeFormat = it }
-                    res.shopName?.let { financialState.institution = it }
-                    if (financialState.logoPath == null) financialState.logoPath = path
-                } else if (financialState.type == AccountType.BANK_ACCOUNT) {
+                if (financialState.type == AccountType.BANK_ACCOUNT) {
                     val details = chequeScanner.scan(bitmap)
                     if (details.accountNumber.isNotEmpty()) financialState.number = details.accountNumber
                     if (details.routingNumber.isNotEmpty()) financialState.routing = details.routingNumber
@@ -198,6 +192,19 @@ class ScanResultProcessor(
                     if (financialState.holder.isEmpty()) financialState.holder = details.ownerName
                     if (financialState.institution.isEmpty()) financialState.institution = details.bankName
                 }
+            }
+            3 -> {
+                rewardsState.frontPath = path
+                rewardsState.hasFrontImage = true
+                val res = rewardsScanner.scan(bitmap)
+                    
+                val newBarcode = res.barcode ?: res.cardNumber
+                if (newBarcode != null && (rewardsState.barcode.isEmpty() || newBarcode.length > rewardsState.barcode.length)) {
+                    rewardsState.barcode = newBarcode
+                }
+                res.barcodeFormat?.let { rewardsState.barcodeFormat = it }
+                res.shopName?.let { rewardsState.institution = it }
+                if (rewardsState.logoPath == null) rewardsState.logoPath = path
             }
             1 -> {
                 identityState.frontPath = path

@@ -35,6 +35,9 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.vijay.cardkeeper.data.entity.GiftCard
+import com.vijay.cardkeeper.ui.common.CardKeeperTextField
+import com.vijay.cardkeeper.ui.common.CardKeeperScanButtons
+import com.vijay.cardkeeper.ui.common.CardKeeperSaveButton
 
 class GiftCardFormState(initialItem: GiftCard?) {
     var providerName by mutableStateOf(initialItem?.providerName ?: "")
@@ -83,75 +86,43 @@ fun GiftCardForm(
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         
         // 1. Top - Image Scan Buttons (Matching FinancialForm)
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Button(
-                onClick = onScanFront,
-                modifier = Modifier.weight(1f),
-                colors = if (state.hasFrontImage)
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                else ButtonDefaults.buttonColors()
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.PhotoCamera, "Front")
-                    Text(if (state.hasFrontImage) "Front Captured" else "Scan Front")
-                }
-            }
-
-            Button(
-                onClick = onScanBack,
-                modifier = Modifier.weight(1f),
-                colors = if (state.hasBackImage)
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                else ButtonDefaults.buttonColors()
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.PhotoCamera, "Back")
-                    Text(if (state.hasBackImage) "Back Captured" else "Scan Back")
-                }
-            }
-        }
+        CardKeeperScanButtons(
+            hasFrontImage = state.hasFrontImage,
+            onScanFront = onScanFront,
+            hasBackImage = state.hasBackImage,
+            onScanBack = onScanBack
+        )
 
         // 2. Provider Name
-        OutlinedTextField(
+        CardKeeperTextField(
             value = state.providerName,
             onValueChange = { 
                 state.providerName = it 
                 state.providerNameError = false
             },
-            label = { Text("Provider Name (e.g., Amazon)") },
-            modifier = Modifier.fillMaxWidth(),
+            label = "Provider Name (e.g., Amazon)",
             isError = state.providerNameError,
             supportingText = { if (state.providerNameError) Text("Required") }
         )
 
         // 3. Card Number (Manual Entry, No Scanner)
-        OutlinedTextField(
+        CardKeeperTextField(
             value = state.cardNumber,
             onValueChange = { 
                 state.cardNumber = it
                 state.cardNumberError = false
             },
-            label = { Text("Gift Card Code (Optional)") },
-            modifier = Modifier.fillMaxWidth(),
+            label = "Gift Card Code (Optional)",
             isError = state.cardNumberError,
             // supportingText = { if (state.cardNumberError) Text("Required") } // Optional now
         )
 
         // 4. PIN
-        OutlinedTextField(
+        // 4. PIN
+        CardKeeperTextField(
             value = state.pin,
             onValueChange = { state.pin = it },
-            label = { Text("PIN (Optional)") },
-            modifier = Modifier.fillMaxWidth()
+            label = "PIN (Optional)"
         )
         
         Spacer(modifier = Modifier.height(8.dp))
@@ -159,15 +130,14 @@ fun GiftCardForm(
         // 5. Scan Data (Barcode/QR)
         Text("Scan Data", style = MaterialTheme.typography.titleMedium)
         
-        OutlinedTextField(
+        CardKeeperTextField(
             value = state.barcode ?: state.qrCode ?: "",
             onValueChange = { 
                 // Mostly read-only from scan, but allowing edit if specifically barcode
                 state.barcode = it 
             },
-            label = { Text(if (state.qrCode != null) "QR Code Content" else "Barcode Content") },
+            label = if (state.qrCode != null) "QR Code Content" else "Barcode Content",
             placeholder = { Text("Scan to populate") },
-            modifier = Modifier.fillMaxWidth(),
             trailingIcon = {
                 IconButton(
                     onClick = onScanBarcode
@@ -184,21 +154,19 @@ fun GiftCardForm(
         }
 
         // 6. Notes
-        OutlinedTextField(
+        // 6. Notes
+        CardKeeperTextField(
             value = state.notes,
             onValueChange = { state.notes = it },
-            label = { Text("Notes (Optional)") },
-            modifier = Modifier.fillMaxWidth(),
+            label = "Notes (Optional)",
             minLines = 2
         )
         
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = {
-                onSave()
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) { Text("Save Gift Card") }
+        CardKeeperSaveButton(
+            onClick = { onSave() },
+            text = "Save Gift Card"
+        )
     }
 }

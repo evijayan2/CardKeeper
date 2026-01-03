@@ -10,6 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.vijay.cardkeeper.data.entity.GreenCard
+import com.vijay.cardkeeper.ui.common.CardKeeperTextField
+import com.vijay.cardkeeper.ui.common.CardKeeperScanButtons
+import com.vijay.cardkeeper.ui.common.CardKeeperSaveButton
 import com.vijay.cardkeeper.ui.common.DateFormatType
 import com.vijay.cardkeeper.util.DateUtils
 import com.vijay.cardkeeper.ui.common.DateVisualTransformation
@@ -67,94 +70,48 @@ fun GreenCardForm(
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         // Scan Buttons
-        Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-        ) {
-            Button(
-                    onClick = onScanFront,
-                    modifier = Modifier.weight(1f),
-                    colors =
-                            if (state.hasFrontImage)
-                                    ButtonDefaults.buttonColors(
-                                            containerColor =
-                                                    MaterialTheme.colorScheme.primaryContainer,
-                                            contentColor =
-                                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                            else ButtonDefaults.buttonColors()
-            ) {
-                Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.PhotoCamera, "Front")
-                    Text(
-                            if (state.hasFrontImage)
-                                    "Front Captured"
-                            else "Scan Front"
-                    )
-                }
-            }
-            Button(
-                    onClick = onScanBack,
-                    modifier = Modifier.weight(1f),
-                    colors =
-                            if (state.hasBackImage)
-                                    ButtonDefaults.buttonColors(
-                                            containerColor =
-                                                    MaterialTheme.colorScheme.primaryContainer,
-                                            contentColor =
-                                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
-                            else ButtonDefaults.buttonColors()
-            ) {
-                Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.PhotoCamera, "Back")
-                    Text(
-                            if (state.hasBackImage) "Back Captured"
-                            else "Scan Back"
-                    )
-                }
-            }
-        }
+        CardKeeperScanButtons(
+            hasFrontImage = state.hasFrontImage,
+            onScanFront = onScanFront,
+            hasBackImage = state.hasBackImage,
+            onScanBack = onScanBack
+        )
 
-        OutlinedTextField(
+        CardKeeperTextField(
                 value = state.surname,
                 onValueChange = { state.surname = it },
-                label = { Text("Surname") },
-                modifier = Modifier.fillMaxWidth()
+                label = "Surname"
         )
-        OutlinedTextField(
+        CardKeeperTextField(
                 value = state.givenName,
                 onValueChange = { state.givenName = it },
-                label = { Text("Given Name") },
-                modifier = Modifier.fillMaxWidth()
+                label = "Given Name"
         )
-        OutlinedTextField(
+        CardKeeperTextField(
                 value = state.uscisNumber,
                 onValueChange = { state.uscisNumber = it },
-                label = { Text("USCIS#") },
-                modifier = Modifier.fillMaxWidth()
+                label = "USCIS#"
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.category,
                     onValueChange = { state.category = it },
-                    label = { Text("Category") },
+                    label = "Category",
                     modifier = Modifier.weight(1f)
             )
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.sex,
                     onValueChange = { state.sex = it },
-                    label = { Text("Sex") },
+                    label = "Sex",
                     modifier = Modifier.weight(1f)
             )
         }
-        OutlinedTextField(
+        CardKeeperTextField(
                 value = state.countryOfBirth,
                 onValueChange = { state.countryOfBirth = it },
-                label = { Text("Country of Birth") },
-                modifier = Modifier.fillMaxWidth()
+                label = "Country of Birth"
         )
-        OutlinedTextField(
+        CardKeeperTextField(
                 value = state.rawDob,
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
@@ -162,14 +119,13 @@ fun GreenCardForm(
                         state.dobError = !DateUtils.isValidDate(it, DateFormatType.USA) && it.length == 8
                     }
                 },
-                label = { Text("Date of Birth (MM/DD/YYYY)") },
-                modifier = Modifier.fillMaxWidth(),
+                label = "Date of Birth (MM/DD/YYYY)",
                 visualTransformation = dateVisualTransformation,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 isError = state.dobError,
                 supportingText = { if (state.dobError) Text("Invalid Date") }
         )
-        OutlinedTextField(
+        CardKeeperTextField(
                 value = state.rawExpiryDate,
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
@@ -177,14 +133,13 @@ fun GreenCardForm(
                         state.expiryError = !DateUtils.isValidDate(it, DateFormatType.USA) && it.length == 8
                     }
                 },
-                label = { Text("Card Expires (MM/DD/YYYY)") },
-                modifier = Modifier.fillMaxWidth(),
+                label = "Card Expires (MM/DD/YYYY)",
                 visualTransformation = dateVisualTransformation,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 isError = state.expiryError,
                 supportingText = { if (state.expiryError) Text("Invalid Date") }
         )
-        OutlinedTextField(
+        CardKeeperTextField(
                 value = state.rawResidentSince,
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
@@ -192,19 +147,16 @@ fun GreenCardForm(
                         state.residentSinceError = !DateUtils.isValidDate(it, DateFormatType.USA) && it.length == 8
                     }
                 },
-                label = { Text("Resident Since (MM/DD/YYYY)") },
-                modifier = Modifier.fillMaxWidth(),
+                label = "Resident Since (MM/DD/YYYY)",
                 visualTransformation = dateVisualTransformation,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 isError = state.residentSinceError,
                 supportingText = { if (state.residentSinceError) Text("Invalid Date") }
         )
 
-        Button(
-                onClick = {
-                    onSave()
-                },
-                modifier = Modifier.fillMaxWidth()
-        ) { Text("Save Green Card") }
+        CardKeeperSaveButton(
+                onClick = { onSave() },
+                text = "Save Green Card"
+        )
     }
 }

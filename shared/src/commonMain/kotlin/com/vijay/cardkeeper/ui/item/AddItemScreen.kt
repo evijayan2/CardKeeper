@@ -12,11 +12,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.vijay.cardkeeper.ui.item.forms.*
+import com.vijay.cardkeeper.ui.common.CardKeeperTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddItemScreen(
     financialState: FinancialFormState,
+    rewardsState: RewardsFormState,
     identityState: IdentityFormState,
     passportState: PassportFormState,
     greenCardState: GreenCardFormState,
@@ -35,18 +37,9 @@ fun AddItemScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = {
-                     // Back button handling is typically done via IconButton calling onNavigateBack
-                     // But Standard Scaffold TopBar usually has it.
-                     // For now, assuming caller handles BackPress or we add a button here.
-                     // The existing app uses a specific TopBar. I'll stick to a simple one or parameterized one.
-                     // Actually the app passes `navigateBack` and uses `Icons.AutoMirrored.Filled.ArrowBack`.
-                     androidx.compose.material3.IconButton(onClick = onNavigateBack) {
-                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                     }
-                }
+            CardKeeperTopBar(
+                title = title,
+                onNavigateBack = onNavigateBack
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -88,13 +81,22 @@ fun AddItemScreen(
 
             // Forms
             when (selectedCategory) {
-                0, 3 -> { // Financial or Rewards
+                0 -> { // Financial
                      FinancialForm(
                          state = financialState,
                          onScanFront = { onScanRequest(selectedCategory, ScanRequestType.FRONT) },
                          onScanBack = { onScanRequest(selectedCategory, ScanRequestType.BACK) },
-                         onScanBarcode = { onScanRequest(selectedCategory, ScanRequestType.BARCODE) },
+                         onSave = onSave,
+                         onNavigateBack = onNavigateBack
+                     )
+                }
+                3 -> { // Rewards
+                     RewardsForm(
+                         state = rewardsState,
+                         onScanFront = { onScanRequest(selectedCategory, ScanRequestType.FRONT) },
+                         onScanBack = { onScanRequest(selectedCategory, ScanRequestType.BACK) },
                          onPickLogo = { onScanRequest(selectedCategory, ScanRequestType.PICK_LOGO) },
+                         onScanBarcode = { onScanRequest(selectedCategory, ScanRequestType.BARCODE) },
                          onSave = onSave,
                          onNavigateBack = onNavigateBack
                      )

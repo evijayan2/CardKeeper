@@ -20,6 +20,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.vijay.cardkeeper.data.entity.AadharCard
+import com.vijay.cardkeeper.ui.common.CardKeeperTextField
+import com.vijay.cardkeeper.ui.common.CardKeeperScanButtons
+import com.vijay.cardkeeper.ui.common.CardKeeperScanActionButton
+import com.vijay.cardkeeper.ui.common.CardKeeperSaveButton
 import com.vijay.cardkeeper.ui.common.DateFormatType
 import com.vijay.cardkeeper.util.DateUtils
 import com.vijay.cardkeeper.ui.common.DateVisualTransformation
@@ -94,82 +98,21 @@ fun AadharCardForm(
 
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 // Scan Buttons Row
-                Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                ) {
-                        Button(
-                                onClick = onScanFront,
-                                modifier = Modifier.weight(1f),
-                                colors =
-                                        if (state.hasFrontImage)
-                                                ButtonDefaults.buttonColors(
-                                                        containerColor =
-                                                                MaterialTheme.colorScheme
-                                                                        .primaryContainer,
-                                                        contentColor =
-                                                                MaterialTheme.colorScheme
-                                                                        .onPrimaryContainer
-                                                )
-                                        else ButtonDefaults.buttonColors()
-                        ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Icon(Icons.Filled.PhotoCamera, "Front")
-                                        Text(
-                                                if (state.hasFrontImage)
-                                                        "Front ✓"
-                                                else "Scan Front"
-                                        )
-                                }
-                        }
-                        Button(
-                                onClick = onScanBack,
-                                modifier = Modifier.weight(1f),
-                                colors =
-                                        if (state.hasBackImage)
-                                                ButtonDefaults.buttonColors(
-                                                        containerColor =
-                                                                MaterialTheme.colorScheme
-                                                                        .primaryContainer,
-                                                        contentColor =
-                                                                MaterialTheme.colorScheme
-                                                                        .onPrimaryContainer
-                                                )
-                                        else ButtonDefaults.buttonColors()
-                        ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Icon(Icons.Filled.PhotoCamera, "Back")
-                                        Text(
-                                                if (state.hasBackImage)
-                                                        "Back ✓"
-                                                else "Scan Back"
-                                        )
-                                }
-                        }
-                }
+                CardKeeperScanButtons(
+                    hasFrontImage = state.hasFrontImage,
+                    onScanFront = onScanFront,
+                    hasBackImage = state.hasBackImage,
+                    onScanBack = onScanBack
+                )
 
                 // QR Scan Button
-                Button(
-                        onClick = onScanQr,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors =
-                                if (state.qrData != null)
-                                        ButtonDefaults.buttonColors(
-                                                containerColor =
-                                                        MaterialTheme.colorScheme.tertiaryContainer,
-                                                contentColor =
-                                                        MaterialTheme.colorScheme
-                                                                .onTertiaryContainer
-                                        )
-                                else ButtonDefaults.outlinedButtonColors()
-                ) {
-                        Icon(
-                                Icons.Filled.QrCodeScanner,
-                                "QR",
-                                modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text(if (state.qrData != null) "QR Scanned ✓" else "Scan Aadhaar QR Code")
-                }
+                CardKeeperScanActionButton(
+                    text = "Scan Aadhaar QR Code",
+                    onClick = onScanQr,
+                    icon = Icons.Filled.QrCodeScanner,
+                    isCaptured = state.qrData != null,
+                    capturedText = "QR Scanned ✓"
+                )
 
                 // Signature Verification Status
                 if (state.qrData != null) {
@@ -279,14 +222,13 @@ fun AadharCardForm(
                 // Aadhaar Number Section
                 Text("Aadhaar Details", style = MaterialTheme.typography.titleMedium)
 
-                OutlinedTextField(
+                CardKeeperTextField(
                         value = state.uid,
                         onValueChange = { state.uid = it },
-                        label = { Text("Aadhaar Number") },
+                        label = "Aadhaar Number",
                         placeholder = if (state.maskedAadhaarNumber.isNotEmpty()) {
                             { Text(state.maskedAadhaarNumber) }
                         } else null,
-                        modifier = Modifier.fillMaxWidth(),
                         visualTransformation =
                                 if (isUidVisible)
                                         androidx.compose.ui.text.input.VisualTransformation.None
@@ -315,11 +257,10 @@ fun AadharCardForm(
                         }
                 )
 
-                OutlinedTextField(
+                CardKeeperTextField(
                         value = state.vid,
                         onValueChange = { state.vid = it },
-                        label = { Text("VID (16 digits)") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = "VID (16 digits)"
                 )
 
                 HorizontalDivider()
@@ -327,15 +268,14 @@ fun AadharCardForm(
                 // Personal Details Section
                 Text("Personal Details", style = MaterialTheme.typography.titleMedium)
 
-                OutlinedTextField(
+                CardKeeperTextField(
                         value = state.holderName,
                         onValueChange = { state.holderName = it },
-                        label = { Text("Name (as on Aadhaar)") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = "Name (as on Aadhaar)"
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
+                        CardKeeperTextField(
                                 value = state.rawDob,
                                 onValueChange = {
                                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
@@ -343,16 +283,16 @@ fun AadharCardForm(
                                         state.dobError = !DateUtils.isValidDate(it, DateFormatType.INDIA) && it.length == 8
                                     }
                                 },
-                                label = { Text("DOB (DD/MM/YYYY)") },
+                                label = "DOB (DD/MM/YYYY)",
                                 modifier = Modifier.weight(1f),
                                 visualTransformation = dateVisualTransformation,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 isError = state.dobError
                         )
-                        OutlinedTextField(
+                        CardKeeperTextField(
                                 value = state.gender,
                                 onValueChange = { state.gender = it },
-                                label = { Text("Gender") },
+                                label = "Gender",
                                 modifier = Modifier.weight(1f)
                         )
                 }
@@ -362,28 +302,26 @@ fun AadharCardForm(
                 // Contact Details Section
                 Text("Contact Details", style = MaterialTheme.typography.titleMedium)
 
-                OutlinedTextField(
+                CardKeeperTextField(
                         value = state.mobile,
                         onValueChange = { state.mobile = it },
-                        label = { Text("Mobile Number") },
+                        label = "Mobile Number",
                         keyboardOptions =
                                 androidx.compose.foundation.text.KeyboardOptions(
                                         keyboardType =
                                                 androidx.compose.ui.text.input.KeyboardType.Phone
-                                ),
-                        modifier = Modifier.fillMaxWidth()
+                                )
                 )
 
-                OutlinedTextField(
+                CardKeeperTextField(
                         value = state.email,
                         onValueChange = { state.email = it },
-                        label = { Text("Email Address") },
+                        label = "Email Address",
                         keyboardOptions =
                                 androidx.compose.foundation.text.KeyboardOptions(
                                         keyboardType =
                                                 androidx.compose.ui.text.input.KeyboardType.Email
-                                ),
-                        modifier = Modifier.fillMaxWidth()
+                                )
                 )
 
                 HorizontalDivider()
@@ -391,36 +329,31 @@ fun AadharCardForm(
                 // Address Section
                 Text("Address", style = MaterialTheme.typography.titleMedium)
 
-                OutlinedTextField(
+                CardKeeperTextField(
                         value = state.address,
                         onValueChange = { state.address = it },
-                        label = { Text("Address") },
-                        modifier = Modifier.fillMaxWidth(),
+                        label = "Address",
                         minLines = 2
                 )
 
-                OutlinedTextField(
+                CardKeeperTextField(
                         value = state.pincode,
                         onValueChange = { state.pincode = it },
-                        label = { Text("Pincode") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = "Pincode"
                 )
 
                 // Optional: Enrollment Number
-                OutlinedTextField(
+                CardKeeperTextField(
                         value = state.enrollmentNumber,
                         onValueChange = { state.enrollmentNumber = it },
-                        label = { Text("Enrollment Number (Optional)") },
-                        modifier = Modifier.fillMaxWidth()
+                        label = "Enrollment Number (Optional)"
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                Button(
-                        onClick = {
-                                onSave()
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                ) { Text("Save Aadhaar Card") }
+                CardKeeperSaveButton(
+                    onClick = { onSave() },
+                    text = "Save Aadhaar Card"
+                )
         }
 }

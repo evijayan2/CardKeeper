@@ -105,8 +105,10 @@ fun AddItemRoute(
     // Form States
     val financialState = rememberFinancialFormState(
         account = item as? FinancialAccount,
-        reward = item as? RewardCard,
         initialType = initialAccountType
+    )
+    val rewardsState = rememberRewardsFormState(
+        reward = item as? RewardCard
     )
     val identityState = rememberIdentityFormState(item as? IdentityDocument, null)
     val passportState = rememberPassportFormState(item as? Passport)
@@ -167,7 +169,7 @@ fun AddItemRoute(
                         val path = saveImageToInternalStorage(context, b, "scan_${System.currentTimeMillis()}")
                         scanProcessor.process(
                             bitmap = b, path = path, category = selectedCategory, isBack = scanningBack,
-                            financialState = financialState, identityState = identityState,
+                            financialState = financialState, rewardsState = rewardsState, identityState = identityState,
                             passportState = passportState, greenCardState = greenCardState,
                             aadharCardState = aadharCardState, giftCardState = giftCardState,
                             panCardState = panCardState
@@ -190,7 +192,8 @@ fun AddItemRoute(
                 
                 // Switch back to Main for state updates if needed, though state is thread-safe mostly
                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                   if (selectedCategory == 0 || selectedCategory == 3) financialState.logoPath = path
+                   if (selectedCategory == 0) financialState.logoPath = path
+                   else if (selectedCategory == 3) rewardsState.logoPath = path
                    else if (selectedCategory == 6) giftCardState.logoPath = path
                }
             }
@@ -225,7 +228,7 @@ fun AddItemRoute(
             try {
                 println("CardKeeperUI: Starting save operation for category: $selectedCategory")
                 when (selectedCategory) {
-                    0, 3 -> {
+                    0 -> {
                         println("CardKeeperUI: Saving Financial Account")
                         val acc = FinancialAccount(
                             id = if (documentId != null && (typeForLookup == "financial" || typeForLookup == "rewards")) documentId else 0,
@@ -249,9 +252,9 @@ fun AddItemRoute(
                             frontImagePath = financialState.frontPath,
                             backImagePath = financialState.backPath,
                             logoImagePath = financialState.logoPath,
-                            barcode = financialState.barcode.ifBlank { null },
-                            barcodeFormat = financialState.barcodeFormat,
-                            linkedPhoneNumber = financialState.linkedPhone.ifBlank { null }
+                            barcode = null,
+                            barcodeFormat = null,
+                            linkedPhoneNumber = null
                         )
                         val job = viewModel.saveFinancialAccount(acc)
                         job.join()
@@ -261,15 +264,15 @@ fun AddItemRoute(
                         println("CardKeeperUI: Saving Reward Card")
                         val rc = RewardCard(
                             id = if (documentId != null && typeForLookup == "rewards") documentId else 0,
-                            name = financialState.institution,
-                            type = financialState.type,
-                            barcode = financialState.barcode.ifBlank { null },
-                            barcodeFormat = financialState.barcodeFormat,
-                            linkedPhoneNumber = financialState.linkedPhone.ifBlank { null },
-                            frontImagePath = financialState.frontPath,
-                            backImagePath = financialState.backPath,
-                            logoImagePath = financialState.logoPath,
-                            notes = financialState.notes.ifBlank { null }
+                            name = rewardsState.institution,
+                            type = rewardsState.type,
+                            barcode = rewardsState.barcode.ifBlank { null },
+                            barcodeFormat = rewardsState.barcodeFormat,
+                            linkedPhoneNumber = rewardsState.linkedPhone.ifBlank { null },
+                            frontImagePath = rewardsState.frontPath,
+                            backImagePath = rewardsState.backPath,
+                            logoImagePath = rewardsState.logoPath,
+                            notes = rewardsState.notes.ifBlank { null }
                         )
                         val job = viewModel.saveRewardCard(rc)
                         job.join()
@@ -456,6 +459,7 @@ fun AddItemRoute(
     Box {
         com.vijay.cardkeeper.ui.item.AddItemScreen(
             financialState = financialState,
+            rewardsState = rewardsState,
             identityState = identityState,
             passportState = passportState,
             greenCardState = greenCardState,
@@ -499,9 +503,12 @@ fun AddItemRoute(
                                 if (details.issuingAuthority.isNotEmpty()) identityState.issuingAuthority = details.issuingAuthority
                             }
                         }
-                        0, 3 -> { // Financial or Rewards
-                            financialState.barcode = barcode
-                            financialState.barcodeFormat = format
+                        0 -> { // Financial
+                             // Financial Form no longer supports barcode usage
+                        }
+                        3 -> { // Rewards
+                             rewardsState.barcode = barcode
+                             rewardsState.barcodeFormat = format
                         }
                         5 -> { // Aadhaar
                             val result = aadharQrScanner.parse(barcode)
