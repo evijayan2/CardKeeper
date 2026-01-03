@@ -16,31 +16,33 @@
 
 ### 2.2 Dashboard (Home Screen)
 The dashboard is organized into four main tabs:
-1.  **Finance:** Lists Bank Accounts, Credit/Debit Cards.
-2.  **Identity:** Lists Driver Licenses, Aadhar Cards, Green Cards.
-3.  **Passports:** Lists Passports.
 4.  **Rewards:** Lists Rewards Cards and Gift Cards.
+5.  **Accounts:** Financial Accounts (Bank/Credit).
+
 
 **FAB (Floating Action Button):** The central "+" button opens a menu to add new items:
-*   Credit/Debit Card
+*   Credit/Debit Card (Financial Account)
 *   Bank Account
 *   Rewards Card
 *   Gift Card
-*   Driver License
+*   Driver License (Identity Document)
 *   Passport
 *   Green Card
 *   Aadhaar Card
-*   Other Identity
+*   PAN Card
+
 
 ### 2.3 Item Management & Scanning
 The app leverages **Google ML Kit** and **CameraX** for intelligent data entry.
 
-*   **Financial Cards:** Supports scanning card details (Number, Expiry) using text recognition.
-*   **Driver License:** Supports scanning PDF417 barcodes on the back of US licenses to auto-fill data.
-*   **Passport:** Supports scanning the MRZ (Machine Readable Zone) to auto-fill identity details.
-*   **Aadhar Card:** Supports scanning the QR code. Validates signature using UIDAI public certificates.
-*   **Green Card:** Supports MRZ scanning (back side) for data extraction.
+*   **Financial Cards:** Supports scanning card details (Number, Expiry).
+*   **Driver License:** Supports scanning PDF417 barcodes.
+*   **Passport:** Supports scanning the MRZ (Machine Readable Zone).
+*   **Aadhar Card:** Supports scanning the QR code.
+*   **Green Card:** Supports MRZ scanning.
+*   **PAN Card:** Supports text recognition/manual entry.
 *   **Manual Entry:** All fields can be edited manually.
+
 *   **Images:** Users can capture Front and Back images of physical cards/docs. These are stored locally.
 
 ### 2.4 Search
@@ -55,11 +57,12 @@ The app leverages **Google ML Kit** and **CameraX** for intelligent data entry.
     *   **Reminder Schedule:** Configurable days before expiration (e.g., 30, 7, 1 day prior).
 
 ## 3. Technical Stack & Dependencies (For Tester Awareness)
-*   **Storage:** Room Database with SQLCipher (Encryption).
+*   **Storage:** SQLDelight with SQLCipher (Encryption).
 *   **Camera/Scanning:** CameraX, ML Kit (Text Recognition, Barcode Scanning, Document Scanner), ZXing.
 *   **Security:** Android Biometric API.
 *   **Image Loading:** Coil.
-*   **Architecture:** MVVM with Jetpack Compose.
+*   **Architecture:** Kotlin Multiplatform Mobile (KMM) with Clean Architecture.
+*   **Concurrency:** Kotlin Coroutines & Flow.
 
 ## 4. Test Scenarios for Manual Testing
 
