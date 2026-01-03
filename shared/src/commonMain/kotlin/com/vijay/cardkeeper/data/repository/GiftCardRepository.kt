@@ -34,7 +34,7 @@ class GiftCardRepositoryImpl(private val database: SqlDelightDatabase) : GiftCar
         return queries.getGiftCardById(id.toLong()).executeAsOneOrNull()?.toEntity()
     }
 
-    override suspend fun insertGiftCard(giftCard: GiftCard) {
+    override suspend fun insertGiftCard(giftCard: GiftCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.insertGiftCard(
             id = if (giftCard.id == 0) null else giftCard.id.toLong(),
             providerName = giftCard.providerName,
@@ -50,7 +50,7 @@ class GiftCardRepositoryImpl(private val database: SqlDelightDatabase) : GiftCar
         )
     }
 
-    override suspend fun updateGiftCard(giftCard: GiftCard) {
+    override suspend fun updateGiftCard(giftCard: GiftCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.updateGiftCard(
             providerName = giftCard.providerName,
             cardNumber = giftCard.cardNumber,
@@ -66,7 +66,7 @@ class GiftCardRepositoryImpl(private val database: SqlDelightDatabase) : GiftCar
         )
     }
 
-    override suspend fun deleteGiftCard(giftCard: GiftCard) {
+    override suspend fun deleteGiftCard(giftCard: GiftCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.deleteGiftCard(giftCard.id.toLong())
     }
 

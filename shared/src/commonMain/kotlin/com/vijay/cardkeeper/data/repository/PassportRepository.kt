@@ -24,7 +24,7 @@ class PassportRepository(database: SqlDelightDatabase) {
         .mapToOneOrNull(Dispatchers.IO)
         .map { it?.toEntity() }
 
-    suspend fun insert(passport: Passport) {
+    suspend fun insert(passport: Passport) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.insert(
             id = if (passport.id == 0) null else passport.id.toLong(),
             passportNumber = passport.passportNumber,
@@ -50,7 +50,7 @@ class PassportRepository(database: SqlDelightDatabase) {
         )
     }
 
-    suspend fun update(passport: Passport) {
+    suspend fun update(passport: Passport) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.update(
             passportNumber = passport.passportNumber,
             countryCode = passport.countryCode,
@@ -76,7 +76,7 @@ class PassportRepository(database: SqlDelightDatabase) {
         )
     }
 
-    suspend fun delete(passport: Passport) {
+    suspend fun delete(passport: Passport) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.delete(passport.id.toLong())
     }
 

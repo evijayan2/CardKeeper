@@ -30,7 +30,7 @@ class IdentityRepository(private val database: SqlDelightDatabase) {
         return queries.getDocumentById(id.toLong()).executeAsOneOrNull()?.toEntity()
     }
 
-    suspend fun insertDocument(doc: IdentityDocument) {
+    suspend fun insertDocument(doc: IdentityDocument) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.insertDocument(
             id = if (doc.id == 0) null else doc.id.toLong(),
             type = doc.type.name,
@@ -55,7 +55,7 @@ class IdentityRepository(private val database: SqlDelightDatabase) {
         )
     }
 
-    suspend fun updateDocument(doc: IdentityDocument) {
+    suspend fun updateDocument(doc: IdentityDocument) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.updateDocument(
             type = doc.type.name,
             country = doc.country,
@@ -80,7 +80,7 @@ class IdentityRepository(private val database: SqlDelightDatabase) {
         )
     }
 
-    suspend fun deleteDocument(doc: IdentityDocument) {
+    suspend fun deleteDocument(doc: IdentityDocument) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.deleteDocument(doc.id.toLong())
     }
 

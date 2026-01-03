@@ -24,7 +24,7 @@ class AadharCardRepository(database: SqlDelightDatabase) {
         .mapToOneOrNull(Dispatchers.IO)
         .map { it?.toEntity() }
 
-    suspend fun insert(aadharCard: AadharCard) {
+    suspend fun insert(aadharCard: AadharCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.insert(
             id = if (aadharCard.id == 0) null else aadharCard.id.toLong(),
             referenceId = aadharCard.referenceId,
@@ -49,7 +49,7 @@ class AadharCardRepository(database: SqlDelightDatabase) {
         )
     }
 
-    suspend fun update(aadharCard: AadharCard) {
+    suspend fun update(aadharCard: AadharCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.update(
             referenceId = aadharCard.referenceId,
             holderName = aadharCard.holderName,
@@ -74,7 +74,7 @@ class AadharCardRepository(database: SqlDelightDatabase) {
         )
     }
 
-    suspend fun delete(aadharCard: AadharCard) {
+    suspend fun delete(aadharCard: AadharCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.delete(aadharCard.id.toLong())
     }
 

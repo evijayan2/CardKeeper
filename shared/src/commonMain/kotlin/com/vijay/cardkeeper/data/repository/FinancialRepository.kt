@@ -24,7 +24,7 @@ class FinancialRepository(private val database: SqlDelightDatabase) {
         return queries.getAccountById(id.toLong()).executeAsOneOrNull()?.toEntity()
     }
 
-    suspend fun insertAccount(account: FinancialAccount) {
+    suspend fun insertAccount(account: FinancialAccount) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.insertAccount(
             id = if (account.id == 0) null else account.id.toLong(),
             type = account.type.name,
@@ -61,7 +61,7 @@ class FinancialRepository(private val database: SqlDelightDatabase) {
         )
     }
 
-    suspend fun updateAccount(account: FinancialAccount) {
+    suspend fun updateAccount(account: FinancialAccount) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.updateAccount(
             type = account.type.name,
             institutionName = account.institutionName,
@@ -98,7 +98,7 @@ class FinancialRepository(private val database: SqlDelightDatabase) {
         )
     }
 
-    suspend fun deleteAccount(account: FinancialAccount) {
+    suspend fun deleteAccount(account: FinancialAccount) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.deleteAccount(account.id.toLong())
     }
 

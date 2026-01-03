@@ -24,7 +24,7 @@ class GreenCardRepository(database: SqlDelightDatabase) {
         .mapToOneOrNull(Dispatchers.IO)
         .map { it?.toEntity() }
 
-    suspend fun insert(greenCard: GreenCard) {
+    suspend fun insert(greenCard: GreenCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.insert(
             id = if (greenCard.id == 0) null else greenCard.id.toLong(),
             surname = greenCard.surname,
@@ -41,7 +41,7 @@ class GreenCardRepository(database: SqlDelightDatabase) {
         )
     }
 
-    suspend fun update(greenCard: GreenCard) {
+    suspend fun update(greenCard: GreenCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.update(
             surname = greenCard.surname,
             givenName = greenCard.givenName,
@@ -58,7 +58,7 @@ class GreenCardRepository(database: SqlDelightDatabase) {
         )
     }
 
-    suspend fun delete(greenCard: GreenCard) {
+    suspend fun delete(greenCard: GreenCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.delete(greenCard.id.toLong())
     }
 

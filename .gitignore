@@ -8,3 +8,5 @@ build/
 **.log
 **.jks
 certs/
+local.properties
+use-java.ps1

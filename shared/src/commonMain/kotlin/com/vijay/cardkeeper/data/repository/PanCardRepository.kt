@@ -24,7 +24,7 @@ class PanCardRepository(database: SqlDelightDatabase) {
         .mapToOneOrNull(Dispatchers.IO)
         .map { it?.toEntity() }
 
-    suspend fun insert(panCard: PanCard) {
+    suspend fun insert(panCard: PanCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.insert(
             id = if (panCard.id == 0) null else panCard.id.toLong(),
             panNumber = panCard.panNumber,
@@ -38,7 +38,7 @@ class PanCardRepository(database: SqlDelightDatabase) {
         )
     }
 
-    suspend fun update(panCard: PanCard) {
+    suspend fun update(panCard: PanCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.update(
             panNumber = panCard.panNumber,
             holderName = panCard.holderName,
@@ -52,7 +52,7 @@ class PanCardRepository(database: SqlDelightDatabase) {
         )
     }
 
-    suspend fun delete(panCard: PanCard) {
+    suspend fun delete(panCard: PanCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.delete(panCard.id.toLong())
     }
 

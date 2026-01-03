@@ -35,7 +35,7 @@ class RewardCardRepositoryImpl(private val database: SqlDelightDatabase) : Rewar
         return queries.getRewardCardById(id.toLong()).executeAsOneOrNull()?.toEntity()
     }
 
-    override suspend fun insertRewardCard(rewardCard: RewardCard) {
+    override suspend fun insertRewardCard(rewardCard: RewardCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.insertRewardCard(
             id = if (rewardCard.id == 0) null else rewardCard.id.toLong(),
             name = rewardCard.name,
@@ -50,7 +50,7 @@ class RewardCardRepositoryImpl(private val database: SqlDelightDatabase) : Rewar
         )
     }
 
-    override suspend fun updateRewardCard(rewardCard: RewardCard) {
+    override suspend fun updateRewardCard(rewardCard: RewardCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.updateRewardCard(
             name = rewardCard.name,
             type = rewardCard.type.name,
@@ -65,7 +65,7 @@ class RewardCardRepositoryImpl(private val database: SqlDelightDatabase) : Rewar
         )
     }
 
-    override suspend fun deleteRewardCard(rewardCard: RewardCard) {
+    override suspend fun deleteRewardCard(rewardCard: RewardCard) = kotlinx.coroutines.withContext(Dispatchers.IO) {
         queries.deleteRewardCard(rewardCard.id.toLong())
     }
 
