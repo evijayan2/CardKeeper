@@ -45,6 +45,7 @@ import kards.shared.generated.resources.placeholder_image
 import com.vijay.cardkeeper.data.entity.AccountType
 import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.PanCard
+import com.vijay.cardkeeper.data.entity.RewardCard
 
 import com.vijay.cardkeeper.data.entity.IdentityDocument
 import com.vijay.cardkeeper.data.entity.Passport
@@ -287,7 +288,7 @@ fun FinancialList(list: List<FinancialAccount>, onItemClick: (Int) -> Unit, onCo
 
 @Composable
 fun RewardsList(
-    list: List<FinancialAccount>, 
+    list: List<RewardCard>, 
     giftCards: List<GiftCard>,
     onItemClick: (Int) -> Unit,
     onGiftCardClick: (Int) -> Unit
@@ -308,7 +309,7 @@ fun RewardsList(
                 Text("Rewards Cards", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
             }
         }
-        items(list, key = { "rc_${it.id}" }) { account -> RewardsCardItem(account, onItemClick) } 
+        items(list, key = { "rc_${it.id}" }) { rewardCard -> RewardsCardItem(rewardCard, onItemClick) } 
     }
 }
 
@@ -367,9 +368,9 @@ fun GiftCardItem(giftCard: GiftCard, onItemClick: (Int) -> Unit) {
 }
 
 @Composable
-fun RewardsCardItem(account: FinancialAccount, onItemClick: (Int) -> Unit) {
+fun RewardsCardItem(rewardCard: RewardCard, onItemClick: (Int) -> Unit) {
     Card(
-            modifier = Modifier.fillMaxWidth().clickable { onItemClick(account.id) },
+            modifier = Modifier.fillMaxWidth().clickable { onItemClick(rewardCard.id) },
             colors =
                     CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -377,7 +378,7 @@ fun RewardsCardItem(account: FinancialAccount, onItemClick: (Int) -> Unit) {
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             // Document Icon or Image (Front Image or Logo)
-            val imagePath = account.logoImagePath ?: account.frontImagePath
+            val imagePath = rewardCard.logoImagePath ?: rewardCard.frontImagePath
             if (imagePath != null) {
                 AsyncImage(
                         model = imagePath,
@@ -404,20 +405,20 @@ fun RewardsCardItem(account: FinancialAccount, onItemClick: (Int) -> Unit) {
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                        text = account.institutionName, // Store Name
+                        text = rewardCard.name, // Store Name
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                 )
-                if (!account.barcode.isNullOrBlank()) {
+                rewardCard.barcode?.let {
                     Text(
-                            text = account.barcode,
+                            text = it,
                             style = MaterialTheme.typography.bodyMedium,
                             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                     )
                 }
-                if (!account.linkedPhoneNumber.isNullOrBlank()) {
+                if (!rewardCard.linkedPhoneNumber.isNullOrBlank()) {
                     Text(
-                            text = "Phone: ${account.linkedPhoneNumber}",
+                            text = "Phone: ${rewardCard.linkedPhoneNumber}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1062,10 +1063,10 @@ fun DashboardImageThumbnail(
         textColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        val context = coil3.compose.LocalPlatformContext.current
+        val platformContext = coil3.compose.LocalPlatformContext.current
         val request = remember(path) {
             println("CardKeeperUI: Loading Thumbnail: $path")
-            ImageRequest.Builder(context)
+            ImageRequest.Builder(platformContext)
                 .data(path)
                 .size(300) // Downsample to thumbnail size to prevent OOM
                 .crossfade(true)

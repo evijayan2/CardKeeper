@@ -1,7 +1,6 @@
 package com.vijay.cardkeeper.data.entity
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+
 
 enum class AccountType {
     CREDIT_CARD,
@@ -24,9 +23,9 @@ enum class BankAccountSubType {
     OTHER
 }
 
-@Entity(tableName = "financial_accounts")
+
 data class FinancialAccount(
-        @PrimaryKey(autoGenerate = true) val id: Int = 0,
+        val id: Int = 0,
         val type: AccountType,
         val institutionName: String, // e.g., Chase, SBI, LIC
         val accountName: String, // e.g., "Sapphire Reserve", "Savings 1234"

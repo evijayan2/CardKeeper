@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS passports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    passportNumber TEXT NOT NULL,
+    countryCode TEXT NOT NULL,
+    surname TEXT,
+    givenNames TEXT,
+    nationality TEXT,
+    dob TEXT,
+    placeOfBirth TEXT,
+    sex TEXT,
+    dateOfIssue TEXT,
+    dateOfExpiry TEXT,
+    authority TEXT,
+    endorsements TEXT,
+    frontImagePath TEXT,
+    backImagePath TEXT,
+    fatherName TEXT,
+    motherName TEXT,
+    spouseName TEXT,
+    address TEXT,
+    placeOfIssue TEXT,
+    fileNumber TEXT
+);

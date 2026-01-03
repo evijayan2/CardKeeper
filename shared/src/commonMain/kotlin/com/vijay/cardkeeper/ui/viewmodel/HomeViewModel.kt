@@ -14,8 +14,10 @@ import com.vijay.cardkeeper.data.repository.GiftCardRepository
 import com.vijay.cardkeeper.data.repository.GreenCardRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
 import com.vijay.cardkeeper.data.repository.PassportRepository
-import com.vijay.cardkeeper.data.entity.PanCard
 import com.vijay.cardkeeper.data.repository.PanCardRepository
+import com.vijay.cardkeeper.data.entity.PanCard
+import com.vijay.cardkeeper.data.entity.RewardCard
+import com.vijay.cardkeeper.data.repository.RewardCardRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -28,7 +30,8 @@ class HomeViewModel(
         greenCardRepository: GreenCardRepository,
         aadharCardRepository: AadharCardRepository,
         giftCardRepository: GiftCardRepository,
-        panCardRepository: PanCardRepository
+        panCardRepository: PanCardRepository,
+        rewardCardRepository: RewardCardRepository
 ) : ViewModel() {
 
         val bankAccounts: StateFlow<List<FinancialAccount>> =
@@ -46,19 +49,9 @@ class HomeViewModel(
                         }
                         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-        val rewardsCards: StateFlow<List<FinancialAccount>> =
-                financialRepository
-                        .allAccounts
-                        .map { list ->
-                                list.filter {
-                                        it.type ==
-                                                com.vijay.cardkeeper.data.entity.AccountType
-                                                        .REWARDS_CARD ||
-                                                it.type ==
-                                                        com.vijay.cardkeeper.data.entity.AccountType
-                                                                .LIBRARY_CARD
-                                }
-                        }
+        val rewardsCards: StateFlow<List<RewardCard>> =
+                rewardCardRepository
+                        .getAllRewardCards()
                         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
         val identityDocuments: StateFlow<List<IdentityDocument>> =
@@ -97,7 +90,7 @@ class HomeViewModel(
                 )
 
         val panCards: StateFlow<List<PanCard>> =
-                panCardRepository.getAllPanCards().stateIn(
+                panCardRepository.allPanCards.stateIn(
                         viewModelScope,
                         SharingStarted.Eagerly,
                         emptyList()

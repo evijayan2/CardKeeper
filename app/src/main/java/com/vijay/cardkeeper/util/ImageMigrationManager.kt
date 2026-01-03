@@ -21,7 +21,8 @@ class ImageMigrationManager(
     private val greenCardRepository: GreenCardRepository,
     private val aadharCardRepository: AadharCardRepository,
     private val giftCardRepository: GiftCardRepository,
-    private val panCardRepository: PanCardRepository
+    private val panCardRepository: PanCardRepository,
+    private val rewardCardRepository: com.vijay.cardkeeper.data.repository.RewardCardRepository
 ) {
 
     suspend fun performMigration() {
@@ -143,7 +144,7 @@ class ImageMigrationManager(
                 }
 
                 // PAN Cards
-                val panCards = panCardRepository.getAllPanCards().first()
+                val panCards = panCardRepository.allPanCards.first()
                 panCards.forEach { pc ->
                     val filesToDelete = mutableListOf<File>()
                     var changed = false
@@ -151,14 +152,32 @@ class ImageMigrationManager(
                     val newBack = migratePath(pc.backImagePath, filesToDelete)?.also { changed = true }
                     
                     if (changed) {
-                        panCardRepository.updatePanCard(pc.copy(
+                        panCardRepository.update(pc.copy(
                             frontImagePath = newFront ?: pc.frontImagePath,
                             backImagePath = newBack ?: pc.backImagePath
                         ))
                         filesToDelete.forEach { try { it.delete() } catch(e: Exception) { e.printStackTrace() } }
                     }
                 }
-
+                
+                // Reward Cards
+                val rewardCards = rewardCardRepository.getAllRewardCards().first()
+                rewardCards.forEach { rc ->
+                    val filesToDelete = mutableListOf<File>()
+                    var changed = false
+                    val newFront = migratePath(rc.frontImagePath, filesToDelete)?.also { changed = true }
+                    val newBack = migratePath(rc.backImagePath, filesToDelete)?.also { changed = true }
+                    val newLogo = migratePath(rc.logoImagePath, filesToDelete)?.also { changed = true }
+                    
+                    if (changed) {
+                        rewardCardRepository.updateRewardCard(rc.copy(
+                            frontImagePath = newFront ?: rc.frontImagePath,
+                            backImagePath = newBack ?: rc.backImagePath,
+                            logoImagePath = newLogo ?: rc.logoImagePath
+                        ))
+                        filesToDelete.forEach { try { it.delete() } catch(e: Exception) { e.printStackTrace() } }
+                    }
+                }
                 // Mark complete
                 prefs.edit().putBoolean("image_migration_complete", true).apply()
                 android.util.Log.i("ImageMigration", "Migration/Repair completed successfully")

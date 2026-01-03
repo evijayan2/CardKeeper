@@ -10,13 +10,15 @@ import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.GreenCard
 import com.vijay.cardkeeper.data.entity.GiftCard
 import com.vijay.cardkeeper.data.entity.IdentityDocument
+import com.vijay.cardkeeper.data.entity.PanCard
+import com.vijay.cardkeeper.data.entity.RewardCard
 import com.vijay.cardkeeper.data.repository.AadharCardRepository
 import com.vijay.cardkeeper.data.repository.FinancialRepository
 import com.vijay.cardkeeper.data.repository.GiftCardRepository
 import com.vijay.cardkeeper.data.repository.GreenCardRepository
 import com.vijay.cardkeeper.data.repository.IdentityRepository
-import com.vijay.cardkeeper.data.entity.PanCard
 import com.vijay.cardkeeper.data.repository.PanCardRepository
+import com.vijay.cardkeeper.data.repository.RewardCardRepository
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.launch
 
@@ -29,6 +31,7 @@ class AddItemViewModel(
 
         private val giftCardRepository: GiftCardRepository,
         private val panCardRepository: PanCardRepository,
+        private val rewardCardRepository: RewardCardRepository,
         private val expirationScheduler: com.vijay.cardkeeper.domain.ExpirationScheduler
 ) : ViewModel() {
 
@@ -259,18 +262,27 @@ class AddItemViewModel(
 
         fun savePanCard(panCard: PanCard) = viewModelScope.launch {
                 if (panCard.id > 0) {
-                        panCardRepository.updatePanCard(panCard)
+                        panCardRepository.update(panCard)
                 } else {
-                        panCardRepository.insertPanCard(panCard)
+                        panCardRepository.insert(panCard)
                 }
                 scheduleExpirationCheck()
         }
 
         fun deletePanCard(panCard: PanCard) {
                 viewModelScope.launch { 
-                    panCardRepository.deletePanCard(panCard)
+                    panCardRepository.delete(panCard)
                     scheduleExpirationCheck()
                 }
+        }
+
+        fun saveRewardCard(rewardCard: RewardCard) = viewModelScope.launch {
+                if (rewardCard.id > 0) {
+                        rewardCardRepository.updateRewardCard(rewardCard)
+                } else {
+                        rewardCardRepository.insertRewardCard(rewardCard)
+                }
+                scheduleExpirationCheck()
         }
 
         fun getItem(id: Int?, type: String?): kotlinx.coroutines.flow.Flow<Any?> =
@@ -278,8 +290,10 @@ class AddItemViewModel(
                         if (id == null || id == 0) {
                                 emit(null)
                         } else {
-                                if (type == "financial" || type == "REWARDS_CARD") {
+                                if (type == "financial") {
                                         emit(financialRepository.getAccountById(id))
+                                } else if (type == "rewards" || type == "REWARDS_CARD") {
+                                        emit(rewardCardRepository.getRewardCardById(id))
                                 } else if (type == "identity" || type == "DRIVER_LICENSE") {
                                         emit(identityRepository.getDocumentById(id))
                                 } else if (type == "passport" || type == "PASSPORT") {
@@ -291,7 +305,7 @@ class AddItemViewModel(
                                 } else if (type == "giftcard") {
                                         emit(giftCardRepository.getGiftCardById(id))
                                 } else if (type == "pancard") {
-                                        emitAll(panCardRepository.getPanCardById(id))
+                                        emitAll(panCardRepository.getPanCard(id))
                                 }
                         }
                 }

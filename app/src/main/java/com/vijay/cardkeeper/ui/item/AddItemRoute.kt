@@ -46,7 +46,7 @@ fun AddItemRoute(
             0 -> "financial"
             1 -> "identity"
             2 -> "passport"
-            3 -> "financial" // Rewards Card is stored as FinancialAccount
+            3 -> "rewards" 
             4 -> "greencard"
             5 -> "aadhar"
             6 -> "giftcard"
@@ -64,7 +64,10 @@ fun AddItemRoute(
             when (it) {
                 is IdentityDocument -> selectedCategory = 1
                 is FinancialAccount -> {
-                    selectedCategory = if (it.type == AccountType.REWARDS_CARD || it.type == AccountType.LIBRARY_CARD) 3 else 0
+                    selectedCategory = 0
+                }
+                is RewardCard -> {
+                    selectedCategory = 3
                 }
                 is Passport -> selectedCategory = 2
                 is GreenCard -> selectedCategory = 4
@@ -87,7 +90,11 @@ fun AddItemRoute(
     }
 
     // Form States
-    val financialState = rememberFinancialFormState(item as? FinancialAccount, initialAccountType)
+    val financialState = rememberFinancialFormState(
+        account = item as? FinancialAccount,
+        reward = item as? RewardCard,
+        initialType = initialAccountType
+    )
     val identityState = rememberIdentityFormState(item as? IdentityDocument, null)
     val passportState = rememberPassportFormState(item as? Passport)
     val greenCardState = rememberGreenCardFormState(item as? GreenCard)
@@ -221,6 +228,24 @@ fun AddItemRoute(
                         val job = viewModel.saveFinancialAccount(acc)
                         job.join()
                         println("CardKeeperUI: Financial Account saved successfully")
+                    }
+                    3 -> {
+                        println("CardKeeperUI: Saving Reward Card")
+                        val rc = RewardCard(
+                            id = if (documentId != null && typeForLookup == "rewards") documentId else 0,
+                            name = financialState.institution,
+                            type = financialState.type,
+                            barcode = financialState.barcode.ifBlank { null },
+                            barcodeFormat = financialState.barcodeFormat,
+                            linkedPhoneNumber = financialState.linkedPhone.ifBlank { null },
+                            frontImagePath = financialState.frontPath,
+                            backImagePath = financialState.backPath,
+                            logoImagePath = financialState.logoPath,
+                            notes = financialState.notes.ifBlank { null }
+                        )
+                        val job = viewModel.saveRewardCard(rc)
+                        job.join()
+                        println("CardKeeperUI: Reward Card saved successfully")
                     }
                     1 -> {
                         println("CardKeeperUI: Saving Identity Document")

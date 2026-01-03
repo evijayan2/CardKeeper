@@ -1,0 +1,60 @@
+CREATE TABLE IF NOT EXISTS aadhar_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    referenceId TEXT NOT NULL,
+    holderName TEXT NOT NULL,
+    dob TEXT NOT NULL,
+    gender TEXT NOT NULL,
+    address TEXT NOT NULL,
+    pincode TEXT,
+    maskedAadhaarNumber TEXT NOT NULL,
+    uid TEXT,
+    vid TEXT,
+    photoBase64 TEXT,
+    timestamp TEXT,
+    digitalSignature TEXT,
+    certificateId TEXT,
+    enrollmentNumber TEXT,
+    email TEXT,
+    mobile TEXT,
+    frontImagePath TEXT,
+    backImagePath TEXT,
+    qrData TEXT
+);
+
+getAllAadharCards:
+SELECT *
+FROM aadhar_cards
+ORDER BY id DESC;
+
+getAadharCard:
+SELECT *
+FROM aadhar_cards
+WHERE id = :id;
+
+insert:
+INSERT OR REPLACE INTO aadhar_cards(
+    id, referenceId, holderName, dob, gender, address, pincode,
+    maskedAadhaarNumber, uid, vid, photoBase64, timestamp, digitalSignature,
+    certificateId, enrollmentNumber, email, mobile, frontImagePath, backImagePath, qrData
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+update:
+UPDATE aadhar_cards
+SET referenceId = ?, holderName = ?, dob = ?, gender = ?, address = ?, pincode = ?,
+    maskedAadhaarNumber = ?, uid = ?, vid = ?, photoBase64 = ?, timestamp = ?,
+    digitalSignature = ?, certificateId = ?, enrollmentNumber = ?, email = ?,
+    mobile = ?, frontImagePath = ?, backImagePath = ?, qrData = ?
+WHERE id = ?;
+
+delete:
+DELETE FROM aadhar_cards
+WHERE id = :id;
+
+searchAadharCards:
+SELECT *
+FROM aadhar_cards
+WHERE holderName LIKE ('%' || :query || '%')
+   OR maskedAadhaarNumber LIKE ('%' || :query || '%')
+   OR uid LIKE ('%' || :query || '%')
+   OR address LIKE ('%' || :query || '%');

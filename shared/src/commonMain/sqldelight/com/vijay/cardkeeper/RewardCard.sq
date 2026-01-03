@@ -1,0 +1,54 @@
+CREATE TABLE reward_cards (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL, -- "REWARDS_CARD" or "LIBRARY_CARD"
+    barcode TEXT,
+    barcodeFormat INTEGER,
+    linkedPhoneNumber TEXT,
+    frontImagePath TEXT,
+    backImagePath TEXT,
+    logoImagePath TEXT,
+    notes TEXT
+);
+
+getAllRewardCards:
+SELECT * FROM reward_cards ORDER BY name ASC;
+
+getRewardCardById:
+SELECT * FROM reward_cards WHERE id = ?;
+
+insertRewardCard:
+INSERT OR REPLACE INTO reward_cards (
+    id,
+    name,
+    type,
+    barcode,
+    barcodeFormat,
+    linkedPhoneNumber,
+    frontImagePath,
+    backImagePath,
+    logoImagePath,
+    notes
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateRewardCard:
+UPDATE reward_cards SET
+    name = ?,
+    type = ?,
+    barcode = ?,
+    barcodeFormat = ?,
+    linkedPhoneNumber = ?,
+    frontImagePath = ?,
+    backImagePath = ?,
+    logoImagePath = ?,
+    notes = ?
+WHERE id = ?;
+
+deleteRewardCard:
+DELETE FROM reward_cards WHERE id = ?;
+
+searchRewardCards:
+SELECT * FROM reward_cards
+WHERE name LIKE '%' || :query || '%'
+OR linkedPhoneNumber LIKE '%' || :query || '%'
+OR notes LIKE '%' || :query || '%';

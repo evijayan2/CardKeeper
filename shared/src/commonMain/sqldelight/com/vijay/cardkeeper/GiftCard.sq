@@ -1,0 +1,56 @@
+CREATE TABLE gift_cards (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    providerName TEXT NOT NULL,
+    cardNumber TEXT NOT NULL,
+    pin TEXT,
+    frontImagePath TEXT,
+    backImagePath TEXT,
+    barcode TEXT,
+    barcodeFormat INTEGER,
+    qrCode TEXT,
+    logoImagePath TEXT,
+    notes TEXT
+);
+
+getAllGiftCards:
+SELECT * FROM gift_cards ORDER BY providerName ASC;
+
+getGiftCardById:
+SELECT * FROM gift_cards WHERE id = ?;
+
+insertGiftCard:
+INSERT OR REPLACE INTO gift_cards (
+    id,
+    providerName,
+    cardNumber,
+    pin,
+    frontImagePath,
+    backImagePath,
+    barcode,
+    barcodeFormat,
+    qrCode,
+    logoImagePath,
+    notes
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateGiftCard:
+UPDATE gift_cards SET
+    providerName = ?,
+    cardNumber = ?,
+    pin = ?,
+    frontImagePath = ?,
+    backImagePath = ?,
+    barcode = ?,
+    barcodeFormat = ?,
+    qrCode = ?,
+    logoImagePath = ?,
+    notes = ?
+WHERE id = ?;
+
+deleteGiftCard:
+DELETE FROM gift_cards WHERE id = ?;
+
+searchGiftCards:
+SELECT * FROM gift_cards
+WHERE providerName LIKE '%' || :query || '%'
+OR cardNumber LIKE '%' || :query || '%';

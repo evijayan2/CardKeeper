@@ -1,0 +1,275 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 21,
+    "identityHash": "a3b222c6bac820421bfed79b87b5a92b",
+    "entities": [
+      {
+        "tableName": "passports",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `passportNumber` TEXT NOT NULL, `countryCode` TEXT NOT NULL, `surname` TEXT, `givenNames` TEXT, `nationality` TEXT, `dob` TEXT, `placeOfBirth` TEXT, `sex` TEXT, `dateOfIssue` TEXT, `dateOfExpiry` TEXT, `authority` TEXT, `endorsements` TEXT, `frontImagePath` TEXT, `backImagePath` TEXT, `fatherName` TEXT, `motherName` TEXT, `spouseName` TEXT, `address` TEXT, `placeOfIssue` TEXT, `fileNumber` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "passportNumber",
+            "columnName": "passportNumber",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "countryCode",
+            "columnName": "countryCode",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "surname",
+            "columnName": "surname",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "givenNames",
+            "columnName": "givenNames",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "nationality",
+            "columnName": "nationality",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "dob",
+            "columnName": "dob",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "placeOfBirth",
+            "columnName": "placeOfBirth",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sex",
+            "columnName": "sex",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "dateOfIssue",
+            "columnName": "dateOfIssue",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "dateOfExpiry",
+            "columnName": "dateOfExpiry",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "authority",
+            "columnName": "authority",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "endorsements",
+            "columnName": "endorsements",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "frontImagePath",
+            "columnName": "frontImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "backImagePath",
+            "columnName": "backImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fatherName",
+            "columnName": "fatherName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "motherName",
+            "columnName": "motherName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "spouseName",
+            "columnName": "spouseName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "address",
+            "columnName": "address",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "placeOfIssue",
+            "columnName": "placeOfIssue",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "fileNumber",
+            "columnName": "fileNumber",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "green_cards",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `surname` TEXT NOT NULL, `givenName` TEXT NOT NULL, `uscisNumber` TEXT NOT NULL, `category` TEXT NOT NULL, `countryOfBirth` TEXT NOT NULL, `dob` TEXT NOT NULL, `sex` TEXT NOT NULL, `expiryDate` TEXT NOT NULL, `residentSince` TEXT NOT NULL, `frontImagePath` TEXT, `backImagePath` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "surname",
+            "columnName": "surname",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "givenName",
+            "columnName": "givenName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "uscisNumber",
+            "columnName": "uscisNumber",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "category",
+            "columnName": "category",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "countryOfBirth",
+            "columnName": "countryOfBirth",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dob",
+            "columnName": "dob",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sex",
+            "columnName": "sex",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expiryDate",
+            "columnName": "expiryDate",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "residentSince",
+            "columnName": "residentSince",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "frontImagePath",
+            "columnName": "frontImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "backImagePath",
+            "columnName": "backImagePath",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "pan_cards",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `panNumber` TEXT NOT NULL, `holderName` TEXT NOT NULL, `fatherName` TEXT, `dob` TEXT, `frontImagePath` TEXT, `backImagePath` TEXT, `issueDate` TEXT, `acknowledgementNumber` TEXT)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "panNumber",
+            "columnName": "panNumber",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "holderName",
+            "columnName": "holderName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fatherName",
+            "columnName": "fatherName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "dob",
+            "columnName": "dob",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "frontImagePath",
+            "columnName": "frontImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "backImagePath",
+            "columnName": "backImagePath",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "issueDate",
+            "columnName": "issueDate",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "acknowledgementNumber",
+            "columnName": "acknowledgementNumber",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a3b222c6bac820421bfed79b87b5a92b')"
+    ]
+  }
+}

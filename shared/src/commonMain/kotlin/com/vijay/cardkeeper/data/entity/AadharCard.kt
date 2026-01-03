@@ -1,15 +1,14 @@
 package com.vijay.cardkeeper.data.entity
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+
 
 /**
  * Aadhar Card entity with fields from Aadhar QR code. QR code contains: RefID, Name, DOB/YOB,
  * Gender, Address, Masked Aadhaar, Photo, Timestamp, Signature
  */
-@Entity(tableName = "aadhar_cards")
+
 data class AadharCard(
-        @PrimaryKey(autoGenerate = true) val id: Int = 0,
+        val id: Int = 0,
 
         // Reference ID from QR (unique identifier for this Aadhar issuance)
         val referenceId: String,

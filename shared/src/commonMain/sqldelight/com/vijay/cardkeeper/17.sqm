@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS gift_cards (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    providerName TEXT NOT NULL,
+    cardNumber TEXT NOT NULL,
+    pin TEXT,
+    frontImagePath TEXT,
+    backImagePath TEXT,
+    barcode TEXT,
+    barcodeFormat INTEGER,
+    qrCode TEXT,
+    logoImagePath TEXT,
+    notes TEXT
+);

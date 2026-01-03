@@ -1,0 +1,14 @@
+CREATE TABLE IF NOT EXISTS green_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    surname TEXT NOT NULL,
+    givenName TEXT NOT NULL,
+    uscisNumber TEXT NOT NULL,
+    category TEXT NOT NULL,
+    countryOfBirth TEXT NOT NULL,
+    dob TEXT NOT NULL,
+    sex TEXT NOT NULL,
+    expiryDate TEXT NOT NULL,
+    residentSince TEXT NOT NULL,
+    frontImagePath TEXT,
+    backImagePath TEXT
+);

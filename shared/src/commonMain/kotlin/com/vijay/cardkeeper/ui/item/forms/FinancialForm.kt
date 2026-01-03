@@ -16,18 +16,23 @@ import androidx.compose.ui.unit.dp
 import com.vijay.cardkeeper.data.entity.AccountType
 import com.vijay.cardkeeper.data.entity.BankAccountSubType
 import com.vijay.cardkeeper.data.entity.FinancialAccount
+import com.vijay.cardkeeper.data.entity.RewardCard
 import com.vijay.cardkeeper.ui.common.DateVisualTransformation
 import com.vijay.cardkeeper.ui.common.MonthYearVisualTransformation
 
-class FinancialFormState(initialAccount: FinancialAccount?, initialType: AccountType? = null) {
-        var type by mutableStateOf(initialAccount?.type ?: initialType ?: AccountType.CREDIT_CARD)
-        var institution by mutableStateOf(initialAccount?.institutionName ?: "")
-        var accName by mutableStateOf(initialAccount?.accountName ?: "")
-        var holder by mutableStateOf(initialAccount?.holderName ?: "")
-        var number by mutableStateOf(initialAccount?.number ?: "")
-        var routing by mutableStateOf(initialAccount?.routingNumber ?: "")
-        var ifsc by mutableStateOf(initialAccount?.ifscCode ?: "")
-        var swift by mutableStateOf(initialAccount?.swiftCode ?: "")
+class FinancialFormState(
+    initialAccount: FinancialAccount? = null,
+    initialReward: RewardCard? = null,
+    initialType: AccountType? = null
+) {
+    var type by mutableStateOf(initialAccount?.type ?: initialReward?.type ?: initialType ?: AccountType.CREDIT_CARD)
+    var institution by mutableStateOf(initialAccount?.institutionName ?: initialReward?.name ?: "")
+    var accName by mutableStateOf(initialAccount?.accountName ?: "")
+    var holder by mutableStateOf(initialAccount?.holderName ?: "")
+    var number by mutableStateOf(initialAccount?.number ?: "")
+    var routing by mutableStateOf(initialAccount?.routingNumber ?: "")
+    var ifsc by mutableStateOf(initialAccount?.ifscCode ?: "")
+    var swift by mutableStateOf(initialAccount?.swiftCode ?: "")
     private var _expiry = mutableStateOf(initialAccount?.expiryDate?.filter { it.isDigit() }?.take(4) ?: "")
     var expiry: String
         get() = _expiry.value
@@ -49,47 +54,48 @@ class FinancialFormState(initialAccount: FinancialAccount?, initialType: Account
         }
 
     var expiryError by mutableStateOf(false)
-        var cvv by mutableStateOf(initialAccount?.cvv ?: "")
-        var pin by mutableStateOf(initialAccount?.cardPin ?: "")
-        var network by mutableStateOf(initialAccount?.cardNetwork ?: "")
-        var notes by mutableStateOf(initialAccount?.notes ?: "")
-        var contact by mutableStateOf(initialAccount?.lostCardContactNumber ?: "")
+    var cvv by mutableStateOf(initialAccount?.cvv ?: "")
+    var pin by mutableStateOf(initialAccount?.cardPin ?: "")
+    var network by mutableStateOf(initialAccount?.cardNetwork ?: "")
+    var notes by mutableStateOf(initialAccount?.notes ?: initialReward?.notes ?: "")
+    var contact by mutableStateOf(initialAccount?.lostCardContactNumber ?: "")
 
-        // Bank Account Specifics
-        var accountSubType by mutableStateOf(initialAccount?.accountSubType)
-        var wireNumber by mutableStateOf(initialAccount?.wireNumber ?: "")
-        var branchAddress by mutableStateOf(initialAccount?.branchAddress ?: "")
-        var branchContact by mutableStateOf(initialAccount?.branchContactNumber ?: "")
-        var bankWebUrl by mutableStateOf(initialAccount?.bankWebUrl ?: "")
-        var bankBrandColor by mutableStateOf(initialAccount?.bankBrandColor)
-        var holderAddress by mutableStateOf(initialAccount?.holderAddress ?: "")
+    // Bank Account Specifics
+    var accountSubType by mutableStateOf(initialAccount?.accountSubType)
+    var wireNumber by mutableStateOf(initialAccount?.wireNumber ?: "")
+    var branchAddress by mutableStateOf(initialAccount?.branchAddress ?: "")
+    var branchContact by mutableStateOf(initialAccount?.branchContactNumber ?: "")
+    var bankWebUrl by mutableStateOf(initialAccount?.bankWebUrl ?: "")
+    var bankBrandColor by mutableStateOf(initialAccount?.bankBrandColor)
+    var holderAddress by mutableStateOf(initialAccount?.holderAddress ?: "")
 
-        // Rewards Specifics
-        var barcode by mutableStateOf(initialAccount?.barcode ?: "")
-        var barcodeFormat by mutableStateOf(initialAccount?.barcodeFormat)
-        var linkedPhone by mutableStateOf(initialAccount?.linkedPhoneNumber ?: "")
+    // Rewards Specifics
+    var barcode by mutableStateOf(initialAccount?.barcode ?: initialReward?.barcode ?: "")
+    var barcodeFormat by mutableStateOf(initialAccount?.barcodeFormat ?: initialReward?.barcodeFormat)
+    var linkedPhone by mutableStateOf(initialAccount?.linkedPhoneNumber ?: initialReward?.linkedPhoneNumber ?: "")
 
-        // Images using Path check or boolean flag
-        var frontPath by mutableStateOf(initialAccount?.frontImagePath)
-        var backPath by mutableStateOf(initialAccount?.backImagePath)
-        var logoPath by mutableStateOf(initialAccount?.logoImagePath)
+    // Images using Path check or boolean flag
+    var frontPath by mutableStateOf(initialAccount?.frontImagePath ?: initialReward?.frontImagePath)
+    var backPath by mutableStateOf(initialAccount?.backImagePath ?: initialReward?.backImagePath)
+    var logoPath by mutableStateOf(initialAccount?.logoImagePath ?: initialReward?.logoImagePath)
 
-        // Bitmaps removed, using flags for UI state
-        var hasFrontImage by mutableStateOf(initialAccount?.frontImagePath != null)
-        var hasBackImage by mutableStateOf(initialAccount?.backImagePath != null)
-        var hasLogoImage by mutableStateOf(initialAccount?.logoImagePath != null)
+    // Bitmaps removed, using flags for UI state
+    var hasFrontImage by mutableStateOf(initialAccount?.frontImagePath != null || initialReward?.frontImagePath != null)
+    var hasBackImage by mutableStateOf(initialAccount?.backImagePath != null || initialReward?.backImagePath != null)
+    var hasLogoImage by mutableStateOf(initialAccount?.logoImagePath != null || initialReward?.logoImagePath != null)
 
-        // UI State
-        var cvvVisible by mutableStateOf(false)
-        var pinVisible by mutableStateOf(false)
+    // UI State
+    var cvvVisible by mutableStateOf(false)
+    var pinVisible by mutableStateOf(false)
 }
 
 @Composable
 fun rememberFinancialFormState(
-        account: FinancialAccount?,
-        initialType: AccountType? = null
+    account: FinancialAccount? = null,
+    reward: RewardCard? = null,
+    initialType: AccountType? = null
 ): FinancialFormState {
-        return remember(account, initialType) { FinancialFormState(account, initialType) }
+    return remember(account, reward, initialType) { FinancialFormState(account, reward, initialType) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

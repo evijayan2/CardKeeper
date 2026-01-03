@@ -17,7 +17,8 @@ class ViewItemViewModel(
     private val passportRepository: PassportRepository,
     private val greenCardRepository: GreenCardRepository,
     private val aadharCardRepository: AadharCardRepository,
-    private val panCardRepository: PanCardRepository
+    private val panCardRepository: PanCardRepository,
+    private val rewardCardRepository: RewardCardRepository
 ) : ViewModel() {
 
     private val _selectedAccount = MutableStateFlow<FinancialAccount?>(null)
@@ -40,6 +41,9 @@ class ViewItemViewModel(
 
     private val _selectedPanCard = MutableStateFlow<PanCard?>(null)
     val selectedPanCard: StateFlow<PanCard?> = _selectedPanCard.asStateFlow()
+
+    private val _selectedRewardCard = MutableStateFlow<RewardCard?>(null)
+    val selectedRewardCard: StateFlow<RewardCard?> = _selectedRewardCard.asStateFlow()
 
     private val _fullScreenImage = MutableStateFlow<String?>(null)
     val fullScreenImage: StateFlow<String?> = _fullScreenImage.asStateFlow()
@@ -97,10 +101,18 @@ class ViewItemViewModel(
     }
 
     fun loadPanCard(id: Int) {
-        viewModelScope.launch { _selectedPanCard.value = panCardRepository.getPanCardById(id).firstOrNull() }
+        viewModelScope.launch { _selectedPanCard.value = panCardRepository.getPanCard(id).firstOrNull() }
     }
 
     fun deletePanCard(panCard: PanCard) {
-        viewModelScope.launch { panCardRepository.deletePanCard(panCard) }
+        viewModelScope.launch { panCardRepository.delete(panCard) }
+    }
+
+    fun loadRewardCard(id: Int) {
+        viewModelScope.launch { _selectedRewardCard.value = rewardCardRepository.getRewardCardById(id) }
+    }
+
+    fun deleteRewardCard(rewardCard: RewardCard) {
+        viewModelScope.launch { rewardCardRepository.deleteRewardCard(rewardCard) }
     }
 }

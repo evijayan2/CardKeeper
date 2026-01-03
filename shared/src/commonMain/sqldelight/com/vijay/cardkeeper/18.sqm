@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS reward_cards (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    barcode TEXT,
+    barcodeFormat INTEGER,
+    linkedPhoneNumber TEXT,
+    frontImagePath TEXT,
+    backImagePath TEXT,
+    logoImagePath TEXT,
+    notes TEXT
+);

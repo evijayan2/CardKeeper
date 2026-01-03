@@ -1,7 +1,7 @@
 package com.vijay.cardkeeper.di
 
 import android.content.Context
-import com.vijay.cardkeeper.data.AppDatabase
+
 import com.vijay.cardkeeper.data.repository.AadharCardRepository
 import com.vijay.cardkeeper.data.repository.FinancialRepository
 import com.vijay.cardkeeper.data.repository.GreenCardRepository
@@ -10,6 +10,12 @@ import com.vijay.cardkeeper.data.repository.IdentityRepository
 import com.vijay.cardkeeper.data.repository.SearchRepository
 import com.vijay.cardkeeper.data.repository.PanCardRepository
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.vijay.cardkeeper.SqlDelightDatabase
+import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+
+
+import com.vijay.cardkeeper.data.repository.RewardCardRepository
+import com.vijay.cardkeeper.data.repository.RewardCardRepositoryImpl
 
 /** AppContainer for manual dependency injection. */
 interface AppContainer {
@@ -19,6 +25,7 @@ interface AppContainer {
     val greenCardRepository: GreenCardRepository
     val giftCardRepository: GiftCardRepository
     val aadharCardRepository: AadharCardRepository
+    val rewardCardRepository: RewardCardRepository
     val panCardRepository: PanCardRepository
     val searchRepository: SearchRepository
     val userPreferencesRepository: com.vijay.cardkeeper.data.repository.UserPreferencesRepository
@@ -30,55 +37,52 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     // We assume that by the time this is accessed, the secure key is unlocked and cached.
     // If not, it means we bypassed AuthActivity, which is a security violation, so crashing is
     // appropriate.
-    private val database: AppDatabase by lazy {
+
+
+    private val sqlDelightDatabase: SqlDelightDatabase by lazy {
         val key =
                 com.vijay.cardkeeper.util.KeyManager.cachedPassphrase
                         ?: throw IllegalStateException("Database accessed before authentication!")
         val factory = net.zetetic.database.sqlcipher.SupportOpenHelperFactory(key)
-        androidx.room.Room.databaseBuilder(
-            context.applicationContext,
-            com.vijay.cardkeeper.data.AppDatabase::class.java,
-            "cardkeeper_database"
+        val driver = AndroidSqliteDriver(
+            schema = SqlDelightDatabase.Schema,
+            context = context,
+            name = "cardkeeper_database",
+            factory = factory
         )
-        .openHelperFactory(factory)
-        .addMigrations(
-            com.vijay.cardkeeper.data.MIGRATION_11_12,
-            com.vijay.cardkeeper.data.MIGRATION_12_13,
-            com.vijay.cardkeeper.data.MIGRATION_13_14,
-            com.vijay.cardkeeper.data.MIGRATION_14_15,
-            com.vijay.cardkeeper.data.MIGRATION_15_16,
-            com.vijay.cardkeeper.data.MIGRATION_16_17
-        )
-        .fallbackToDestructiveMigration(false)
-        .build()
+        SqlDelightDatabase(driver)
     }
 
     override val financialRepository: FinancialRepository by lazy {
-        FinancialRepository(database.financialAccountDao())
+        FinancialRepository(sqlDelightDatabase)
     }
 
     override val identityRepository: IdentityRepository by lazy {
-        IdentityRepository(database.identityDocumentDao())
+        IdentityRepository(sqlDelightDatabase)
     }
 
     override val passportRepository:
             com.vijay.cardkeeper.data.repository.PassportRepository by lazy {
-        com.vijay.cardkeeper.data.repository.PassportRepository(database.passportDao())
+        com.vijay.cardkeeper.data.repository.PassportRepository(sqlDelightDatabase)
     }
     override val greenCardRepository: GreenCardRepository by lazy {
-        GreenCardRepository(database.greenCardDao())
+        GreenCardRepository(sqlDelightDatabase)
     }
 
     override val giftCardRepository: GiftCardRepository by lazy {
-        com.vijay.cardkeeper.data.repository.GiftCardRepositoryImpl(database.giftCardDao())
+        com.vijay.cardkeeper.data.repository.GiftCardRepositoryImpl(sqlDelightDatabase)
     }
 
     override val aadharCardRepository: AadharCardRepository by lazy {
-        AadharCardRepository(database.aadharCardDao())
+        AadharCardRepository(sqlDelightDatabase)
+    }
+
+    override val rewardCardRepository: RewardCardRepository by lazy {
+        RewardCardRepositoryImpl(sqlDelightDatabase)
     }
 
     override val panCardRepository: PanCardRepository by lazy {
-        PanCardRepository(database.panCardDao())
+        PanCardRepository(sqlDelightDatabase)
     }
 
     override val searchRepository: SearchRepository by lazy {
@@ -87,7 +91,10 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 identityRepository,
                 passportRepository,
                 greenCardRepository,
-                aadharCardRepository
+                aadharCardRepository,
+                rewardCardRepository,
+                giftCardRepository,
+                panCardRepository
         )
     }
 
@@ -107,7 +114,8 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
             greenCardRepository = greenCardRepository,
             aadharCardRepository = aadharCardRepository,
             giftCardRepository = giftCardRepository,
-            panCardRepository = panCardRepository
+            panCardRepository = panCardRepository,
+            rewardCardRepository = rewardCardRepository
         )
     }
 }

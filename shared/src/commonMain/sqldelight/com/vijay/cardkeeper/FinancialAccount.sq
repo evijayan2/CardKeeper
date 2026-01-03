@@ -1,0 +1,71 @@
+CREATE TABLE financial_accounts (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    institutionName TEXT NOT NULL,
+    accountName TEXT NOT NULL,
+    holderName TEXT NOT NULL,
+    number TEXT NOT NULL,
+    cvv TEXT,
+    pinHint TEXT,
+    routingNumber TEXT,
+    ifscCode TEXT,
+    swiftCode TEXT,
+    branchCode TEXT,
+    wireNumber TEXT,
+    accountSubType TEXT,
+    branchAddress TEXT,
+    branchContactNumber TEXT,
+    bankWebUrl TEXT,
+    bankBrandColor INTEGER,
+    holderAddress TEXT,
+    expiryDate TEXT,
+    statementDate INTEGER,
+    colorTheme INTEGER,
+    cardNetwork TEXT,
+    notes TEXT,
+    cardPin TEXT,
+    lostCardContactNumber TEXT,
+    frontImagePath TEXT,
+    backImagePath TEXT,
+    barcode TEXT,
+    barcodeFormat INTEGER,
+    linkedPhoneNumber TEXT,
+    logoImagePath TEXT
+);
+
+getAllAccounts:
+SELECT * FROM financial_accounts ORDER BY institutionName ASC;
+
+getAccountById:
+SELECT * FROM financial_accounts WHERE id = :id;
+
+insertAccount:
+INSERT OR REPLACE INTO financial_accounts (
+    id, type, institutionName, accountName, holderName, number, cvv, pinHint,
+    routingNumber, ifscCode, swiftCode, branchCode, wireNumber, accountSubType,
+    branchAddress, branchContactNumber, bankWebUrl, bankBrandColor, holderAddress,
+    expiryDate, statementDate, colorTheme, cardNetwork, notes, cardPin,
+    lostCardContactNumber, frontImagePath, backImagePath, barcode, barcodeFormat,
+    linkedPhoneNumber, logoImagePath
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateAccount:
+UPDATE financial_accounts SET
+    type = ?, institutionName = ?, accountName = ?, holderName = ?, number = ?, cvv = ?, pinHint = ?,
+    routingNumber = ?, ifscCode = ?, swiftCode = ?, branchCode = ?, wireNumber = ?, accountSubType = ?,
+    branchAddress = ?, branchContactNumber = ?, bankWebUrl = ?, bankBrandColor = ?, holderAddress = ?,
+    expiryDate = ?, statementDate = ?, colorTheme = ?, cardNetwork = ?, notes = ?, cardPin = ?,
+    lostCardContactNumber = ?, frontImagePath = ?, backImagePath = ?, barcode = ?, barcodeFormat = ?,
+    linkedPhoneNumber = ?, logoImagePath = ?
+WHERE id = ?;
+
+deleteAccount:
+DELETE FROM financial_accounts WHERE id = :id;
+
+searchAccounts:
+SELECT * FROM financial_accounts
+WHERE institutionName LIKE '%' || :query || '%'
+OR accountName LIKE '%' || :query || '%'
+OR holderName LIKE '%' || :query || '%'
+OR number LIKE '%' || :query || '%'
+ORDER BY institutionName ASC;

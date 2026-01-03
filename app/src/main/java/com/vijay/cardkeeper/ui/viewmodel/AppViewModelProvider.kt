@@ -16,7 +16,8 @@ object AppViewModelProvider {
                     cardKeeperApplication().container.greenCardRepository,
                     cardKeeperApplication().container.aadharCardRepository,
                     cardKeeperApplication().container.giftCardRepository,
-                    cardKeeperApplication().container.panCardRepository
+                    cardKeeperApplication().container.panCardRepository,
+                    cardKeeperApplication().container.rewardCardRepository
             )
         }
         initializer {
@@ -38,6 +39,7 @@ object AppViewModelProvider {
 
                     app.container.giftCardRepository,
                     app.container.panCardRepository,
+                    app.container.rewardCardRepository,
                     scheduler
             )
         }
@@ -50,7 +52,8 @@ object AppViewModelProvider {
                 app.container.passportRepository,
                 app.container.greenCardRepository,
                 app.container.aadharCardRepository,
-                app.container.panCardRepository
+                app.container.panCardRepository,
+                app.container.rewardCardRepository
             ) 
         }
 

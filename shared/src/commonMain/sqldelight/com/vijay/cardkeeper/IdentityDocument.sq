@@ -1,0 +1,59 @@
+CREATE TABLE identity_documents (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL,
+    country TEXT NOT NULL,
+    docNumber TEXT NOT NULL,
+    holderName TEXT NOT NULL,
+    issueDate TEXT,
+    expiryDate TEXT,
+    issuingAuthority TEXT,
+    metadata TEXT,
+    frontImagePath TEXT,
+    backImagePath TEXT,
+    state TEXT,
+    address TEXT,
+    dob TEXT,
+    sex TEXT,
+    eyeColor TEXT,
+    height TEXT,
+    licenseClass TEXT,
+    restrictions TEXT,
+    endorsements TEXT
+);
+
+getAllDocuments:
+SELECT * FROM identity_documents ORDER BY type ASC;
+
+getDocumentById:
+SELECT * FROM identity_documents WHERE id = :id;
+
+getExpiringDocuments:
+SELECT * FROM identity_documents 
+WHERE expiryDate BETWEEN :now AND :futureDate 
+ORDER BY expiryDate ASC;
+
+insertDocument:
+INSERT OR REPLACE INTO identity_documents (
+    id, type, country, docNumber, holderName, issueDate, expiryDate,
+    issuingAuthority, metadata, frontImagePath, backImagePath,
+    state, address, dob, sex, eyeColor, height,
+    licenseClass, restrictions, endorsements
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateDocument:
+UPDATE identity_documents SET
+    type = ?, country = ?, docNumber = ?, holderName = ?, issueDate = ?, expiryDate = ?,
+    issuingAuthority = ?, metadata = ?, frontImagePath = ?, backImagePath = ?,
+    state = ?, address = ?, dob = ?, sex = ?, eyeColor = ?, height = ?,
+    licenseClass = ?, restrictions = ?, endorsements = ?
+WHERE id = ?;
+
+deleteDocument:
+DELETE FROM identity_documents WHERE id = :id;
+
+searchDocuments:
+SELECT * FROM identity_documents 
+WHERE holderName LIKE '%' || :query || '%' 
+OR docNumber LIKE '%' || :query || '%' 
+OR issuingAuthority LIKE '%' || :query || '%'
+ORDER BY holderName ASC;

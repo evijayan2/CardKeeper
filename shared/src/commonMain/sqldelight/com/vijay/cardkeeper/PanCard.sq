@@ -1,0 +1,44 @@
+CREATE TABLE IF NOT EXISTS pan_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    panNumber TEXT NOT NULL,
+    holderName TEXT NOT NULL,
+    fatherName TEXT,
+    dob TEXT,
+    frontImagePath TEXT,
+    backImagePath TEXT,
+    issueDate TEXT,
+    acknowledgementNumber TEXT
+);
+
+getAllPanCards:
+SELECT *
+FROM pan_cards
+ORDER BY id DESC;
+
+getPanCard:
+SELECT *
+FROM pan_cards
+WHERE id = :id;
+
+insert:
+INSERT OR REPLACE INTO pan_cards(
+    id, panNumber, holderName, fatherName, dob,
+    frontImagePath, backImagePath, issueDate, acknowledgementNumber
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+update:
+UPDATE pan_cards
+SET panNumber = ?, holderName = ?, fatherName = ?, dob = ?,
+    frontImagePath = ?, backImagePath = ?, issueDate = ?, acknowledgementNumber = ?
+WHERE id = ?;
+
+delete:
+DELETE FROM pan_cards
+WHERE id = :id;
+
+searchPanCards:
+SELECT *
+FROM pan_cards
+WHERE panNumber LIKE ('%' || :query || '%')
+   OR holderName LIKE ('%' || :query || '%');

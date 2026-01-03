@@ -1,27 +1,88 @@
 package com.vijay.cardkeeper.data.repository
 
-import com.vijay.cardkeeper.data.dao.GreenCardDao
+import com.vijay.cardkeeper.SqlDelightDatabase
+import com.vijay.cardkeeper.Green_cards
 import com.vijay.cardkeeper.data.entity.GreenCard
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import app.cash.sqldelight.coroutines.asFlow
+import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOneOrNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 
-class GreenCardRepository(private val greenCardDao: GreenCardDao) {
-    val allGreenCards: Flow<List<GreenCard>> = greenCardDao.getAllGreenCards()
+class GreenCardRepository(database: SqlDelightDatabase) {
+    private val queries = database.greenCardQueries
 
-    fun getGreenCard(id: Int): Flow<GreenCard?> = greenCardDao.getGreenCard(id)
+    val allGreenCards: Flow<List<GreenCard>> = queries.getAllGreenCards()
+        .asFlow()
+        .mapToList(Dispatchers.IO)
+        .map { list -> list.map { it.toEntity() } }
+
+    fun getGreenCard(id: Int): Flow<GreenCard?> = queries.getGreenCard(id.toLong())
+        .asFlow()
+        .mapToOneOrNull(Dispatchers.IO)
+        .map { it?.toEntity() }
 
     suspend fun insert(greenCard: GreenCard) {
-        greenCardDao.insert(greenCard)
+        queries.insert(
+            id = if (greenCard.id == 0) null else greenCard.id.toLong(),
+            surname = greenCard.surname,
+            givenName = greenCard.givenName,
+            uscisNumber = greenCard.uscisNumber,
+            category = greenCard.category,
+            countryOfBirth = greenCard.countryOfBirth,
+            dob = greenCard.dob,
+            sex = greenCard.sex,
+            expiryDate = greenCard.expiryDate,
+            residentSince = greenCard.residentSince,
+            frontImagePath = greenCard.frontImagePath,
+            backImagePath = greenCard.backImagePath
+        )
     }
 
     suspend fun update(greenCard: GreenCard) {
-        greenCardDao.update(greenCard)
+        queries.update(
+            surname = greenCard.surname,
+            givenName = greenCard.givenName,
+            uscisNumber = greenCard.uscisNumber,
+            category = greenCard.category,
+            countryOfBirth = greenCard.countryOfBirth,
+            dob = greenCard.dob,
+            sex = greenCard.sex,
+            expiryDate = greenCard.expiryDate,
+            residentSince = greenCard.residentSince,
+            frontImagePath = greenCard.frontImagePath,
+            backImagePath = greenCard.backImagePath,
+            id = greenCard.id.toLong()
+        )
     }
 
     suspend fun delete(greenCard: GreenCard) {
-        greenCardDao.delete(greenCard)
+        queries.delete(greenCard.id.toLong())
     }
 
     fun searchGreenCards(query: String): Flow<List<GreenCard>> {
-        return greenCardDao.searchGreenCards(query)
+        return queries.searchGreenCards(query)
+            .asFlow()
+            .mapToList(Dispatchers.IO)
+            .map { list -> list.map { it.toEntity() } }
+    }
+
+    private fun Green_cards.toEntity(): GreenCard {
+        return GreenCard(
+            id = id.toInt(),
+            surname = surname,
+            givenName = givenName,
+            uscisNumber = uscisNumber,
+            category = category,
+            countryOfBirth = countryOfBirth,
+            dob = dob,
+            sex = sex,
+            expiryDate = expiryDate,
+            residentSince = residentSince,
+            frontImagePath = frontImagePath,
+            backImagePath = backImagePath
+        )
     }
 }

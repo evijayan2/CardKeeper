@@ -9,7 +9,10 @@ class SearchRepository(
         private val identityRepository: IdentityRepository,
         private val passportRepository: PassportRepository,
         private val greenCardRepository: GreenCardRepository,
-        private val aadharCardRepository: AadharCardRepository
+        private val aadharCardRepository: AadharCardRepository,
+        private val rewardCardRepository: RewardCardRepository,
+        private val giftCardRepository: GiftCardRepository,
+        private val panCardRepository: PanCardRepository
 ) {
         fun search(query: String): Flow<List<SearchResult>> {
                 val lowerQuery = query.lowercase().trim()
@@ -50,6 +53,12 @@ class SearchRepository(
                                 lowerQuery == "rewards" ||
                                         lowerQuery == "reward" ||
                                         lowerQuery == "library" -> "rewards"
+                                lowerQuery == "gift" ||
+                                        lowerQuery == "giftcard" ||
+                                        lowerQuery == "giftcards" -> "giftcard"
+                                lowerQuery == "pan" ||
+                                        lowerQuery == "pancard" ||
+                                        lowerQuery.contains("pan") && lowerQuery.contains("card") -> "pancard"
                                 else -> null
                         }
 
@@ -58,6 +67,9 @@ class SearchRepository(
                 val passportSearch = passportRepository.searchPassports(query)
                 val greenCardSearch = greenCardRepository.searchGreenCards(query)
                 val aadharSearch = aadharCardRepository.searchAadharCards(query)
+                val rewardSearch = rewardCardRepository.searchRewardCards(query)
+                val giftCardSearch = giftCardRepository.searchGiftCards(query)
+                val panCardSearch = panCardRepository.searchPanCards(query)
 
                 // Also get all items for type-based search
                 val allFinancial = financialRepository.allAccounts
@@ -65,6 +77,9 @@ class SearchRepository(
                 val allPassports = passportRepository.allPassports
                 val allGreenCards = greenCardRepository.allGreenCards
                 val allAadharCards = aadharCardRepository.allAadharCards
+                val allRewardCards = rewardCardRepository.getAllRewardCards()
+                val allGiftCards = giftCardRepository.getAllGiftCards()
+                val allPanCards = panCardRepository.allPanCards
 
                 return combine(
                         financialSearch,
@@ -72,11 +87,17 @@ class SearchRepository(
                         passportSearch,
                         greenCardSearch,
                         aadharSearch,
+                        rewardSearch,
+                        giftCardSearch,
+                        panCardSearch,
                         allFinancial,
                         allIdentity,
                         allPassports,
                         allGreenCards,
-                        allAadharCards
+                        allAadharCards,
+                        allRewardCards,
+                        allGiftCards,
+                        allPanCards
                 ) { results ->
                         @Suppress("UNCHECKED_CAST")
                         val accounts =
@@ -95,24 +116,42 @@ class SearchRepository(
                         @Suppress("UNCHECKED_CAST")
                         val aadharCards =
                                 results[4] as List<com.vijay.cardkeeper.data.entity.AadharCard>
+                        @Suppress("UNCHECKED_CAST")
+                        val rewardCards =
+                                results[5] as List<com.vijay.cardkeeper.data.entity.RewardCard>
+                        @Suppress("UNCHECKED_CAST")
+                        val giftCards =
+                                results[6] as List<com.vijay.cardkeeper.data.entity.GiftCard>
+                        @Suppress("UNCHECKED_CAST")
+                        val panCards =
+                                results[7] as List<com.vijay.cardkeeper.data.entity.PanCard>
 
                         @Suppress("UNCHECKED_CAST")
                         val allAccounts =
-                                results[5] as
+                                results[8] as
                                         List<com.vijay.cardkeeper.data.entity.FinancialAccount>
                         @Suppress("UNCHECKED_CAST")
                         val allIdentities =
-                                results[6] as
+                                results[9] as
                                         List<com.vijay.cardkeeper.data.entity.IdentityDocument>
                         @Suppress("UNCHECKED_CAST")
                         val allPassportsList =
-                                results[7] as List<com.vijay.cardkeeper.data.entity.Passport>
+                                results[10] as List<com.vijay.cardkeeper.data.entity.Passport>
                         @Suppress("UNCHECKED_CAST")
                         val allGreenCardsList =
-                                results[8] as List<com.vijay.cardkeeper.data.entity.GreenCard>
+                                results[11] as List<com.vijay.cardkeeper.data.entity.GreenCard>
                         @Suppress("UNCHECKED_CAST")
                         val allAadharCardsList =
-                                results[9] as List<com.vijay.cardkeeper.data.entity.AadharCard>
+                                results[12] as List<com.vijay.cardkeeper.data.entity.AadharCard>
+                        @Suppress("UNCHECKED_CAST")
+                        val allRewardCardsList =
+                                results[13] as List<com.vijay.cardkeeper.data.entity.RewardCard>
+                        @Suppress("UNCHECKED_CAST")
+                        val allGiftCardsList =
+                                results[14] as List<com.vijay.cardkeeper.data.entity.GiftCard>
+                        @Suppress("UNCHECKED_CAST")
+                        val allPanCardsList =
+                                results[15] as List<com.vijay.cardkeeper.data.entity.PanCard>
 
                         val searchResults = mutableListOf<SearchResult>()
                         val addedIds =
@@ -129,23 +168,8 @@ class SearchRepository(
                                                 SearchResult(
                                                         id = account.id,
                                                         title = account.institutionName,
-                                                        subtitle = account.accountName,
-                                                        type =
-                                                                if (account.type ==
-                                                                                com.vijay.cardkeeper
-                                                                                        .data.entity
-                                                                                        .AccountType
-                                                                                        .REWARDS_CARD ||
-                                                                                account.type ==
-                                                                                        com.vijay
-                                                                                                .cardkeeper
-                                                                                                .data
-                                                                                                .entity
-                                                                                                .AccountType
-                                                                                                .LIBRARY_CARD
-                                                                )
-                                                                        "Rewards"
-                                                                else "Finance",
+                                                         subtitle = account.accountName,
+                                                        type = "Finance",
                                                         originalType = account.type.name,
                                                         logoUrl = account.logoImagePath
                                                                         ?: account.frontImagePath
@@ -231,6 +255,58 @@ class SearchRepository(
                                 }
                         }
 
+                        // Helper to add gift card
+                        fun addGiftCardResult(gc: com.vijay.cardkeeper.data.entity.GiftCard) {
+                                val key = "gift_${gc.id}"
+                                if (key !in addedIds) {
+                                        addedIds.add(key)
+                                        searchResults.add(
+                                                SearchResult(
+                                                        id = gc.id,
+                                                        title = gc.providerName,
+                                                        subtitle = "GC Code: ${gc.cardNumber?.takeLast(4) ?: "..."}",
+                                                        type = "Gift Card",
+                                                        originalType = "GIFT_CARD",
+                                                        logoUrl = gc.logoImagePath ?: gc.frontImagePath
+                                                )
+                                        )
+                                }
+                        }
+                        // Helper to add reward card
+                        fun addRewardResult(rewardCard: com.vijay.cardkeeper.data.entity.RewardCard) {
+                                val key = "reward_${rewardCard.id}"
+                                if (key !in addedIds) {
+                                        addedIds.add(key)
+                                        searchResults.add(
+                                                SearchResult(
+                                                        id = rewardCard.id,
+                                                        title = rewardCard.name,
+                                                        subtitle = rewardCard.type.name.replace("_", " "),
+                                                        type = "Rewards",
+                                                        originalType = rewardCard.type.name,
+                                                        logoUrl = rewardCard.logoImagePath ?: rewardCard.frontImagePath
+                                                )
+                                        )
+                                }
+                        }
+
+                        // Helper to add Pan Card
+                        fun addPanCardResult(panCard: com.vijay.cardkeeper.data.entity.PanCard) {
+                                val key = "pancard_${panCard.id}"
+                                if (key !in addedIds) {
+                                        addedIds.add(key)
+                                        searchResults.add(
+                                                SearchResult(
+                                                        id = panCard.id,
+                                                        title = "Pan Card",
+                                                        subtitle = panCard.panNumber,
+                                                        type = "Pan Card",
+                                                        originalType = "PAN_CARD"
+                                                )
+                                        )
+                                }
+                        }
+
                         // If searching by type, return all items of that type
                         when (searchByType) {
                                 "greencard" -> allGreenCardsList.forEach { addGreenCardResult(it) }
@@ -248,19 +324,10 @@ class SearchRepository(
                                                                                 .entity.AccountType
                                                                                 .LIBRARY_CARD
                                                 }
-                                                .forEach { addFinancialResult(it) }
-                                "rewards" ->
-                                        allAccounts
-                                                .filter {
-                                                        it.type ==
-                                                                com.vijay.cardkeeper.data.entity
-                                                                        .AccountType.REWARDS_CARD ||
-                                                                it.type ==
-                                                                        com.vijay.cardkeeper.data
-                                                                                .entity.AccountType
-                                                                                .LIBRARY_CARD
-                                                }
-                                                .forEach { addFinancialResult(it) }
+                                                 .forEach { addFinancialResult(it) }
+                                "rewards" -> allRewardCardsList.forEach { addRewardResult(it) }
+                                "giftcard" -> allGiftCardsList.forEach { addGiftCardResult(it) }
+                                "pancard" -> allPanCardsList.forEach { addPanCardResult(it) }
                                 else -> {
                                         // Regular field-based search
                                         accounts.forEach { addFinancialResult(it) }
@@ -268,6 +335,9 @@ class SearchRepository(
                                         passports.forEach { addPassportResult(it) }
                                         greenCards.forEach { addGreenCardResult(it) }
                                         aadharCards.forEach { addAadharResult(it) }
+                                        rewardCards.forEach { addRewardResult(it) }
+                                        giftCards.forEach { addGiftCardResult(it) }
+                                        panCards.forEach { addPanCardResult(it) }
                                 }
                         }
 

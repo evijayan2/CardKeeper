@@ -6,17 +6,20 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -40,73 +43,58 @@ fun ViewRewardsScreen(
     onSetBrightness: (Float) -> Unit,
     viewModel: ViewItemViewModel
 ) {
-    LaunchedEffect(itemId) { 
-        viewModel.loadAccount(itemId) 
+    LaunchedEffect(itemId) {
+        viewModel.loadRewardCard(itemId)
     }
 
-    val account by viewModel.selectedAccount.collectAsState()
-    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    val rewardCard by viewModel.selectedRewardCard.collectAsState()
+
     val platformContext = LocalPlatformContext.current
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(account?.institutionName ?: "Reward Details") },
+                title = { Text(rewardCard?.name ?: "Loading...") },
                 navigationIcon = {
                     IconButton(onClick = navigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
                 actions = {
-                    IconButton(onClick = { account?.let { onEditClick(it.id) } }) {
-                        Icon(Icons.Filled.Edit, contentDescription = "Edit")
-                    }
-                    IconButton(onClick = { showDeleteConfirmation = true }) {
-                        Icon(Icons.Filled.Delete, contentDescription = "Delete")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
-        if (showDeleteConfirmation) {
-            AlertDialog(
-                onDismissRequest = { showDeleteConfirmation = false },
-                title = { Text("Delete Card") },
-                text = { Text("Are you sure you want to delete this card?") },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            account?.let { viewModel.deleteAccount(it) }
-                            showDeleteConfirmation = false
-                            navigateBack()
+                    rewardCard?.let { rc ->
+                        IconButton(onClick = { onEditClick(rc.id) }) {
+                            Icon(Icons.Filled.Edit, "Edit")
                         }
-                    ) { Text("Delete") }
-                },
-                dismissButton = {
-                    TextButton(onClick = { showDeleteConfirmation = false }) { Text("Cancel") }
+                        IconButton(onClick = {
+                            viewModel.deleteRewardCard(rc)
+                            navigateBack()
+                        }) {
+                            Icon(Icons.Filled.Delete, "Delete")
+                        }
+                    }
                 }
             )
         }
-
-        Column(
-            modifier = Modifier.padding(innerPadding)
-                .fillMaxSize()
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            account?.let { acc ->
-                // Banner / Card Header
+    ) { padding ->
+        rewardCard?.let { rc ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Header Card with Logo
                 ElevatedCard(modifier = Modifier.fillMaxWidth()) {
                     Column(
                         modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Shop Logo
-                        if (acc.logoImagePath != null) {
+                        if (rc.logoImagePath != null) {
                             AsyncImage(
                                 model = ImageRequest.Builder(platformContext)
-                                    .data(acc.logoImagePath)
+                                    .data(rc.logoImagePath)
                                     .crossfade(true)
                                     .build(),
                                 contentDescription = "Logo",
@@ -114,29 +102,14 @@ fun ViewRewardsScreen(
                                 contentScale = ContentScale.Fit
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                        } else {
-                            // Dynamic Logo Fallback
-                            val dynamicLogoUrl = LogoUtils.getInstitutionLogoUrl(acc.institutionName)
-                            if (dynamicLogoUrl != null) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(platformContext)
-                                        .data(dynamicLogoUrl)
-                                        .crossfade(true)
-                                        .build(),
-                                    contentDescription = "Logo",
-                                    modifier = Modifier.height(80.dp).fillMaxWidth(),
-                                    contentScale = ContentScale.Fit
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                            }
                         }
 
                         Text(
-                            text = acc.institutionName,
+                            text = rc.name,
                             style = MaterialTheme.typography.headlineMedium
                         )
                         Text(
-                            text = acc.type.name.replace("_", " "),
+                            text = rc.type.name.replace("_", " "),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.secondary
                         )
@@ -144,15 +117,14 @@ fun ViewRewardsScreen(
                 }
 
                 // Barcode Section
-                if (!acc.barcode.isNullOrEmpty()) {
+                if (!rc.barcode.isNullOrEmpty()) {
                     Card(
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surface
                         ),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                         modifier = Modifier.fillMaxWidth().clickable {
-                            val barcodeVal = acc.barcode
-                            viewModel.setFullScreenImage("BARCODE:$barcodeVal")
+                            viewModel.setFullScreenImage("BARCODE:${rc.barcode}")
                         }
                     ) {
                         Column(
@@ -162,10 +134,8 @@ fun ViewRewardsScreen(
                             Text("Scan Barcode", style = MaterialTheme.typography.labelSmall)
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            val barcodeVal = acc.barcode
-                            val barcodeFormat = acc.barcodeFormat
-                            val barcodeBitmap = remember(barcodeVal, barcodeFormat) {
-                                onGenerateBarcode(barcodeVal, barcodeFormat)
+                            val barcodeBitmap = remember(rc.barcode, rc.barcodeFormat) {
+                                rc.barcode?.let { onGenerateBarcode(it, rc.barcodeFormat) }
                             }
 
                             if (barcodeBitmap != null) {
@@ -177,63 +147,59 @@ fun ViewRewardsScreen(
                                 )
                             }
 
-                            // Barcode Value Text
                             Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = barcodeVal,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontFamily = FontFamily.Monospace
-                            )
-                        }
-                    }
-                }
-
-                // Linked Phone
-                val phone = acc.linkedPhoneNumber
-                if (!phone.isNullOrEmpty()) {
-                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Linked Phone Number", style = MaterialTheme.typography.labelSmall)
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
+                            rc.barcode?.let {
                                 Text(
-                                    text = phone,
-                                    style = MaterialTheme.typography.titleMedium
+                                    text = it,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontFamily = FontFamily.Monospace
                                 )
-                                IconButton(onClick = { onDialNumber(phone) }) {
-                                    Icon(Icons.Filled.Call, "Call")
-                                }
                             }
                         }
                     }
                 }
 
-                // Notes
-                val notesVal = acc.notes
-                if (!notesVal.isNullOrEmpty()) {
-                    OutlinedCard(modifier = Modifier.fillMaxWidth()) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Notes", style = MaterialTheme.typography.labelSmall)
-                            Text(text = notesVal, style = MaterialTheme.typography.bodyMedium)
+                // Details Section
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        if (!rc.linkedPhoneNumber.isNullOrEmpty()) {
+                            DetailRow(
+                                label = "Linked Phone",
+                                value = rc.linkedPhoneNumber!!,
+                                icon = Icons.Filled.Phone,
+                                onAction = { onDialNumber(rc.linkedPhoneNumber!!) }
+                            )
+                        }
+
+                        if (!rc.notes.isNullOrEmpty()) {
+                            if (!rc.linkedPhoneNumber.isNullOrEmpty()) {
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                            }
+                            DetailRow(
+                                label = "Notes",
+                                value = rc.notes!!,
+                                icon = Icons.Filled.Notes
+                            )
                         }
                     }
                 }
 
-                // Images
-                if (acc.frontImagePath != null || acc.backImagePath != null) {
+                // Card Images
+                if (rc.frontImagePath != null || rc.backImagePath != null) {
                     Text("Card Images", style = MaterialTheme.typography.titleMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        acc.frontImagePath?.let { path ->
+                        rc.frontImagePath?.let { path ->
                             Box(modifier = Modifier.weight(1f).clickable {
                                 viewModel.setFullScreenImage(path)
                             }) {
                                 DashboardImageThumbnail(path = path, label = "Front")
                             }
                         }
-                        acc.backImagePath?.let { path ->
+                        rc.backImagePath?.let { path ->
                             Box(modifier = Modifier.weight(1f).clickable {
                                 viewModel.setFullScreenImage(path)
                             }) {
@@ -262,7 +228,7 @@ fun ViewRewardsScreen(
                             val bitmap = remember(fullScreenImage) {
                                 if (fullScreenImage?.startsWith("BARCODE:") == true) {
                                     val code = fullScreenImage!!.substring(8)
-                                    onGenerateBarcode(code, acc.barcodeFormat)
+                                    onGenerateBarcode(code, rc.barcodeFormat)
                                 } else null
                             }
 
@@ -291,11 +257,40 @@ fun ViewRewardsScreen(
                         }
                     }
                 }
-            } ?: run {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
             }
+        } ?: run {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailRow(
+    label: String,
+    value: String,
+    icon: ImageVector,
+    onAction: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(enabled = onAction != null) { onAction?.invoke() },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(24.dp)
+        )
+        Column {
+            Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
+            Text(text = value, style = MaterialTheme.typography.bodyLarge)
+        }
+        if (onAction != null) {
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(Icons.Filled.Call, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         }
     }
 }

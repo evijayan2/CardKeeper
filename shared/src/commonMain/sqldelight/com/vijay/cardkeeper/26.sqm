@@ -1,0 +1,21 @@
+CREATE INDEX IF NOT EXISTS idx_financial_institution_name ON financial_accounts(institutionName);
+CREATE INDEX IF NOT EXISTS idx_financial_account_name ON financial_accounts(accountName);
+
+CREATE INDEX IF NOT EXISTS idx_identity_holder_name ON identity_documents(holderName);
+CREATE INDEX IF NOT EXISTS idx_identity_doc_number ON identity_documents(docNumber);
+
+CREATE INDEX IF NOT EXISTS idx_passport_number ON passports(passportNumber);
+CREATE INDEX IF NOT EXISTS idx_passport_surname ON passports(surname);
+
+CREATE INDEX IF NOT EXISTS idx_pan_number ON pan_cards(panNumber);
+CREATE INDEX IF NOT EXISTS idx_pan_holder_name ON pan_cards(holderName);
+
+CREATE INDEX IF NOT EXISTS idx_aadhar_holder_name ON aadhar_cards(holderName);
+CREATE INDEX IF NOT EXISTS idx_aadhar_masked_number ON aadhar_cards(maskedAadhaarNumber);
+
+CREATE INDEX IF NOT EXISTS idx_green_uscis_number ON green_cards(uscisNumber);
+CREATE INDEX IF NOT EXISTS idx_green_surname ON green_cards(surname);
+
+CREATE INDEX IF NOT EXISTS idx_reward_name ON reward_cards(name);
+
+CREATE INDEX IF NOT EXISTS idx_gift_provider_name ON gift_cards(providerName);

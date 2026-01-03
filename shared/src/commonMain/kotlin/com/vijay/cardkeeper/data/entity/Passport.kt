@@ -1,11 +1,10 @@
 package com.vijay.cardkeeper.data.entity
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
 
-@Entity(tableName = "passports")
+
+
 data class Passport(
-        @PrimaryKey(autoGenerate = true) val id: Int = 0,
+        val id: Int = 0,
         val passportNumber: String,
         val countryCode: String, // USA, IND, etc.
         val surname: String? = null,

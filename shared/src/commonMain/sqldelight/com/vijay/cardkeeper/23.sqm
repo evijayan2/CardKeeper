@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS pan_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    panNumber TEXT NOT NULL,
+    holderName TEXT NOT NULL,
+    fatherName TEXT,
+    dob TEXT,
+    frontImagePath TEXT,
+    backImagePath TEXT,
+    issueDate TEXT,
+    acknowledgementNumber TEXT
+);

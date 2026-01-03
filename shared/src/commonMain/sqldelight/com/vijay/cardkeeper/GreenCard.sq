@@ -1,0 +1,48 @@
+CREATE TABLE IF NOT EXISTS green_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    surname TEXT NOT NULL,
+    givenName TEXT NOT NULL,
+    uscisNumber TEXT NOT NULL,
+    category TEXT NOT NULL,
+    countryOfBirth TEXT NOT NULL,
+    dob TEXT NOT NULL,
+    sex TEXT NOT NULL,
+    expiryDate TEXT NOT NULL,
+    residentSince TEXT NOT NULL,
+    frontImagePath TEXT,
+    backImagePath TEXT
+);
+
+getAllGreenCards:
+SELECT *
+FROM green_cards
+ORDER BY id DESC;
+
+getGreenCard:
+SELECT *
+FROM green_cards
+WHERE id = :id;
+
+insert:
+INSERT OR REPLACE INTO green_cards(
+    id, surname, givenName, uscisNumber, category, countryOfBirth,
+    dob, sex, expiryDate, residentSince, frontImagePath, backImagePath
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+update:
+UPDATE green_cards
+SET surname = ?, givenName = ?, uscisNumber = ?, category = ?, countryOfBirth = ?,
+    dob = ?, sex = ?, expiryDate = ?, residentSince = ?, frontImagePath = ?, backImagePath = ?
+WHERE id = ?;
+
+delete:
+DELETE FROM green_cards
+WHERE id = :id;
+
+searchGreenCards:
+SELECT *
+FROM green_cards
+WHERE uscisNumber LIKE ('%' || :query || '%')
+   OR surname LIKE ('%' || :query || '%')
+   OR givenName LIKE ('%' || :query || '%');

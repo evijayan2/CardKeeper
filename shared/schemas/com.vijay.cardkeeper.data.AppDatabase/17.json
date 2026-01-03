@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 17,
-    "identityHash": "70d615a7baaf5427d5873a94ac2e3e70",
+    "identityHash": "d00b81d478ba2439a5d0085db7d1527d",
     "entities": [
       {
         "tableName": "financial_accounts",
@@ -621,76 +621,6 @@
         }
       },
       {
-        "tableName": "gift_cards",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `providerName` TEXT NOT NULL, `cardNumber` TEXT NOT NULL, `pin` TEXT, `frontImagePath` TEXT, `backImagePath` TEXT, `barcode` TEXT, `barcodeFormat` INTEGER, `qrCode` TEXT, `logoImagePath` TEXT, `notes` TEXT)",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "providerName",
-            "columnName": "providerName",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "cardNumber",
-            "columnName": "cardNumber",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "pin",
-            "columnName": "pin",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "frontImagePath",
-            "columnName": "frontImagePath",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "backImagePath",
-            "columnName": "backImagePath",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "barcode",
-            "columnName": "barcode",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "barcodeFormat",
-            "columnName": "barcodeFormat",
-            "affinity": "INTEGER"
-          },
-          {
-            "fieldPath": "qrCode",
-            "columnName": "qrCode",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "logoImagePath",
-            "columnName": "logoImagePath",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "notes",
-            "columnName": "notes",
-            "affinity": "TEXT"
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": true,
-          "columnNames": [
-            "id"
-          ]
-        }
-      },
-      {
         "tableName": "pan_cards",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `panNumber` TEXT NOT NULL, `holderName` TEXT NOT NULL, `fatherName` TEXT, `dob` TEXT, `frontImagePath` TEXT, `backImagePath` TEXT, `issueDate` TEXT, `acknowledgementNumber` TEXT)",
         "fields": [
@@ -753,7 +683,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '70d615a7baaf5427d5873a94ac2e3e70')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd00b81d478ba2439a5d0085db7d1527d')"
     ]
   }
 }

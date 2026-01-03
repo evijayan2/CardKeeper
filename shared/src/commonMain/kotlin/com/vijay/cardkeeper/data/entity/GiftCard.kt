@@ -1,11 +1,7 @@
 package com.vijay.cardkeeper.data.entity
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-
-@Entity(tableName = "gift_cards")
 data class GiftCard(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val id: Int = 0,
     val providerName: String, // e.g., Amazon, Costco
     val cardNumber: String, // Gift Card Code
     val pin: String? = null,

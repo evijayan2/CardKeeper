@@ -133,6 +133,9 @@ dependencies {
 
     // WorkManager
     implementation("androidx.work:work-runtime-ktx:2.10.0")
+
+    // SQLDelight
+    implementation("app.cash.sqldelight:android-driver:2.0.2")
 }
 
 // Task to download UIDAI certificates for Aadhar QR signature verification

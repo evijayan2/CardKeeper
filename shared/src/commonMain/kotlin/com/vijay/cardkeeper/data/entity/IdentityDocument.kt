@@ -1,22 +1,21 @@
 package com.vijay.cardkeeper.data.entity
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
+
 
 enum class DocumentType {
     PASSPORT,
     DRIVER_LICENSE,
     GREEN_CARD,
-    ADHAAR,
+    AADHAR,
     PAN,
     SSN,
     VOTER_ID,
     OTHER
 }
 
-@Entity(tableName = "identity_documents")
+
 data class IdentityDocument(
-        @PrimaryKey(autoGenerate = true) val id: Int = 0,
+        val id: Int = 0,
         val type: DocumentType,
         val country: String, // USA, IND, etc.
         val docNumber: String, // Passport No, DL No

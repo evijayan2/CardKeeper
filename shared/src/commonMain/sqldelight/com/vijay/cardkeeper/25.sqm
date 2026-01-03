@@ -1,0 +1,1 @@
+UPDATE identity_documents SET type = 'AADHAR' WHERE type = 'ADHAAR';
