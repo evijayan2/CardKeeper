@@ -41,7 +41,8 @@ fun ViewGiftCardScreen(
     onCopyContent: (String, String) -> Unit, // content, label for message
     qrCodeContent: @Composable (String) -> Unit,
     barcodeContent: @Composable (String, Int?) -> Unit, // content, format
-    viewModel: ViewItemViewModel
+    viewModel: ViewItemViewModel,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     val giftCard by viewModel.selectedGiftCard.collectAsState()
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -69,7 +70,8 @@ fun ViewGiftCardScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Column(
             modifier = Modifier

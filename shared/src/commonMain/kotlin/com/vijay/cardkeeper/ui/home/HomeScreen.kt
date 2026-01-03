@@ -72,7 +72,8 @@ fun HomeScreen(
         navigateToSettings: () -> Unit = {},
         viewModel: HomeViewModel,
         onCopyContent: (String) -> Unit,
-        initialTab: Int? = null
+        initialTab: Int? = null,
+        snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     val bankAccounts by viewModel.bankAccounts.collectAsState()
     val rewardsCards by viewModel.rewardsCards.collectAsState()
@@ -123,6 +124,7 @@ fun HomeScreen(
                         }
                 )
             },
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             floatingActionButton = {
                 Box {
                     FloatingActionButton(onClick = { showMenu = true }) {

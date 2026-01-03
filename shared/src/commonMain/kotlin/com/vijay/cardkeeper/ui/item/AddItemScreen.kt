@@ -30,7 +30,8 @@ fun AddItemScreen(
     onNavigateBack: () -> Unit,
     isEditing: Boolean,
     showCategoryTabs: Boolean = !isEditing,
-    title: String = if (isEditing) "Edit Item" else "Add Item"
+    title: String = if (isEditing) "Edit Item" else "Add Item",
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     Scaffold(
         topBar = {
@@ -47,7 +48,8 @@ fun AddItemScreen(
                      }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier

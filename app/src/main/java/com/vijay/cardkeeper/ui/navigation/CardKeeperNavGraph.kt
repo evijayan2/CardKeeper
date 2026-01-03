@@ -1,5 +1,7 @@
 package com.vijay.cardkeeper.ui.navigation
 
+import kotlinx.coroutines.launch
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
@@ -58,6 +60,20 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
             val targetTab = backStackEntry.arguments?.getInt("tab") ?: -1
             val homeViewModel: com.vijay.cardkeeper.ui.viewmodel.HomeViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = com.vijay.cardkeeper.ui.viewmodel.AppViewModelProvider.Factory)
             val context = androidx.compose.ui.platform.LocalContext.current
+            val snackbarHostState = androidx.compose.runtime.remember { androidx.compose.material3.SnackbarHostState() }
+            val scope = androidx.compose.runtime.rememberCoroutineScope()
+
+            // Observe global snackbar messages
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                com.vijay.cardkeeper.ui.common.SnackbarManager.messages.collect { message ->
+                    snackbarHostState.showSnackbar(
+                        message = message.message,
+                        actionLabel = message.actionLabel,
+                        withDismissAction = message.withDismissAction,
+                        duration = androidx.compose.material3.SnackbarDuration.Short
+                    )
+                }
+            }
             
             // Use key() to force stable composition and prevent rendering glitches
             androidx.compose.runtime.key("home_screen_stable") {
@@ -68,12 +84,15 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                             )
                         },
                         viewModel = homeViewModel,
-                    initialTab = if (targetTab >= 0) targetTab else null,
+                        initialTab = if (targetTab >= 0) targetTab else null,
+                        snackbarHostState = snackbarHostState,
                         onCopyContent = { text ->
                             val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                             val clip = android.content.ClipData.newPlainText("Copied Text", text)
                             clipboard.setPrimaryClip(clip)
-                            android.widget.Toast.makeText(context, "Copied", android.widget.Toast.LENGTH_SHORT).show()
+                             scope.launch {
+                                com.vijay.cardkeeper.ui.common.SnackbarManager.showMessage("Copied")
+                            }
                         },
                         navigateToItemView = { itemId -> navController.navigate("view_item/$itemId") },
                         navigateToIdentityView = { docId ->
