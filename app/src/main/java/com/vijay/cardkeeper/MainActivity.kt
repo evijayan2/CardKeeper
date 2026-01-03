@@ -20,6 +20,7 @@ import com.vijay.cardkeeper.ui.theme.CardKeeperTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.setFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE, android.view.WindowManager.LayoutParams.FLAG_SECURE)
         
         System.out.println("CardKeeperUI: MainActivity onCreate called")
 
