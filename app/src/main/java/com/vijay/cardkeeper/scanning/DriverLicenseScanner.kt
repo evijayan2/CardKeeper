@@ -83,27 +83,41 @@ class DriverLicenseScanner {
 
         // AAMVA format: Each field starts with a 3-letter code followed by value, ending with
         // newline or specific delimiter
-        val lines = rawData.split("\n", "\r\n", "\r")
+        // AAMVA format usually uses LF, CR, or specific delimiters
+        // Split by common line terminators
+        val lines = rawData.split("\n", "\r\n", "\r", "\\n")
 
         for (line in lines) {
-            if (line.length >= 3) {
-                val code = line.take(3).uppercase()
-                val value = line.drop(3).trim()
-                if (value.isNotEmpty()) {
-                    fields[code] = value
+            val trimmed = line.trim()
+            if (trimmed.length >= 3) {
+                // Try to identify if the line STARTS with a 3-letter code
+                // AAMVA codes are 3 uppercase letters
+                val possibleCode = trimmed.take(3)
+                if (possibleCode.all { it.isUpperCase() }) {
+                     val value = trimmed.drop(3).trim()
+                     if (value.isNotEmpty()) {
+                        fields[possibleCode] = value
+                     }
                 }
             }
         }
 
-        // Also try regex-based parsing for single-line formats
-        val regex = Regex("([A-Z]{3})([^A-Z]{2,})")
+        // Regex parsing as fallback (or for single-line data)
+        // Match 3 uppercase letters (Key) followed by value until the next Key or End of String
+        // Using lookahead (?=...) to stop before the next key
+        val regex = Regex("([A-Z]{3})(.+?)(?=$|[A-Z]{3})")
         regex.findAll(rawData).forEach { match ->
             val code = match.groupValues[1]
             val value = match.groupValues[2].trim()
+            
+            // Avoid overwriting if we already found a cleaner value via split
             if (value.isNotEmpty() && !fields.containsKey(code)) {
                 fields[code] = value
             }
         }
+
+        // Log all parsed fields for debugging
+        Log.d("DriverLicenseScanner", "Parsed AAMVA Fields: $fields")
 
         // Extract standard AAMVA fields
         val firstName = fields["DAC"] ?: fields["DCT"] ?: "" // First name
@@ -119,7 +133,19 @@ class DriverLicenseScanner {
 
         val dob = fields["DBB"] ?: "" // Date of birth (MMDDYYYY or YYYYMMDD)
         val expiryDate = fields["DBA"] ?: "" // Expiration date
-        val docNumber = fields["DAQ"] ?: fields["DCA"] ?: "" // License number
+        
+        // License number
+        // 1. Try DAQ (standard)
+        // 2. If missing, check if DAQ is embedded in ANS field (common in some states)
+        var docNumber = fields["DAQ"] ?: ""
+        if (docNumber.isEmpty()) {
+            val ans = fields["ANS"] ?: ""
+            if (ans.contains("DAQ")) {
+                docNumber = ans.substringAfter("DAQ").takeWhile { it.isLetterOrDigit() }
+                Log.d("DriverLicenseScanner", "Extracted DAQ from ANS: $docNumber")
+            }
+        }
+        
         val address =
                 buildString {
                             val street = fields["DAG"] ?: ""

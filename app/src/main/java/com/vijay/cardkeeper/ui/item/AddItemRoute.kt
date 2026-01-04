@@ -485,6 +485,12 @@ fun AddItemRoute(
                         1 -> { // Identity (DL)
                             scope.launch {
                                 val details = driverLicenseScanner.parseAAMVAData(barcode)
+                                if (details.docNumber.isNotEmpty() || details.name.isNotEmpty()) {
+                                    snackbarHostState.showSnackbar("Scanned DL: ${details.name.ifEmpty { "Data Found" }}")
+                                } else {
+                                    snackbarHostState.showSnackbar("Could not extract DL data. Try again.")
+                                }
+
                                 if (details.docNumber.isNotEmpty()) identityState.number = details.docNumber
                                 if (details.name.isNotEmpty()) {
                                     identityState.firstName = details.name.substringBefore(" ")
