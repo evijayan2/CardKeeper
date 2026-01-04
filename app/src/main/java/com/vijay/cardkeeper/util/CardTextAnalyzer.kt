@@ -18,8 +18,17 @@ class CardTextAnalyzer(private val onCardFound: (CardDetails) -> Unit) : ImageAn
     private val cvvPattern = Regex("\\b\\d{3,4}\\b") // Weak signal, context dependent
     private val debitPattern = Regex("(?i)DEBIT")
     private val creditPattern = Regex("(?i)CREDIT")
+    
+    // Scheme Patterns (Text based)
+    private val rupayPattern = Regex("(?i)RUPAY")
+    private val visaPattern = Regex("(?i)VISA")
+    private val masterCardPattern = Regex("(?i)MASTER\\s?CARD")
+    private val maestroPattern = Regex("(?i)MAESTRO")
+    private val amexPattern = Regex("(?i)(AMERICAN\\s?EXPRESS|AMEX)")
+    private val discoverPattern = Regex("(?i)DISCOVER")
+    private val phonePattern = Regex("(?i)(?:(?:\\+|00)1[-. ]?)?\\(?([2-9][0-8][0-9])\\)?[-. ]?([2-9][0-9]{2})[-. ]?([0-9]{4})")
 
-    // Known Banks (Simple list for heuristic)
+    // Known Banks (Expanded list)
     private val knownBanks =
             listOf(
                     "CHASE",
@@ -34,10 +43,29 @@ class CardTextAnalyzer(private val onCardFound: (CardDetails) -> Unit) : ImageAn
                     "HDFC",
                     "ICICI",
                     "SBI",
+                    "STATE BANK OF INDIA",
                     "AXIS",
                     "KOTAK",
+                    "MAHINDRA",
                     "PNC",
-                    "US BANK"
+                    "US BANK",
+                    "IDFC",
+                    "BOB",
+                    "BANK OF BARODA",
+                    "PNB",
+                    "PUNJAB NATIONAL BANK",
+                    "CANARA",
+                    "UNION BANK",
+                    "INDUSIND",
+                    "YES BANK",
+                    "RBL",
+                    "HSBC",
+                    "STANDARD CHARTERED",
+                    "SC",
+                    "DBS",
+                    "FEDERAL BANK",
+                    "IDBI",
+                    "INDIAN BANK"
             )
 
     @ExperimentalGetImage
@@ -64,10 +92,22 @@ class CardTextAnalyzer(private val onCardFound: (CardDetails) -> Unit) : ImageAn
                     var foundOwner = ""
                     var foundBank = ""
                     var foundType = "Credit" // Default
+                    var foundScheme = ""
+                    var foundCvv = ""
+                    var potentialOwner = ""
+                    var foundPhone = ""
 
                     // 1. Analyze entire text blocks for general keywords
                     val allText = visionText.text
                     if (debitPattern.containsMatchIn(allText)) foundType = "Debit"
+
+                    // Scheme detection via Text
+                    if (rupayPattern.containsMatchIn(allText)) foundScheme = "RuPay"
+                    else if (visaPattern.containsMatchIn(allText)) foundScheme = "Visa"
+                    else if (masterCardPattern.containsMatchIn(allText)) foundScheme = "MasterCard"
+                    else if (maestroPattern.containsMatchIn(allText)) foundScheme = "Maestro"
+                    else if (amexPattern.containsMatchIn(allText)) foundScheme = "Amex"
+                    else if (discoverPattern.containsMatchIn(allText)) foundScheme = "Discover"
 
                     // 2. Iterate blocks for specific fields
                     for (block in visionText.textBlocks) {
@@ -78,7 +118,15 @@ class CardTextAnalyzer(private val onCardFound: (CardDetails) -> Unit) : ImageAn
                             if (foundBank.isEmpty()) {
                                 val upperLine = lineText.uppercase()
                                 knownBanks.firstOrNull { upperLine.contains(it) }?.let {
-                                    foundBank = it
+                                    // Expand short names
+                                    foundBank = when(it) {
+                                        "SBI" -> "State Bank of India"
+                                        "BOB" -> "Bank of Baroda"
+                                        "PNB" -> "Punjab National Bank"
+                                        "SC" -> "Standard Chartered"
+                                        "BOFA" -> "Bank of America"
+                                        else -> it
+                                    }
                                 }
                             }
 
@@ -95,9 +143,6 @@ class CardTextAnalyzer(private val onCardFound: (CardDetails) -> Unit) : ImageAn
 
                             // Expiry Detection
                             if (foundExpiry.isEmpty()) {
-                                // Look for "VALID THRU" or similar context lines nearby (not
-                                // implemented fully here),
-                                // but simpler regex match first
                                 val match = expiryPattern.find(lineText)
                                 if (match != null) {
                                     foundExpiry = match.value
@@ -105,88 +150,120 @@ class CardTextAnalyzer(private val onCardFound: (CardDetails) -> Unit) : ImageAn
                             }
 
                             // Potential Name Detection
-                            // Heuristic: Matches name pattern, not a bank, not a keyword.
-                            // Removed strict foundNumber dependency to allow name capture even if
-                            // number fails/is elsewhere,
-                            // though we prioritize lines that look like names.
                             if (foundOwner.isEmpty()) {
                                 val upperText = lineText.uppercase()
                                 val isKeyword =
                                         listOf(
-                                                        "VALID",
-                                                        "THRU",
-                                                        "FROM",
-                                                        "UNTIL",
-                                                        "SINCE",
-                                                        "MEMBER",
-                                                        "AUTHORIZED",
-                                                        "SIGNATURE",
-                                                        "CARD",
-                                                        "DEBIT",
-                                                        "CREDIT",
-                                                        "ELECTRONIC",
-                                                        "USE",
-                                                        "ONLY",
-                                                        "TELLER",
-                                                        "GOOD"
-                                                )
-                                                .any { upperText.contains(it) }
+                                                "VALID", "THRU", "FROM", "UNTIL", "SINCE",
+                                                "MEMBER", "AUTHORIZED", "SIGNATURE", "CARD",
+                                                "DEBIT", "CREDIT", "ELECTRONIC", "USE", "ONLY",
+                                                "TELLER", "GOOD", "RuPay", "VISA", "MASTER", "MAESTRO", "AMEX",
+                                                "CVV", "CVC", "CID", "SECURITY", "CODE"
+                                        ).any { upperText.contains(it.uppercase()) }
 
                                 val isBank = knownBanks.any { upperText.contains(it) }
 
-                                // Regex: Allow letters, spaces, dots, hyphens, apostrophes. Min
-                                // length 5.
-                                if (!isKeyword &&
-                                                !isBank &&
-                                                lineText.matches(Regex("^[a-zA-Z\\s\\.\\-']+$")) &&
-                                                lineText.length > 5 &&
-                                                lineText.split(" ").size > 1
+                                if (!isKeyword && !isBank &&
+                                    lineText.matches(Regex("^[a-zA-Z\\s\\.\\-']+$")) &&
+                                    lineText.length > 5 &&
+                                    lineText.split(" ").size > 1
                                 ) {
-                                    // If we found a number, assume name is AFTER number?
-                                    // Or just capture the first candidate that fits well.
-                                    // For now, capture first valid candidate, but if we found
-                                    // number, ensure this line is arguably "below" or
-                                    // separate.
-                                    // MLKit blocks usually flow top-down.
-                                    // Warning: This might capture "PLATINUM" or "REWARDS" if not in
-                                    // keywords.
-                                    // Let's add "PLATINUM", "BUSINESS", "REWARDS", "WORLD" to
-                                    // keywords/exclusions if needed.
-                                    // Checking if it seems to be a name (2+ words).
-                                    foundOwner = lineText
+                                    // Only store as candidate; verify presence of number later
+                                    if (potentialOwner.isEmpty()) { 
+                                        potentialOwner = lineText 
+                                        android.util.Log.d("CardTextAnalyzer", "Potential Owner found: $potentialOwner")
+                                    }
+                                } else {
+                                     android.util.Log.d("CardTextAnalyzer", "Line rejected as owner: $lineText (Keyword=$isKeyword, Bank=$isBank)")
+                                }
+                            }
+                            
+                            // CVV Detection (Back of card or Front Amex)
+                            if (foundCvv.isEmpty()) {
+                                val upperLine = lineText.uppercase()
+                                val cvvKeywords = listOf("CVV", "CVC", "CID", "CVV2", "CVC2", "SECURITY CODE")
+                                val hasKeyword = cvvKeywords.any { upperLine.contains(it) }
+                                
+                                if (hasKeyword) {
+                                    val match = cvvPattern.find(lineText)
+                                    if (match != null) {
+                                        foundCvv = match.value
+                                    }
+                                } else {
+                                    // Heuristic for isolated 3-4 digit numbers (risky, but valid for some backs)
+                                    val possibleCvv = cvvPattern.find(lineText)?.value
+                                    if (possibleCvv != null) {
+                                        val isYear = possibleCvv.length == 4 && (possibleCvv.startsWith("20") || possibleCvv.startsWith("19"))
+                                        if (!isYear && possibleCvv != foundExpiry.replace("/", "")) {
+                                             // Store as candidate if needed, but for now relying on keywords or future improvements
+                                            foundCvv = possibleCvv
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Phone Number Detection
+                            if (foundPhone.isEmpty()) {
+                                // Simple regex check
+                                val match = phonePattern.find(lineText)
+                                if (match != null) {
+                                    foundPhone = match.value
                                 }
                             }
                         }
                     }
 
-                    if (foundNumber.isNotEmpty()) {
-                        // Infer Scheme from number
-                        val scheme =
-                                when {
-                                    foundNumber.startsWith("4") -> "Visa"
-                                    foundNumber.startsWith("5") -> "MasterCard"
-                                    foundNumber.startsWith("34") || foundNumber.startsWith("37") ->
-                                            "Amex"
-                                    foundNumber.startsWith("6") -> "Discover"
-                                    else -> "Unknown"
-                                }
-
-                        onResult(
-                                CardDetails(
-                                        number = foundNumber,
-                                        expiryDate = foundExpiry,
-                                        ownerName = foundOwner,
-                                        bankName = foundBank,
-                                        cardType = foundType,
-                                        scheme = scheme,
-                                        securityCode =
-                                                "" // Hard to detect reliability from front scan
-                                )
-                        )
+                    // 4. Finalize Owner Name (Only if Number is present, per user request)
+                    if (foundNumber.isNotEmpty() && potentialOwner.isNotEmpty()) {
+                        foundOwner = potentialOwner
                     }
+
+                    // 3. Consistency checks & Final Scheme Logic
+                    var finalScheme = if (foundScheme.isNotEmpty()) foundScheme else "Unknown"
+                    
+                    if (foundNumber.isNotEmpty()) {
+                        val numberScheme = when {
+                            foundNumber.startsWith("4") -> "Visa"
+                            foundNumber.startsWith("5") -> "MasterCard"
+                            foundNumber.startsWith("34") || foundNumber.startsWith("37") -> "Amex"
+                            foundNumber.startsWith("6") -> {
+                                if (foundNumber.startsWith("60") || foundNumber.startsWith("65")) "RuPay"
+                                else "Discover"
+                            }
+                            // RuPay ranges: 60, 65, 81, 82, 508
+                            foundNumber.startsWith("81") || foundNumber.startsWith("82") -> "RuPay"
+                            foundNumber.startsWith("508") -> "RuPay"
+                            // Maestro check (50, 56-58, 6...) - simplified
+                            foundNumber.startsWith("50") || foundNumber.startsWith("56") || foundNumber.startsWith("57") || foundNumber.startsWith("58") -> "Maestro"
+                            else -> "Unknown"
+                        }
+                        
+                        // Prioritize Number Scheme if known
+                        if (numberScheme != "Unknown") {
+                            finalScheme = numberScheme
+                        }
+                    }
+
+                    // ALWAYS return result to avoid hanging
+                    val finalDetails = CardDetails(
+                            number = foundNumber,
+                            expiryDate = foundExpiry,
+                            ownerName = foundOwner,
+                            bankName = foundBank,
+                            cardType = foundType,
+                            scheme = finalScheme,
+                            securityCode = foundCvv,
+                            phoneNumber = foundPhone
+                    )
+                    android.util.Log.d("CardTextAnalyzer", "Analysis Complete. Returning: $finalDetails")
+                    onResult(finalDetails)
                 }
-                .addOnFailureListener {
-                    // Handle failure if needed, mainly for debugging
+                .addOnFailureListener { e ->
+                     // Even on failure, we should probably return empty to unblock?
+                     // Or let it be. But usually onSuccess is called even if no text.
+                     // Failure is for exceptions.
+                     android.util.Log.e("CardTextAnalyzer", "Text analysis failed", e)
+                     onResult(CardDetails("", "", "", "", "", "Unknown", "", ""))
                 }
     }
 }

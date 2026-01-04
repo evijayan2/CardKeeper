@@ -71,6 +71,10 @@ class ScanResultProcessor(
                 val details = paymentScanner.scan(bitmap)
                 if (financialState.number.isEmpty()) financialState.number = details.number
                 if (financialState.expiry.isEmpty()) financialState.expiry = details.expiryDate
+                if (financialState.cvv.isEmpty()) financialState.cvv = details.securityCode
+                if (financialState.network.isEmpty()) financialState.network = details.scheme
+                if (financialState.holder.isEmpty()) financialState.holder = details.ownerName
+                if (financialState.contact.isEmpty()) financialState.contact = details.phoneNumber
             }
             3 -> {
                 rewardsState.backPath = path
@@ -175,9 +179,11 @@ class ScanResultProcessor(
         panCardState: PanCardFormState
     ) {
         when (category) {
-            0 -> {
+            0 -> { // Financial Account
                 financialState.frontPath = path
                 financialState.hasFrontImage = true
+                android.util.Log.d("ScanResultProcessor", "Processing Front Side. Category: $category, AccountType: ${financialState.type}")
+                
                 if (financialState.type == AccountType.BANK_ACCOUNT) {
                     val details = chequeScanner.scan(bitmap)
                     if (details.accountNumber.isNotEmpty()) financialState.number = details.accountNumber
@@ -187,11 +193,35 @@ class ScanResultProcessor(
                     if (details.holderName.isNotEmpty()) financialState.holder = details.holderName
                 } else {
                     val details = paymentScanner.scan(bitmap)
-                    if (financialState.number.isEmpty()) financialState.number = details.number
-                    if (financialState.expiry.isEmpty()) financialState.expiry = details.expiryDate
-                    if (financialState.holder.isEmpty()) financialState.holder = details.ownerName
-                    if (financialState.institution.isEmpty()) financialState.institution = details.bankName
+                android.util.Log.d("ScanResultProcessor", "Received Details: $details")
+                
+                if (financialState.number.isEmpty()) financialState.number = details.number
+                if (financialState.expiry.isEmpty()) financialState.expiry = details.expiryDate
+                if (financialState.holder.isEmpty()) {
+                    financialState.holder = details.ownerName
+                    android.util.Log.d("ScanResultProcessor", "Mapped Holder: ${details.ownerName}")
                 }
+                if (financialState.institution.isEmpty()) financialState.institution = details.bankName
+                
+                // Map Scheme (Network)
+                if (details.scheme.isNotEmpty() && details.scheme != "Unknown") {
+                     android.util.Log.d("ScanResultProcessor", "Mapping Network: ${details.scheme} (Old: ${financialState.network})")
+                     financialState.network = details.scheme
+                }
+                
+                // Map Card Type
+                if (details.cardType.equals("Debit", ignoreCase = true)) {
+                    financialState.type = AccountType.DEBIT_CARD
+                } else if (details.cardType.equals("Credit", ignoreCase = true)) {
+                    financialState.type = AccountType.CREDIT_CARD
+                }
+                if (financialState.cvv.isEmpty()) {
+                    financialState.cvv = details.securityCode
+                }
+                if (financialState.contact.isEmpty()) {
+                    financialState.contact = details.phoneNumber
+                }
+            }
             }
             3 -> {
                 rewardsState.frontPath = path
