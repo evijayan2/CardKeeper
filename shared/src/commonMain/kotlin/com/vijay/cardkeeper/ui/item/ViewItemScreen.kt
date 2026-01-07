@@ -401,7 +401,8 @@ fun ViewItemScreen(
                      // But barcodeContent is a composable.
                      
                      androidx.compose.ui.window.Dialog(
-                         onDismissRequest = { viewModel.setFullScreenImage(null) }
+                         onDismissRequest = { viewModel.setFullScreenImage(null) },
+                         properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
                      ) {
                          Box(
                              modifier = Modifier.fillMaxSize().background(Color.Black).clickable { viewModel.setFullScreenImage(null) },

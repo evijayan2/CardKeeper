@@ -216,7 +216,8 @@ fun ViewRewardsScreen(
                         onDismissRequest = { 
                             onSetBrightness(-1f)
                             viewModel.setFullScreenImage(null) 
-                        }
+                        },
+                        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
                     ) {
                         Box(
                             modifier = Modifier.fillMaxSize().background(Color.Black).clickable {
