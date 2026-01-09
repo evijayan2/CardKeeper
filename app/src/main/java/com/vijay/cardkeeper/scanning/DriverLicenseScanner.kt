@@ -26,7 +26,7 @@ class DriverLicenseScanner {
                     )
                     .build()
 
-    private val barcodeScanner = BarcodeScanning.getClient(options)
+    private val barcodeScanner by lazy { BarcodeScanning.getClient(options) }
 
     /**
      * Scans a bitmap for PDF417 barcode and extracts driver license information. Returns
@@ -141,7 +141,17 @@ class DriverLicenseScanner {
         if (docNumber.isEmpty()) {
             val ans = fields["ANS"] ?: ""
             if (ans.contains("DAQ")) {
-                docNumber = ans.substringAfter("DAQ").takeWhile { it.isLetterOrDigit() }
+                // Modified: Capture everything after DAQ until the next 3-letter uppercase tag,
+                // a space, a newline, or the end of the string.
+                docNumber = ans.substringAfter("DAQ")
+                    .split(Regex("[\\s\\n\\r]")) // Split by any whitespace or newline
+                    .first()                    // Take the first segment
+                    // Use a lookahead to stop if another Tag (3 Uppercase letters) starts immediately
+                    // (Common in Strict AAMVA without spaces)
+                    .split(Regex("(?=[A-Z]{3})"))
+                    .first()
+                    .trim()
+
                 Log.d("DriverLicenseScanner", "Extracted DAQ from ANS: $docNumber")
             }
         }
