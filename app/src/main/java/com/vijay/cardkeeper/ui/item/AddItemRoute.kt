@@ -64,6 +64,7 @@ fun AddItemRoute(
             5 -> "aadhar"
             6 -> "giftcard"
             7 -> "pancard"
+            8 -> "insurance"
             else -> "financial"
         }
 
@@ -86,7 +87,9 @@ fun AddItemRoute(
                 is GreenCard -> selectedCategory = 4
                 is AadharCard -> selectedCategory = 5
                 is GiftCard -> selectedCategory = 6
+                is GiftCard -> selectedCategory = 6
                 is PanCard -> selectedCategory = 7
+                is InsuranceCard -> selectedCategory = 8
             }
         }
     }
@@ -116,6 +119,7 @@ fun AddItemRoute(
     val aadharCardState = rememberAadharCardFormState(item as? AadharCard)
     val giftCardState = rememberGiftCardFormState(item as? GiftCard)
     val panCardState = rememberPanCardFormState(item as? PanCard)
+    val insuranceState = rememberInsuranceCardFormState(item as? InsuranceCard)
 
     // Scanners
     val scannerOptions = remember {
@@ -137,6 +141,7 @@ fun AddItemRoute(
     val aadharScanner = remember { AadharScanner() }
     val aadharQrScanner = remember { AadharQrScanner(context) }
     val panCardScanner = remember { PanCardScanner() }
+    val insuranceCardScanner = remember { InsuranceCardScanner() }
 
     // State for Camera/Barcode logic
     var scanningBack by remember { mutableStateOf(false) }
@@ -145,11 +150,11 @@ fun AddItemRoute(
     // Scan Processor
     val scanProcessor = remember(
         paymentScanner, rewardsScanner, identityScanner, driverLicenseScanner,
-        chequeScanner, passportScanner, greenCardScanner, aadharScanner, panCardScanner
+        chequeScanner, passportScanner, greenCardScanner, aadharScanner, panCardScanner, insuranceCardScanner
     ) {
         com.vijay.cardkeeper.ui.item.logic.ScanResultProcessor(
             paymentScanner, rewardsScanner, identityScanner, driverLicenseScanner,
-            chequeScanner, passportScanner, greenCardScanner, aadharScanner, panCardScanner
+            chequeScanner, passportScanner, greenCardScanner, aadharScanner, panCardScanner, insuranceCardScanner
         )
     }
 
@@ -172,7 +177,7 @@ fun AddItemRoute(
                             financialState = financialState, rewardsState = rewardsState, identityState = identityState,
                             passportState = passportState, greenCardState = greenCardState,
                             aadharCardState = aadharCardState, giftCardState = giftCardState,
-                            panCardState = panCardState
+                            panCardState = panCardState, insuranceState = insuranceState
                         )
                     }
                 }
@@ -417,6 +422,28 @@ fun AddItemRoute(
                         job.join()
                         println("CardKeeperUI: PAN Card saved successfully")
                     }
+                    8 -> {
+                        println("CardKeeperUI: Saving Insurance Card")
+                        val ic = InsuranceCard(
+                            id = if (documentId != null && typeForLookup == "insurance") documentId else 0,
+                            providerName = insuranceState.providerName,
+                            planName = insuranceState.planName,
+                            type = insuranceState.type,
+                            policyNumber = insuranceState.policyNumber,
+                            groupNumber = insuranceState.groupNumber.ifBlank { null },
+                            memberId = insuranceState.memberId.ifBlank { null },
+                            policyHolderName = insuranceState.policyHolderName,
+                            expiryDate = insuranceState.expiryDate.ifBlank { null },
+                            website = insuranceState.website.ifBlank { null },
+                            customerServiceNumber = insuranceState.customerServiceNumber.ifBlank { null },
+                            frontImagePath = insuranceState.frontPath,
+                            backImagePath = insuranceState.backPath,
+                            notes = insuranceState.notes.ifBlank { null }
+                        )
+                        val job = viewModel.saveInsuranceCard(ic)
+                        job.join()
+                        println("CardKeeperUI: Insurance Card saved successfully")
+                    }
                 }
                 println("CardKeeperUI: Save complete, navigating back")
                 navigateBack(selectedCategory) // Pass the category that was saved
@@ -440,6 +467,7 @@ fun AddItemRoute(
             5 -> "Edit Aadhaar Card"
             6 -> "Edit Gift Card"
             7 -> "Edit PAN Card"
+            8 -> "Edit Insurance Card"
             else -> "Edit Item"
         }
     } else {
@@ -452,6 +480,7 @@ fun AddItemRoute(
             5 -> "Add Aadhaar Card"
             6 -> "Add Gift Card"
             7 -> "Add PAN Card"
+            8 -> "Add Insurance Card"
             else -> "Add Item"
         }
     }
@@ -465,7 +494,9 @@ fun AddItemRoute(
             greenCardState = greenCardState,
             aadharCardState = aadharCardState,
             giftCardState = giftCardState,
+
             panCardState = panCardState,
+            insuranceState = insuranceState,
             selectedCategory = selectedCategory,
             onCategorySelected = { selectedCategory = it },
             onScanRequest = onScanRequest,

@@ -18,7 +18,8 @@ class ViewItemViewModel(
     private val greenCardRepository: GreenCardRepository,
     private val aadharCardRepository: AadharCardRepository,
     private val panCardRepository: PanCardRepository,
-    private val rewardCardRepository: RewardCardRepository
+    private val rewardCardRepository: RewardCardRepository,
+    private val insuranceCardRepository: com.vijay.cardkeeper.data.repository.InsuranceCardRepository
 ) : ViewModel() {
 
     private val _selectedAccount = MutableStateFlow<FinancialAccount?>(null)
@@ -44,6 +45,9 @@ class ViewItemViewModel(
 
     private val _selectedRewardCard = MutableStateFlow<RewardCard?>(null)
     val selectedRewardCard: StateFlow<RewardCard?> = _selectedRewardCard.asStateFlow()
+
+    private val _selectedInsuranceCard = MutableStateFlow<com.vijay.cardkeeper.data.entity.InsuranceCard?>(null)
+    val selectedInsuranceCard: StateFlow<com.vijay.cardkeeper.data.entity.InsuranceCard?> = _selectedInsuranceCard.asStateFlow()
 
     private val _fullScreenImage = MutableStateFlow<String?>(null)
     val fullScreenImage: StateFlow<String?> = _fullScreenImage.asStateFlow()
@@ -131,5 +135,15 @@ class ViewItemViewModel(
 
     fun deleteRewardCard(rewardCard: RewardCard) {
         viewModelScope.launch { rewardCardRepository.deleteRewardCard(rewardCard) }
+    }
+
+    fun loadInsuranceCard(id: Int) {
+        viewModelScope.launch { 
+            _selectedInsuranceCard.value = insuranceCardRepository.getInsuranceCard(id).firstOrNull() 
+        }
+    }
+
+    fun deleteInsuranceCard(insuranceCard: com.vijay.cardkeeper.data.entity.InsuranceCard) {
+        viewModelScope.launch { insuranceCardRepository.delete(insuranceCard) }
     }
 }

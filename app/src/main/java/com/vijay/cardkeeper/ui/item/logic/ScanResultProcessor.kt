@@ -19,7 +19,8 @@ class ScanResultProcessor(
     private val passportScanner: PassportScanner,
     private val greenCardScanner: GreenCardScanner,
     private val aadharScanner: AadharScanner,
-    private val panCardScanner: PanCardScanner
+    private val panCardScanner: PanCardScanner,
+    private val insuranceCardScanner: InsuranceCardScanner
 ) {
 
     suspend fun process(
@@ -34,19 +35,21 @@ class ScanResultProcessor(
         greenCardState: GreenCardFormState,
         aadharCardState: AadharCardFormState,
         giftCardState: GiftCardFormState,
-        panCardState: PanCardFormState
+        panCardState: PanCardFormState,
+        insuranceState: InsuranceCardFormState
     ) {
+        android.util.Log.d("ScanResultProcessor", "Processing Scan. Category: $category, isBack: $isBack")
         if (isBack) {
             processBackSide(
                 bitmap, path, category,
                 financialState, rewardsState, identityState, passportState, greenCardState, 
-                aadharCardState, giftCardState, panCardState
+                aadharCardState, giftCardState, panCardState, insuranceState
             )
         } else {
             processFrontSide(
                 bitmap, path, category,
                 financialState, rewardsState, identityState, passportState, greenCardState, 
-                aadharCardState, giftCardState, panCardState
+                aadharCardState, giftCardState, panCardState, insuranceState
             )
         }
     }
@@ -62,7 +65,8 @@ class ScanResultProcessor(
         greenCardState: GreenCardFormState,
         aadharCardState: AadharCardFormState,
         giftCardState: GiftCardFormState,
-        panCardState: PanCardFormState
+        panCardState: PanCardFormState,
+        insuranceState: InsuranceCardFormState
     ) {
         when (category) {
             0 -> {
@@ -162,6 +166,15 @@ class ScanResultProcessor(
                 panCardState.backPath = path
                 panCardState.hasBackImage = true
             }
+            8 -> {
+                insuranceState.backPath = path
+                insuranceState.hasBackImage = true
+                android.util.Log.d("ScanResultProcessor", "Insurance Card Back Image saved.")
+                
+                // Optional: Try to extract member ID or Group # from back if front failed?
+                // For now, let's keep it simple and only rely on front for main details, 
+                // but we can still run scan if we want to catch things on the back.
+            }
         }
     }
 
@@ -176,7 +189,8 @@ class ScanResultProcessor(
         greenCardState: GreenCardFormState,
         aadharCardState: AadharCardFormState,
         giftCardState: GiftCardFormState,
-        panCardState: PanCardFormState
+        panCardState: PanCardFormState,
+        insuranceState: InsuranceCardFormState
     ) {
         when (category) {
             0 -> { // Financial Account
@@ -304,10 +318,29 @@ class ScanResultProcessor(
                 panCardState.frontPath = path
                 panCardState.hasFrontImage = true
                 val result = panCardScanner.scan(bitmap)
+                android.util.Log.d("ScanResultProcessor", "PAN Card Scanned: $result")
                 if (result.panNumber.isNotEmpty()) panCardState.panNumber = result.panNumber
                 if (result.holderName.isNotEmpty()) panCardState.holderName = result.holderName
                 if (result.fatherName.isNotEmpty()) panCardState.fatherName = result.fatherName
                 if (result.dob.isNotEmpty()) panCardState.rawDob = result.dob.filter { it.isDigit() }
+            }
+            8 -> {
+                insuranceState.frontPath = path
+                insuranceState.hasFrontImage = true
+                
+                val details = insuranceCardScanner.scan(bitmap)
+                android.util.Log.d("ScanResultProcessor", "Insurance Card Scanned: $details")
+                
+                if (details.providerName.isNotEmpty()) insuranceState.providerName = details.providerName
+                if (details.memberId.isNotEmpty()) insuranceState.memberId = details.memberId
+                if (details.groupNumber.isNotEmpty()) insuranceState.groupNumber = details.groupNumber
+                if (details.policyNumber.isNotEmpty()) insuranceState.policyNumber = details.policyNumber
+                if (details.planName.isNotEmpty()) insuranceState.planName = details.planName
+                if (details.policyHolderName.isNotEmpty()) insuranceState.policyHolderName = details.policyHolderName
+                if (details.rawText.isNotEmpty() && insuranceState.notes.isEmpty()) {
+                    // Maybe put raw text in notes if debug mode, or just leave empty?
+                    // insuranceState.notes = "Scanned Text:\n${details.rawText}" 
+                }
             }
         }
     }

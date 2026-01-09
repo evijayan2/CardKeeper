@@ -116,6 +116,9 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                         navigateToRewardsView = { accountId ->
                             navController.navigate("view_rewards/$accountId")
                         },
+                        navigateToInsuranceView = { cardId ->
+                            navController.navigate("view_insurance/$cardId")
+                        },
                         navigateToSearch = {
                             navController.navigate(CardKeeperDestinations.SEARCH_ROUTE)
                         },
@@ -195,6 +198,7 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                             5 -> 1  // Aadhar → Identity tab
                             6 -> 3  // Gift Card → Rewards tab
                             7 -> 1  // PAN Card → Identity tab
+                            8 -> 3  // Insurance Card → Rewards tab
                             else -> 0
                         }
                         navController.navigate("home?tab=$targetTab") {
@@ -294,6 +298,17 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
                     itemId = accountId,
                     navigateBack = { navController.popBackStack() },
                     onEditClick = { id -> navController.navigate("add_item?category=3&itemId=$id") }
+            )
+        }
+        composable(
+                route = "view_insurance/{cardId}",
+                arguments = listOf(navArgument("cardId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val cardId = backStackEntry.arguments?.getInt("cardId") ?: 0
+            com.vijay.cardkeeper.ui.item.ViewInsuranceCardRoute(
+                    cardId = cardId,
+                    navigateBack = { navController.popBackStack() },
+                    onEdit = { id -> navController.navigate("add_item?category=8&itemId=$id") }
             )
         }
     }

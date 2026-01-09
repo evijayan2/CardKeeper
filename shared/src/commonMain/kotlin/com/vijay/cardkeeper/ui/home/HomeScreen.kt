@@ -68,6 +68,7 @@ fun HomeScreen(
         navigateToPanCardView: (Int) -> Unit = {},
         navigateToGiftCardView: (Int) -> Unit = {},
         navigateToRewardsView: (Int) -> Unit = {},
+        navigateToInsuranceView: (Int) -> Unit = {},
         navigateToSearch: () -> Unit = {},
         navigateToSettings: () -> Unit = {},
         viewModel: HomeViewModel,
@@ -82,6 +83,7 @@ fun HomeScreen(
     val greenCardState by viewModel.greenCards.collectAsState()
     val aadharCardState by viewModel.aadharCards.collectAsState()
     val panCardState by viewModel.panCards.collectAsState()
+    val insuranceCards by viewModel.insuranceCards.collectAsState()
     val giftCards by viewModel.giftCards.collectAsState()
     var selectedTab by rememberSaveable { mutableStateOf(initialTab ?: 0) }
     
@@ -222,7 +224,15 @@ fun HomeScreen(
                                     showMenu = false
                                     navigateToItemEntry(7, "PAN")
                                 },
-                                leadingIcon = { Icon(Icons.Filled.Face, contentDescription = null) } // Using Face as placeholder
+                                leadingIcon = { Icon(Icons.Filled.AccountBox, contentDescription = null) }
+                        )
+                        DropdownMenuItem(
+                                text = { Text("Insurance Card") },
+                                onClick = {
+                                    showMenu = false
+                                    navigateToItemEntry(8, "INSURANCE")
+                                },
+                                leadingIcon = { Icon(Icons.Filled.CreditCard, contentDescription = null) }
                         )
                     }
                 }
@@ -272,7 +282,7 @@ fun HomeScreen(
                                 navigateToPanCardView
                         )
                 2 -> PassportList(passportState, navigateToPassportView)
-                3 -> RewardsList(rewardsCards, giftCards, navigateToRewardsView, navigateToGiftCardView)
+                3 -> RewardsList(rewardsCards, giftCards, insuranceCards, navigateToRewardsView, navigateToGiftCardView, navigateToInsuranceView)
             }
         }
     }
@@ -290,15 +300,18 @@ fun FinancialList(list: List<FinancialAccount>, onItemClick: (Int) -> Unit, onCo
 
 @Composable
 fun RewardsList(
-    list: List<RewardCard>, 
+    rewardsCards: List<RewardCard>,
     giftCards: List<GiftCard>,
-    onItemClick: (Int) -> Unit,
-    onGiftCardClick: (Int) -> Unit
+    insuranceCards: List<com.vijay.cardkeeper.data.entity.InsuranceCard>,
+    onRewardClick: (Int) -> Unit,
+    onGiftCardClick: (Int) -> Unit,
+    onInsuranceCardClick: (Int) -> Unit
 ) {
     LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) { 
+    ) {
+        // 1. Gift Cards
         if (giftCards.isNotEmpty()) {
             item {
                 Text("Gift Cards", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
@@ -308,10 +321,100 @@ fun RewardsList(
                 Spacer(modifier = Modifier.height(8.dp))
                 HorizontalDivider()
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Rewards Cards", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
             }
         }
-        items(list, key = { "rc_${it.id}" }) { rewardCard -> RewardsCardItem(rewardCard, onItemClick) } 
+
+        // 2. Insurance Cards
+        if (insuranceCards.isNotEmpty()) {
+            item {
+                Text("Insurance Cards", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+            }
+            items(insuranceCards, key = { "ins_${it.id}" }) { card -> InsuranceCardItem(card, onInsuranceCardClick) }
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
+
+        // 3. Rewards Cards
+        if (rewardsCards.isNotEmpty()) {
+             // Only show header if there are other items above, or maybe always for consistency?
+             // Requested order: Gift -> Insurance -> Rewards.
+             // If others exist, definitely show header.
+             if (giftCards.isNotEmpty() || insuranceCards.isNotEmpty()) {
+                 item {
+                     Text("Rewards Cards", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                 }
+             }
+             items(rewardsCards, key = { "rc_${it.id}" }) { rewardCard -> RewardsCardItem(rewardCard, onRewardClick) }
+        } else if (giftCards.isEmpty() && insuranceCards.isEmpty()) {
+             // Empty state?
+        }
+    }
+}
+
+@Composable
+fun InsuranceCardItem(card: com.vijay.cardkeeper.data.entity.InsuranceCard, onItemClick: (Int) -> Unit) {
+    Card(
+            modifier = Modifier.fillMaxWidth().clickable { onItemClick(card.id) },
+            colors =
+                    CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+    ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            // Document Icon or Image (Front Image)
+            val imagePath = card.frontImagePath
+            if (imagePath != null) {
+                AsyncImage(
+                        model = imagePath,
+                        contentDescription = null,
+                        modifier =
+                                Modifier.size(60.dp)
+                                        .clip(
+                                                androidx.compose.foundation.shape
+                                                        .RoundedCornerShape(8.dp)
+                                        ),
+                        contentScale = ContentScale.Crop,
+                        fallback = painterResource(Res.drawable.placeholder_image)
+                )
+            } else {
+                 // Fallback Icon based on type
+                val icon = when (card.type) {
+                    com.vijay.cardkeeper.data.entity.InsuranceCardType.MEDICAL -> Icons.Default.Face // detailed medical icon?
+                    com.vijay.cardkeeper.data.entity.InsuranceCardType.DENTAL -> Icons.Default.Face
+                    com.vijay.cardkeeper.data.entity.InsuranceCardType.EYE -> Icons.Default.Face
+                }
+                Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(60.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                        text = card.providerName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                )
+                Text(
+                        text = "${card.type.name} - ${card.policyNumber}",
+                        style = MaterialTheme.typography.bodyMedium
+                )
+                if (!card.policyHolderName.isNullOrBlank()) {
+                     Text(
+                        text = card.policyHolderName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                     )
+                }
+            }
+        }
     }
 }
 

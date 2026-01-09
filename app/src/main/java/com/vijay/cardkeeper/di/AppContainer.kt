@@ -16,6 +16,7 @@ import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 
 import com.vijay.cardkeeper.data.repository.RewardCardRepository
 import com.vijay.cardkeeper.data.repository.RewardCardRepositoryImpl
+import com.vijay.cardkeeper.data.repository.InsuranceCardRepository
 
 /** AppContainer for manual dependency injection. */
 interface AppContainer {
@@ -27,6 +28,7 @@ interface AppContainer {
     val aadharCardRepository: AadharCardRepository
     val rewardCardRepository: RewardCardRepository
     val panCardRepository: PanCardRepository
+    val insuranceCardRepository: InsuranceCardRepository
     val searchRepository: SearchRepository
     val userPreferencesRepository: com.vijay.cardkeeper.data.repository.UserPreferencesRepository
     val imageMigrationManager: com.vijay.cardkeeper.util.ImageMigrationManager
@@ -83,6 +85,10 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val panCardRepository: PanCardRepository by lazy {
         PanCardRepository(sqlDelightDatabase)
+    }
+
+    override val insuranceCardRepository: InsuranceCardRepository by lazy {
+        InsuranceCardRepository(sqlDelightDatabase)
     }
 
     override val searchRepository: SearchRepository by lazy {

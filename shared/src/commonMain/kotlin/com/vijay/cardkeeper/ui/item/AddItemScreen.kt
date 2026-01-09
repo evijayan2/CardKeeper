@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.vijay.cardkeeper.ui.item.forms.*
+import com.vijay.cardkeeper.ui.item.forms.InsuranceCardFormState // Explicit import if not covered by wildcard or just to be safe
 import com.vijay.cardkeeper.ui.common.CardKeeperTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -25,6 +26,7 @@ fun AddItemScreen(
     aadharCardState: AadharCardFormState,
     giftCardState: GiftCardFormState,
     panCardState: PanCardFormState,
+    insuranceState: InsuranceCardFormState,
     selectedCategory: Int,
     onCategorySelected: (Int) -> Unit,
     onScanRequest: (category: Int, requestType: ScanRequestType) -> Unit,
@@ -62,6 +64,7 @@ fun AddItemScreen(
                     Tab(selected = selectedCategory == 5, onClick = { onCategorySelected(5) }, text = { Text("Aadhaar") })
                     Tab(selected = selectedCategory == 6, onClick = { onCategorySelected(6) }, text = { Text("Gift Card") })
                     Tab(selected = selectedCategory == 7, onClick = { onCategorySelected(7) }, text = { Text("PAN Card") })
+                    Tab(selected = selectedCategory == 8, onClick = { onCategorySelected(8) }, text = { Text("Insurance") })
                 }
             } else if (isEditing) {
                  // If editing, show the category title as a locked header or just rely on TopBar
@@ -74,6 +77,7 @@ fun AddItemScreen(
                      5 -> "Aadhaar Card"
                      6 -> "Gift Card"
                      7 -> "PAN Card"
+                     8 -> "Insurance Card"
                      else -> "Item"
                  }
                  Text(title, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(vertical = 8.dp))
@@ -155,6 +159,15 @@ fun AddItemScreen(
                          onScanOcr = { onScanRequest(7, ScanRequestType.FRONT) }, // Use FRONT for OCR scan
                          onScanFront = { onScanRequest(7, ScanRequestType.FRONT) },
                          onScanBack = { onScanRequest(7, ScanRequestType.BACK) },
+                         onSave = onSave,
+                         onNavigateBack = onNavigateBack
+                     )
+                }
+                8 -> { // Insurance
+                     InsuranceCardForm(
+                         state = insuranceState,
+                         onScanFront = { onScanRequest(8, ScanRequestType.FRONT) },
+                         onScanBack = { onScanRequest(8, ScanRequestType.BACK) },
                          onSave = onSave,
                          onNavigateBack = onNavigateBack
                      )
