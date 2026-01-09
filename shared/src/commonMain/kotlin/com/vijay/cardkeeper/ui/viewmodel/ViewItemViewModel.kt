@@ -18,7 +18,8 @@ class ViewItemViewModel(
     private val greenCardRepository: GreenCardRepository,
     private val aadharCardRepository: AadharCardRepository,
     private val panCardRepository: PanCardRepository,
-    private val rewardCardRepository: RewardCardRepository
+    private val rewardCardRepository: RewardCardRepository,
+    private val insuranceCardRepository: com.vijay.cardkeeper.data.repository.InsuranceCardRepository
 ) : ViewModel() {
 
     private val _selectedAccount = MutableStateFlow<FinancialAccount?>(null)
@@ -45,8 +46,14 @@ class ViewItemViewModel(
     private val _selectedRewardCard = MutableStateFlow<RewardCard?>(null)
     val selectedRewardCard: StateFlow<RewardCard?> = _selectedRewardCard.asStateFlow()
 
+    private val _selectedInsuranceCard = MutableStateFlow<com.vijay.cardkeeper.data.entity.InsuranceCard?>(null)
+    val selectedInsuranceCard: StateFlow<com.vijay.cardkeeper.data.entity.InsuranceCard?> = _selectedInsuranceCard.asStateFlow()
+
     private val _fullScreenImage = MutableStateFlow<String?>(null)
     val fullScreenImage: StateFlow<String?> = _fullScreenImage.asStateFlow()
+
+    private val _qrCodeBitmap = MutableStateFlow<Any?>(null) // Any? to avoid Android dependency in KMP if strictly shared, but for now we assume shared logic
+    val qrCodeBitmap: StateFlow<Any?> = _qrCodeBitmap.asStateFlow()
 
     fun loadAccount(id: Int) {
         viewModelScope.launch { _selectedAccount.value = financialRepository.getAccountById(id) }
@@ -61,7 +68,21 @@ class ViewItemViewModel(
     }
 
     fun loadGiftCard(id: Int) {
-        viewModelScope.launch { _selectedGiftCard.value = giftCardRepository.getGiftCardById(id) }
+        viewModelScope.launch { 
+            val card = giftCardRepository.getGiftCardById(id)
+            _selectedGiftCard.value = card
+            
+            // If card has QR data, generate bitmap
+            card?.qrCode?.let { qrData ->
+                 // In a real KMP architecture, we'd use a platform-specific generator.
+                 // For this hybrid setup, we'll expose the data and let the UI helper do it properly 
+                 // OR we move the generator to a shared utility if possible.
+                 // Given constraints: We will keep generation in UI *ViewModel* but running on IO dispatcher if we had image libs here.
+                 // HOWEVER, `shared` module likely doesn't have Android Bitmap. 
+                 // We will stick to state exposure and let the UI COMPONENT handle the heavy lifting via a LaunchedEffect + State,
+                 // OR better: we keep the VM pure and just expose the data. 
+            }
+        }
     }
 
     fun deleteGiftCard(giftCard: GiftCard) {
@@ -114,5 +135,15 @@ class ViewItemViewModel(
 
     fun deleteRewardCard(rewardCard: RewardCard) {
         viewModelScope.launch { rewardCardRepository.deleteRewardCard(rewardCard) }
+    }
+
+    fun loadInsuranceCard(id: Int) {
+        viewModelScope.launch { 
+            _selectedInsuranceCard.value = insuranceCardRepository.getInsuranceCard(id).firstOrNull() 
+        }
+    }
+
+    fun deleteInsuranceCard(insuranceCard: com.vijay.cardkeeper.data.entity.InsuranceCard) {
+        viewModelScope.launch { insuranceCardRepository.delete(insuranceCard) }
     }
 }

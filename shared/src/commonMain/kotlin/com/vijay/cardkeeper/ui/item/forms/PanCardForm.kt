@@ -12,6 +12,10 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.vijay.cardkeeper.data.entity.PanCard
+import com.vijay.cardkeeper.ui.common.CardKeeperTextField
+import com.vijay.cardkeeper.ui.common.CardKeeperScanButtons
+import com.vijay.cardkeeper.ui.common.CardKeeperScanActionButton
+import com.vijay.cardkeeper.ui.common.CardKeeperSaveButton
 import com.vijay.cardkeeper.ui.common.DateFormatType
 import com.vijay.cardkeeper.ui.common.DateVisualTransformation
 import com.vijay.cardkeeper.util.DateNormalizer
@@ -68,68 +72,18 @@ fun PanCardForm(
         verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.padding(bottom = 16.dp)
     ) {
-        // OCR Scan Button
-        Button(
-            onClick = onScanOcr,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-            ) {
-                Icon(Icons.Filled.QrCodeScanner, "Scan PAN")
-                Text("Scan PAN Card (OCR)")
-            }
-        }
+
 
         // Image Scan Buttons
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Button(
-                onClick = onScanFront,
-                modifier = Modifier.weight(1f),
-                colors = if (state.hasFrontImage)
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                else ButtonDefaults.buttonColors()
-            ) {
-                Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.PhotoCamera, "Front")
-                    Text(
-                        if (state.hasFrontImage) "Front Captured"
-                        else "Scan Front"
-                    )
-                }
-            }
-            Button(
-                onClick = onScanBack,
-                modifier = Modifier.weight(1f),
-                colors = if (state.hasBackImage)
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                else ButtonDefaults.buttonColors()
-            ) {
-                Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.PhotoCamera, "Back")
-                    Text(
-                        if (state.hasBackImage) "Back Captured"
-                        else "Scan Back"
-                    )
-                }
-            }
-        }
+        CardKeeperScanButtons(
+            hasFrontImage = state.hasFrontImage,
+            onScanFront = onScanFront,
+            hasBackImage = state.hasBackImage,
+            onScanBack = onScanBack
+        )
 
         // PAN Number
-        OutlinedTextField(
+        CardKeeperTextField(
             value = state.panNumber,
             onValueChange = { 
                 // Convert to uppercase and limit to 10 characters
@@ -137,9 +91,8 @@ fun PanCardForm(
                 state.panNumber = formatted
                 state.validatePan()
             },
-            label = { Text("PAN Number") },
+            label = "PAN Number",
             placeholder = { Text("ABCDE1234F") },
-            modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Text,
                 capitalization = KeyboardCapitalization.Characters
@@ -155,23 +108,21 @@ fun PanCardForm(
         )
 
         // Holder Name
-        OutlinedTextField(
+        CardKeeperTextField(
             value = state.holderName,
             onValueChange = { state.holderName = it },
-            label = { Text("Name (as on PAN card)") },
-            modifier = Modifier.fillMaxWidth()
+            label = "Name (as on PAN card)"
         )
 
         // Father's Name
-        OutlinedTextField(
+        CardKeeperTextField(
             value = state.fatherName,
             onValueChange = { state.fatherName = it },
-            label = { Text("Father's Name") },
-            modifier = Modifier.fillMaxWidth()
+            label = "Father's Name"
         )
 
         // Date of Birth (India format: DD/MM/YYYY)
-        OutlinedTextField(
+        CardKeeperTextField(
             value = state.rawDob,
             onValueChange = { 
                 if (it.length <= 8 && it.all { char -> char.isDigit() }) {
@@ -179,8 +130,7 @@ fun PanCardForm(
                     state.dobError = !DateUtils.isValidDate(it, DateFormatType.INDIA) && it.length == 8
                 }
             },
-            label = { Text("Date of Birth (DD/MM/YYYY)") },
-            modifier = Modifier.fillMaxWidth(),
+            label = "Date of Birth (DD/MM/YYYY)",
             visualTransformation = dateVisualTransformation,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             isError = state.dobError,
@@ -188,16 +138,14 @@ fun PanCardForm(
         )
 
         // Save Button
-        Button(
+        CardKeeperSaveButton(
             onClick = {
                 if (state.validatePan() || state.panNumber.isEmpty()) {
                     onSave()
                 }
             },
-            modifier = Modifier.fillMaxWidth(),
+            text = "Save PAN Card",
             enabled = state.panNumber.isNotEmpty() && state.holderName.isNotEmpty()
-        ) { 
-            Text("Save PAN Card") 
-        }
+        )
     }
 }

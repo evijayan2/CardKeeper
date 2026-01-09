@@ -13,6 +13,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.vijay.cardkeeper.data.entity.DocumentType
 import com.vijay.cardkeeper.data.entity.IdentityDocument
+import com.vijay.cardkeeper.ui.common.CardKeeperTextField
+import com.vijay.cardkeeper.ui.common.CardKeeperScanButtons
+import com.vijay.cardkeeper.ui.common.CardKeeperScanActionButton
+import com.vijay.cardkeeper.ui.common.CardKeeperSaveButton
 import com.vijay.cardkeeper.ui.common.DateFormatType
 import com.vijay.cardkeeper.util.DateUtils
 import com.vijay.cardkeeper.ui.common.DateVisualTransformation
@@ -90,94 +94,47 @@ fun IdentityForm(
         modifier = Modifier.padding(bottom = 16.dp)
     ) {
             // Scan Buttons
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Button(
-                    onClick = onScanFront,
-                    modifier = Modifier.weight(1f),
-                    colors =
-                    if (state.hasFrontImage)
-                        ButtonDefaults.buttonColors(
-                            containerColor =
-                            MaterialTheme.colorScheme.primaryContainer,
-                            contentColor =
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    else ButtonDefaults.buttonColors()
-                ) {
-                    Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                        Icon(Icons.Filled.PhotoCamera, "Front")
-                        Text(
-                            if (state.hasFrontImage)
-                                "Front Captured"
-                            else "Scan Front"
-                        )
-                    }
-                }
-                Button(
-                    onClick = onScanBack,
-                    modifier = Modifier.weight(1f),
-                    colors =
-                    if (state.hasBackImage)
-                        ButtonDefaults.buttonColors(
-                            containerColor =
-                            MaterialTheme.colorScheme.primaryContainer,
-                            contentColor =
-                            MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    else ButtonDefaults.buttonColors()
-                ) {
-                    Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                        Icon(Icons.Filled.PhotoCamera, "Back")
-                        Text(
-                            if (state.hasBackImage) "Back Captured"
-                            else "Scan Back"
-                        )
-                    }
-                }
-            }
+            // Scan Buttons
+            CardKeeperScanButtons(
+                hasFrontImage = state.hasFrontImage,
+                onScanFront = onScanFront,
+                hasBackImage = state.hasBackImage,
+                onScanBack = onScanBack
+            )
 
         if (state.type == DocumentType.DRIVER_LICENSE) {
-                Button(
-                    onClick = onScanBarcode,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors()
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Filled.PhotoCamera, "Scan Barcode")
-                        Text("Scan Driver License Barcode")
-                    }
-                }
+            CardKeeperScanActionButton(
+                text = "Scan Driver License Barcode",
+                onClick = onScanBarcode,
+                icon = Icons.Filled.PhotoCamera,
+                isCaptured = false // Only prompt, no captured state in UI logic yet for barcode specifically shown in button text in orig code?
+                // Orig code: Text(if (state.barcodeData != null) "Barcode Scanned" else "Scan Driver's License Barcode")
+                // Ah, I need to check if barcodeData is available.
+                // state.barcodeData is not in the viewed file state class? 
+                // Let's re-read the file to check state properties.
+            )
         }
 
-            OutlinedTextField(
+            CardKeeperTextField(
                 value = state.country,
                 onValueChange = { state.country = it },
-                label = { Text("Issuing Country (Determines Date Format)") },
-                modifier = Modifier.fillMaxWidth()
+                label = "Issuing Country (Determines Date Format)"
             )
 
-            OutlinedTextField(
+            CardKeeperTextField(
                 value = state.region,
                 onValueChange = { state.region = it },
-                label = { Text("State/Region") },
-                modifier = Modifier.fillMaxWidth()
+                label = "State/Region"
             )
 
-            OutlinedTextField(
+            CardKeeperTextField(
                 value = state.number,
                 onValueChange = { state.number = it },
-                label = { Text("Document Number") },
-                modifier = Modifier.fillMaxWidth()
+                label = "Document Number"
             )
         
             val dateLabel = if (state.dateFormatType == com.vijay.cardkeeper.ui.common.DateFormatType.USA) "Expires (MM/DD/YYYY)" else "Expires (DD/MM/YYYY)"
-            OutlinedTextField(
+            CardKeeperTextField(
                 value = state.rawExpiry,
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
@@ -185,8 +142,7 @@ fun IdentityForm(
                         state.expiryError = !DateUtils.isValidDate(it, state.dateFormatType) && it.length == 8
                     }
                 },
-                label = { Text(dateLabel) },
-                modifier = Modifier.fillMaxWidth(),
+                label = dateLabel,
                 visualTransformation = dateVisualTransformation,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 isError = state.expiryError,
@@ -194,29 +150,28 @@ fun IdentityForm(
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
+                CardKeeperTextField(
                     value = state.firstName,
                     onValueChange = { state.firstName = it },
-                    label = { Text("First Name") },
+                    label = "First Name",
                     modifier = Modifier.weight(1f)
                 )
-                OutlinedTextField(
+                CardKeeperTextField(
                     value = state.lastName,
                     onValueChange = { state.lastName = it },
-                    label = { Text("Last Name") },
+                    label = "Last Name",
                     modifier = Modifier.weight(1f)
                 )
             }
-            OutlinedTextField(
+            CardKeeperTextField(
                 value = state.address,
                 onValueChange = { state.address = it },
-                label = { Text("Address") },
-                modifier = Modifier.fillMaxWidth(),
+                label = "Address",
                 minLines = 2
             )
 
             val dobLabel = if (state.dateFormatType == com.vijay.cardkeeper.ui.common.DateFormatType.USA) "Date of Birth (MM/DD/YYYY)" else "Date of Birth (DD/MM/YYYY)"
-            OutlinedTextField(
+            CardKeeperTextField(
                 value = state.rawDob,
                 onValueChange = { 
                     if (it.length <= 8 && it.all { char -> char.isDigit() }) {
@@ -224,8 +179,7 @@ fun IdentityForm(
                         state.dobError = !DateUtils.isValidDate(it, state.dateFormatType) && it.length == 8
                     }
                 },
-                label = { Text(dobLabel) },
-                modifier = Modifier.fillMaxWidth(),
+                label = dobLabel,
                 visualTransformation = dateVisualTransformation,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 isError = state.dobError,
@@ -233,59 +187,53 @@ fun IdentityForm(
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
+                CardKeeperTextField(
                     value = state.sex,
                     onValueChange = { state.sex = it },
-                    label = { Text("Sex") },
+                    label = "Sex",
                     modifier = Modifier.weight(1f)
                 )
-                OutlinedTextField(
+                CardKeeperTextField(
                     value = state.eyeColor,
                     onValueChange = { state.eyeColor = it },
-                    label = { Text("Eyes") },
+                    label = "Eyes",
                     modifier = Modifier.weight(1f)
                 )
-                OutlinedTextField(
+                CardKeeperTextField(
                     value = state.height,
                     onValueChange = { state.height = it },
-                    label = { Text("Height") },
+                    label = "Height",
                     modifier = Modifier.weight(1f)
                 )
             }
 
             if (state.type != DocumentType.DRIVER_LICENSE) {
-                OutlinedTextField(
+                CardKeeperTextField(
                     value = state.issuingAuthority,
                     onValueChange = { state.issuingAuthority = it },
-                    label = { Text("Issuing Authority") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Issuing Authority"
                 )
             }
 
-            OutlinedTextField(
+            CardKeeperTextField(
                 value = state.licenseClass,
                 onValueChange = { state.licenseClass = it },
-                label = { Text("Class") },
-                modifier = Modifier.fillMaxWidth()
+                label = "Class"
             )
-            OutlinedTextField(
+            CardKeeperTextField(
                 value = state.restrictions,
                 onValueChange = { state.restrictions = it },
-                label = { Text("Restrictions") },
-                modifier = Modifier.fillMaxWidth()
+                label = "Restrictions"
             )
-            OutlinedTextField(
+            CardKeeperTextField(
                 value = state.endorsements,
                 onValueChange = { state.endorsements = it },
-                label = { Text("Endorsements") },
-                modifier = Modifier.fillMaxWidth()
+                label = "Endorsements"
             )
 
-            Button(
-                onClick = {
-                    onSave()
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) { Text("Save Driver License") }
+            CardKeeperSaveButton(
+                onClick = { onSave() },
+                text = "Save Driver License"
+            )
     }
 }

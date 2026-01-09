@@ -19,14 +19,16 @@ import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.RewardCard
 import com.vijay.cardkeeper.ui.common.DateVisualTransformation
 import com.vijay.cardkeeper.ui.common.MonthYearVisualTransformation
+import com.vijay.cardkeeper.ui.common.CardKeeperTextField
+import com.vijay.cardkeeper.ui.common.CardKeeperScanButtons
+import com.vijay.cardkeeper.ui.common.CardKeeperSaveButton
 
 class FinancialFormState(
     initialAccount: FinancialAccount? = null,
-    initialReward: RewardCard? = null,
     initialType: AccountType? = null
 ) {
-    var type by mutableStateOf(initialAccount?.type ?: initialReward?.type ?: initialType ?: AccountType.CREDIT_CARD)
-    var institution by mutableStateOf(initialAccount?.institutionName ?: initialReward?.name ?: "")
+    var type by mutableStateOf(initialAccount?.type ?: initialType ?: AccountType.CREDIT_CARD)
+    var institution by mutableStateOf(initialAccount?.institutionName ?: "")
     var accName by mutableStateOf(initialAccount?.accountName ?: "")
     var holder by mutableStateOf(initialAccount?.holderName ?: "")
     var number by mutableStateOf(initialAccount?.number ?: "")
@@ -57,7 +59,7 @@ class FinancialFormState(
     var cvv by mutableStateOf(initialAccount?.cvv ?: "")
     var pin by mutableStateOf(initialAccount?.cardPin ?: "")
     var network by mutableStateOf(initialAccount?.cardNetwork ?: "")
-    var notes by mutableStateOf(initialAccount?.notes ?: initialReward?.notes ?: "")
+    var notes by mutableStateOf(initialAccount?.notes ?: "")
     var contact by mutableStateOf(initialAccount?.lostCardContactNumber ?: "")
 
     // Bank Account Specifics
@@ -69,20 +71,15 @@ class FinancialFormState(
     var bankBrandColor by mutableStateOf(initialAccount?.bankBrandColor)
     var holderAddress by mutableStateOf(initialAccount?.holderAddress ?: "")
 
-    // Rewards Specifics
-    var barcode by mutableStateOf(initialAccount?.barcode ?: initialReward?.barcode ?: "")
-    var barcodeFormat by mutableStateOf(initialAccount?.barcodeFormat ?: initialReward?.barcodeFormat)
-    var linkedPhone by mutableStateOf(initialAccount?.linkedPhoneNumber ?: initialReward?.linkedPhoneNumber ?: "")
-
     // Images using Path check or boolean flag
-    var frontPath by mutableStateOf(initialAccount?.frontImagePath ?: initialReward?.frontImagePath)
-    var backPath by mutableStateOf(initialAccount?.backImagePath ?: initialReward?.backImagePath)
-    var logoPath by mutableStateOf(initialAccount?.logoImagePath ?: initialReward?.logoImagePath)
+    var frontPath by mutableStateOf(initialAccount?.frontImagePath)
+    var backPath by mutableStateOf(initialAccount?.backImagePath)
+    var logoPath by mutableStateOf(initialAccount?.logoImagePath)
 
     // Bitmaps removed, using flags for UI state
-    var hasFrontImage by mutableStateOf(initialAccount?.frontImagePath != null || initialReward?.frontImagePath != null)
-    var hasBackImage by mutableStateOf(initialAccount?.backImagePath != null || initialReward?.backImagePath != null)
-    var hasLogoImage by mutableStateOf(initialAccount?.logoImagePath != null || initialReward?.logoImagePath != null)
+    var hasFrontImage by mutableStateOf(initialAccount?.frontImagePath != null)
+    var hasBackImage by mutableStateOf(initialAccount?.backImagePath != null)
+    var hasLogoImage by mutableStateOf(initialAccount?.logoImagePath != null)
 
     // UI State
     var cvvVisible by mutableStateOf(false)
@@ -92,10 +89,9 @@ class FinancialFormState(
 @Composable
 fun rememberFinancialFormState(
     account: FinancialAccount? = null,
-    reward: RewardCard? = null,
     initialType: AccountType? = null
 ): FinancialFormState {
-    return remember(account, reward, initialType) { FinancialFormState(account, reward, initialType) }
+    return remember(account, initialType) { FinancialFormState(account, initialType) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,8 +100,6 @@ fun FinancialForm(
         state: FinancialFormState,
         onScanFront: () -> Unit,
         onScanBack: () -> Unit,
-        onPickLogo: () -> Unit,
-        onScanBarcode: () -> Unit,
         onSave: () -> Unit,
         onNavigateBack: () -> Unit
 ) {
@@ -113,78 +107,18 @@ fun FinancialForm(
                 val expiryDateVisualTransformation = remember { MonthYearVisualTransformation() }
                 
                 // Scan Buttons
-                Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                ) {
-                        Button(
-                                onClick = onScanFront,
-                                modifier = Modifier.weight(1f),
-                                colors =
-                                        if (state.hasFrontImage)
-                                                ButtonDefaults.buttonColors(
-                                                        containerColor =
-                                                                MaterialTheme.colorScheme
-                                                                        .primaryContainer,
-                                                        contentColor =
-                                                                MaterialTheme.colorScheme
-                                                                        .onPrimaryContainer
-                                                )
-                                        else ButtonDefaults.buttonColors()
-                        ) {
-                                Column(
-                                        horizontalAlignment =
-                                                androidx.compose.ui.Alignment.CenterHorizontally
-                                ) {
-                                        Icon(Icons.Filled.PhotoCamera, "Front")
-                                        Text(
-                                                when {
-                                                        state.hasFrontImage ->
-                                                                if (state.type ==
-                                                                                AccountType
-                                                                                        .BANK_ACCOUNT
-                                                                )
-                                                                        "Cheque Captured"
-                                                                else "Front Captured"
-                                                        state.type == AccountType.BANK_ACCOUNT ->
-                                                                "Scan Cheque"
-                                                        else -> "Scan Front"
-                                                }
-                                        )
-                                }
-                        }
-                        // Only show Scan Back for cards, not for bank accounts
-                        if (state.type != AccountType.BANK_ACCOUNT) {
-                                Button(
-                                        onClick = onScanBack,
-                                        modifier = Modifier.weight(1f),
-                                        colors =
-                                        if (state.hasBackImage)
-                                                        ButtonDefaults.buttonColors(
-                                                                containerColor =
-                                                                        MaterialTheme.colorScheme
-                                                                                .primaryContainer,
-                                                                contentColor =
-                                                                        MaterialTheme.colorScheme
-                                                                                .onPrimaryContainer
-                                                        )
-                                                else ButtonDefaults.buttonColors()
-                                ) {
-                                        Column(
-                                                horizontalAlignment =
-                                                        androidx.compose.ui.Alignment
-                                                                .CenterHorizontally
-                                        ) {
-                                                Icon(Icons.Filled.PhotoCamera, "Back")
-                                                Text(
-                                                        if (state.hasBackImage)
-                                                                "Back Captured"
-                                                        else "Scan Back"
-                                                )
-                                        }
-                                }
-                        }
-                }
+                val frontLabel = if (state.type == AccountType.BANK_ACCOUNT) "Scan Cheque" else "Scan Front"
+                val frontCapturedLabel = if (state.type == AccountType.BANK_ACCOUNT) "Cheque Captured" else "Front Captured"
+
+                CardKeeperScanButtons(
+                    hasFrontImage = state.hasFrontImage,
+                    onScanFront = onScanFront,
+                    frontLabel = frontLabel,
+                    frontCapturedLabel = frontCapturedLabel,
+                    hasBackImage = state.hasBackImage,
+                    onScanBack = onScanBack,
+                    showBack = state.type != AccountType.BANK_ACCOUNT
+                )
 
                 Text("Account Type", style = MaterialTheme.typography.labelLarge)
 
@@ -193,18 +127,11 @@ fun FinancialForm(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.horizontalScroll(rememberScrollState())
                 ) {
-                        val displayedTypes =
-                                if (state.type == AccountType.REWARDS_CARD ||
-                                                state.type == AccountType.LIBRARY_CARD
-                                ) {
-                                        listOf(AccountType.REWARDS_CARD, AccountType.LIBRARY_CARD)
-                                } else {
-                                        listOf(
-                                                AccountType.CREDIT_CARD,
-                                                AccountType.DEBIT_CARD,
-                                                AccountType.BANK_ACCOUNT
-                                        )
-                                }
+                        val displayedTypes = listOf(
+                                AccountType.CREDIT_CARD,
+                                AccountType.DEBIT_CARD,
+                                AccountType.BANK_ACCOUNT
+                        )
 
                         displayedTypes.forEach { type ->
                                 FilterChip(
@@ -215,56 +142,35 @@ fun FinancialForm(
                         }
                 }
 
-                OutlinedTextField(
+                CardKeeperTextField(
                         value = state.institution,
                         onValueChange = { state.institution = it },
-                        label = {
-                                Text(
-                                        if (state.type == AccountType.REWARDS_CARD ||
-                                                        state.type == AccountType.LIBRARY_CARD
-                                        )
-                                                "Shop / Library Name"
-                                        else "Institution (e.g. Chase)"
-                                )
-                        },
-                        modifier = Modifier.fillMaxWidth()
+                        label = "Institution (e.g. Chase)"
                 )
 
                 // Standard Financial Fields
-                if (state.type != AccountType.REWARDS_CARD &&
-                                state.type != AccountType.LIBRARY_CARD &&
-                                state.type != AccountType.BANK_ACCOUNT
-                ) {
-                        OutlinedTextField(
+                if (state.type != AccountType.BANK_ACCOUNT) {
+                        CardKeeperTextField(
                                 value = state.accName,
                                 onValueChange = { state.accName = it },
-                                label = { Text("Account Name (e.g. Sapphire)") },
-                                modifier = Modifier.fillMaxWidth()
+                                label = "Account Name (e.g. Sapphire)"
                         )
                 }
-                if (state.type != AccountType.REWARDS_CARD && state.type != AccountType.LIBRARY_CARD
-                ) {
-                        OutlinedTextField(
-                                value = state.number,
-                                onValueChange = { state.number = it },
-                                label = {
-                                        Text(
-                                                if (state.type == AccountType.BANK_ACCOUNT)
-                                                        "Account Number"
-                                                else "Card Number"
-                                        )
-                                },
-                                keyboardOptions =
-                                        KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.fillMaxWidth()
-                        )
-                        OutlinedTextField(
-                                value = state.holder,
-                                onValueChange = { state.holder = it },
-                                label = { Text("Account Holder Name") },
-                                modifier = Modifier.fillMaxWidth()
-                        )
-                }
+                
+                CardKeeperTextField(
+                        value = state.number,
+                        onValueChange = { state.number = it },
+                        label = if (state.type == AccountType.BANK_ACCOUNT)
+                                "Account Number"
+                        else "Card Number",
+                        keyboardOptions =
+                                KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
+                CardKeeperTextField(
+                        value = state.holder,
+                        onValueChange = { state.holder = it },
+                        label = "Account Holder Name"
+                )
 
                 // Bank Account Specific Fields
                 if (state.type == AccountType.BANK_ACCOUNT) {
@@ -297,103 +203,65 @@ fun FinancialForm(
                         }
 
                         // Core Banking Numbers
-                        OutlinedTextField(
+                        CardKeeperTextField(
                                 value = state.routing,
                                 onValueChange = { state.routing = it },
-                                label = { Text("Routing Number (USA)") },
+                                label = "Routing Number (USA)",
                                 keyboardOptions =
-                                        KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.fillMaxWidth()
+                                        KeyboardOptions(keyboardType = KeyboardType.Number)
                         )
-                        OutlinedTextField(
+                        CardKeeperTextField(
                                 value = state.wireNumber,
                                 onValueChange = { state.wireNumber = it },
-                                label = { Text("Wire Transfer Number") },
+                                label = "Wire Transfer Number",
                                 keyboardOptions =
-                                        KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.fillMaxWidth()
+                                        KeyboardOptions(keyboardType = KeyboardType.Number)
                         )
 
                         // Indian Bank Codes
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedTextField(
+                                CardKeeperTextField(
                                         value = state.ifsc,
                                         onValueChange = { state.ifsc = it.uppercase() },
-                                        label = { Text("IFSC Code") },
+                                        label = "IFSC Code",
                                         modifier = Modifier.weight(1f)
                                 )
-                                OutlinedTextField(
+                                CardKeeperTextField(
                                         value = state.swift,
                                         onValueChange = { state.swift = it.uppercase() },
-                                        label = { Text("SWIFT Code") },
+                                        label = "SWIFT Code",
                                         modifier = Modifier.weight(1f)
                                 )
                         }
 
                         // Branch Details
-                        OutlinedTextField(
+                        CardKeeperTextField(
                                 value = state.branchAddress,
                                 onValueChange = { state.branchAddress = it },
-                                label = { Text("Branch Address") },
-                                modifier = Modifier.fillMaxWidth(),
+                                label = "Branch Address",
                                 minLines = 2
                         )
-                        OutlinedTextField(
+                        CardKeeperTextField(
                                 value = state.branchContact,
                                 onValueChange = { state.branchContact = it },
-                                label = { Text("Branch Contact Number") },
+                                label = "Branch Contact Number",
                                 keyboardOptions =
-                                        KeyboardOptions(keyboardType = KeyboardType.Phone),
-                                modifier = Modifier.fillMaxWidth()
+                                        KeyboardOptions(keyboardType = KeyboardType.Phone)
                         )
-                        OutlinedTextField(
+                        CardKeeperTextField(
                                 value = state.bankWebUrl,
                                 onValueChange = { state.bankWebUrl = it },
-                                label = { Text("Bank Website URL") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                                modifier = Modifier.fillMaxWidth()
+                                label = "Bank Website URL",
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
                         )
 
                         // Account Holder Address (from cheque)
-                        OutlinedTextField(
+                        CardKeeperTextField(
                                 value = state.holderAddress,
                                 onValueChange = { state.holderAddress = it },
-                                label = { Text("Account Holder Address") },
-                                modifier = Modifier.fillMaxWidth(),
+                                label = "Account Holder Address",
                                 minLines = 2
                         )
-                }
-
-                // Rewards / Shop Card Fields
-                if (state.type == AccountType.REWARDS_CARD || state.type == AccountType.LIBRARY_CARD
-                ) {
-                        OutlinedTextField(
-                                value = state.barcode,
-                                onValueChange = { state.barcode = it },
-                                label = { Text("Barcode Number") },
-                                trailingIcon = {
-                                        IconButton(
-                                                onClick = onScanBarcode
-                                        ) { Icon(Icons.Filled.PhotoCamera, "Scan Barcode") }
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                        )
-                        OutlinedTextField(
-                                value = state.linkedPhone,
-                                onValueChange = { state.linkedPhone = it },
-                                label = { Text("Linked Phone Number") },
-                                keyboardOptions =
-                                        KeyboardOptions(keyboardType = KeyboardType.Phone),
-                                modifier = Modifier.fillMaxWidth()
-                        )
-
-                        // Logo Picker
-                        Button(onClick = onPickLogo) {
-                                Text(
-                                        if (state.logoPath != null) "Change Shop Logo"
-                                        else "Pick Shop Logo"
-                                )
-                        }
                 }
 
                 val isCard =
@@ -402,20 +270,20 @@ fun FinancialForm(
 
                 if (isCard) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedTextField(
+                                CardKeeperTextField(
                                         value = state.expiry,
                                         onValueChange = { state.expiry = it },
                                         visualTransformation = expiryDateVisualTransformation,
-                                        label = { Text("Expiry (MM/YY)") },
+                                        label = "Expiry (MM/YY)",
                                         modifier = Modifier.weight(1f),
                                         isError = state.expiryError,
                                         keyboardOptions =
                                                 KeyboardOptions(keyboardType = KeyboardType.Number)
                                 )
-                                OutlinedTextField(
+                                CardKeeperTextField(
                                         value = state.cvv,
                                         onValueChange = { if (it.length <= 4) state.cvv = it },
-                                        label = { Text("CVV/CVC") },
+                                        label = "CVV/CVC",
                                         modifier = Modifier.weight(1f),
                                         visualTransformation =
                                                 if (state.cvvVisible) VisualTransformation.None
@@ -440,16 +308,16 @@ fun FinancialForm(
                         }
 
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                OutlinedTextField(
+                                CardKeeperTextField(
                                         value = state.network,
                                         onValueChange = { state.network = it },
-                                        label = { Text("Network (e.g. Visa)") },
+                                        label = "Network (e.g. Visa)",
                                         modifier = Modifier.weight(1f)
                                 )
-                                OutlinedTextField(
+                                CardKeeperTextField(
                                         value = state.pin,
                                         onValueChange = { state.pin = it },
-                                        label = { Text("Card PIN") },
+                                        label = "Card PIN",
                                         modifier = Modifier.weight(1f),
                                         visualTransformation =
                                                 if (state.pinVisible) VisualTransformation.None
@@ -478,36 +346,30 @@ fun FinancialForm(
 
                 // Lost card contact - only for cards, not bank accounts
                 if (state.type == AccountType.CREDIT_CARD || state.type == AccountType.DEBIT_CARD) {
-                        OutlinedTextField(
+                        CardKeeperTextField(
                                 value = state.contact,
                                 onValueChange = { state.contact = it },
-                                label = { Text("Lost Card Contact Number") },
-                                modifier = Modifier.fillMaxWidth(),
+                                label = "Lost Card Contact Number",
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                         )
                 }
 
-                OutlinedTextField(
+                CardKeeperTextField(
                         value = state.notes,
                         onValueChange = { state.notes = it },
-                        label = { Text("Notes") },
-                        modifier = Modifier.fillMaxWidth(),
+                        label = "Notes",
                         minLines = 3,
                         maxLines = 5
                 )
 
                 val saveButtonText = when (state.type) {
-                    AccountType.REWARDS_CARD -> "Save Rewards Card"
-                    AccountType.LIBRARY_CARD -> "Save Library Card"
                     AccountType.BANK_ACCOUNT -> "Save Bank Account"
                     else -> "Save Card"
                 }
 
-                Button(
-                        onClick = {
-                        onSave()
-                },
-                        modifier = Modifier.fillMaxWidth()
-                ) { Text(saveButtonText) }
+                CardKeeperSaveButton(
+                    onClick = { onSave() },
+                    text = saveButtonText
+                )
         }
 }

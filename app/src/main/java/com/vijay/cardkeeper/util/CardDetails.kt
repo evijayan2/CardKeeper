@@ -7,5 +7,6 @@ data class CardDetails(
         val ownerName: String = "",
         val bankName: String = "",
         val cardType: String = "", // Credit/Debit
-        val scheme: String = "" // Visa, Mastercard, Amex
+        val scheme: String = "", // Visa, Mastercard, Amex
+        val phoneNumber: String = ""
 )

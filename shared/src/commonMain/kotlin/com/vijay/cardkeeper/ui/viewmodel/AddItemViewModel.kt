@@ -32,6 +32,7 @@ class AddItemViewModel(
         private val giftCardRepository: GiftCardRepository,
         private val panCardRepository: PanCardRepository,
         private val rewardCardRepository: RewardCardRepository,
+        private val insuranceCardRepository: com.vijay.cardkeeper.data.repository.InsuranceCardRepository,
         private val expirationScheduler: com.vijay.cardkeeper.domain.ExpirationScheduler
 ) : ViewModel() {
 
@@ -285,6 +286,22 @@ class AddItemViewModel(
                 scheduleExpirationCheck()
         }
 
+        fun saveInsuranceCard(insuranceCard: com.vijay.cardkeeper.data.entity.InsuranceCard) = viewModelScope.launch {
+                if (insuranceCard.id > 0) {
+                        insuranceCardRepository.update(insuranceCard)
+                } else {
+                        insuranceCardRepository.insert(insuranceCard)
+                }
+                scheduleExpirationCheck()
+        }
+
+        fun deleteInsuranceCard(insuranceCard: com.vijay.cardkeeper.data.entity.InsuranceCard) {
+                viewModelScope.launch { 
+                    insuranceCardRepository.delete(insuranceCard)
+                    scheduleExpirationCheck()
+                }
+        }
+
         fun getItem(id: Int?, type: String?): kotlinx.coroutines.flow.Flow<Any?> =
                 kotlinx.coroutines.flow.flow {
                         if (id == null || id == 0) {
@@ -306,6 +323,8 @@ class AddItemViewModel(
                                         emit(giftCardRepository.getGiftCardById(id))
                                 } else if (type == "pancard") {
                                         emitAll(panCardRepository.getPanCard(id))
+                                } else if (type == "insurance") {
+                                        emitAll(insuranceCardRepository.getInsuranceCard(id))
                                 }
                         }
                 }

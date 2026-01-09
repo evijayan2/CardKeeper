@@ -12,17 +12,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.vijay.cardkeeper.ui.item.forms.*
+import com.vijay.cardkeeper.ui.item.forms.InsuranceCardFormState // Explicit import if not covered by wildcard or just to be safe
+import com.vijay.cardkeeper.ui.common.CardKeeperTopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddItemScreen(
     financialState: FinancialFormState,
+    rewardsState: RewardsFormState,
     identityState: IdentityFormState,
     passportState: PassportFormState,
     greenCardState: GreenCardFormState,
     aadharCardState: AadharCardFormState,
     giftCardState: GiftCardFormState,
     panCardState: PanCardFormState,
+    insuranceState: InsuranceCardFormState,
     selectedCategory: Int,
     onCategorySelected: (Int) -> Unit,
     onScanRequest: (category: Int, requestType: ScanRequestType) -> Unit,
@@ -30,24 +34,17 @@ fun AddItemScreen(
     onNavigateBack: () -> Unit,
     isEditing: Boolean,
     showCategoryTabs: Boolean = !isEditing,
-    title: String = if (isEditing) "Edit Item" else "Add Item"
+    title: String = if (isEditing) "Edit Item" else "Add Item",
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = {
-                     // Back button handling is typically done via IconButton calling onNavigateBack
-                     // But Standard Scaffold TopBar usually has it.
-                     // For now, assuming caller handles BackPress or we add a button here.
-                     // The existing app uses a specific TopBar. I'll stick to a simple one or parameterized one.
-                     // Actually the app passes `navigateBack` and uses `Icons.AutoMirrored.Filled.ArrowBack`.
-                     androidx.compose.material3.IconButton(onClick = onNavigateBack) {
-                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                     }
-                }
+            CardKeeperTopBar(
+                title = title,
+                onNavigateBack = onNavigateBack
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -67,6 +64,7 @@ fun AddItemScreen(
                     Tab(selected = selectedCategory == 5, onClick = { onCategorySelected(5) }, text = { Text("Aadhaar") })
                     Tab(selected = selectedCategory == 6, onClick = { onCategorySelected(6) }, text = { Text("Gift Card") })
                     Tab(selected = selectedCategory == 7, onClick = { onCategorySelected(7) }, text = { Text("PAN Card") })
+                    Tab(selected = selectedCategory == 8, onClick = { onCategorySelected(8) }, text = { Text("Insurance") })
                 }
             } else if (isEditing) {
                  // If editing, show the category title as a locked header or just rely on TopBar
@@ -79,6 +77,7 @@ fun AddItemScreen(
                      5 -> "Aadhaar Card"
                      6 -> "Gift Card"
                      7 -> "PAN Card"
+                     8 -> "Insurance Card"
                      else -> "Item"
                  }
                  Text(title, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(vertical = 8.dp))
@@ -86,13 +85,22 @@ fun AddItemScreen(
 
             // Forms
             when (selectedCategory) {
-                0, 3 -> { // Financial or Rewards
+                0 -> { // Financial
                      FinancialForm(
                          state = financialState,
                          onScanFront = { onScanRequest(selectedCategory, ScanRequestType.FRONT) },
                          onScanBack = { onScanRequest(selectedCategory, ScanRequestType.BACK) },
-                         onScanBarcode = { onScanRequest(selectedCategory, ScanRequestType.BARCODE) },
+                         onSave = onSave,
+                         onNavigateBack = onNavigateBack
+                     )
+                }
+                3 -> { // Rewards
+                     RewardsForm(
+                         state = rewardsState,
+                         onScanFront = { onScanRequest(selectedCategory, ScanRequestType.FRONT) },
+                         onScanBack = { onScanRequest(selectedCategory, ScanRequestType.BACK) },
                          onPickLogo = { onScanRequest(selectedCategory, ScanRequestType.PICK_LOGO) },
+                         onScanBarcode = { onScanRequest(selectedCategory, ScanRequestType.BARCODE) },
                          onSave = onSave,
                          onNavigateBack = onNavigateBack
                      )
@@ -151,6 +159,15 @@ fun AddItemScreen(
                          onScanOcr = { onScanRequest(7, ScanRequestType.FRONT) }, // Use FRONT for OCR scan
                          onScanFront = { onScanRequest(7, ScanRequestType.FRONT) },
                          onScanBack = { onScanRequest(7, ScanRequestType.BACK) },
+                         onSave = onSave,
+                         onNavigateBack = onNavigateBack
+                     )
+                }
+                8 -> { // Insurance
+                     InsuranceCardForm(
+                         state = insuranceState,
+                         onScanFront = { onScanRequest(8, ScanRequestType.FRONT) },
+                         onScanBack = { onScanRequest(8, ScanRequestType.BACK) },
                          onSave = onSave,
                          onNavigateBack = onNavigateBack
                      )

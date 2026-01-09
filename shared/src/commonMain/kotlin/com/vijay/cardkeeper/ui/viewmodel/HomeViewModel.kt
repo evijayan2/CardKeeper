@@ -31,7 +31,8 @@ class HomeViewModel(
         aadharCardRepository: AadharCardRepository,
         giftCardRepository: GiftCardRepository,
         panCardRepository: PanCardRepository,
-        rewardCardRepository: RewardCardRepository
+        rewardCardRepository: RewardCardRepository,
+        insuranceCardRepository: com.vijay.cardkeeper.data.repository.InsuranceCardRepository
 ) : ViewModel() {
 
         val bankAccounts: StateFlow<List<FinancialAccount>> =
@@ -89,10 +90,17 @@ class HomeViewModel(
                         emptyList()
                 )
 
-        val panCards: StateFlow<List<PanCard>> =
-                panCardRepository.allPanCards.stateIn(
-                        viewModelScope,
-                        SharingStarted.Eagerly,
-                        emptyList()
-                )
+    val panCards: StateFlow<List<PanCard>> =
+            panCardRepository.allPanCards.stateIn(
+                    viewModelScope,
+                    SharingStarted.Eagerly,
+                    emptyList()
+            )
+
+    val insuranceCards: StateFlow<List<com.vijay.cardkeeper.data.entity.InsuranceCard>> =
+            insuranceCardRepository.allInsuranceCards.stateIn(
+                    viewModelScope,
+                    SharingStarted.Eagerly,
+                    emptyList()
+            )
 }

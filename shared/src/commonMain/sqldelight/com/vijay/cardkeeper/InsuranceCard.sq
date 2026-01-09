@@ -1,0 +1,40 @@
+CREATE TABLE insurance_cards (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    providerName TEXT NOT NULL,
+    planName TEXT,
+    type TEXT NOT NULL,
+    policyNumber TEXT NOT NULL,
+    groupNumber TEXT,
+    memberId TEXT,
+    policyHolderName TEXT NOT NULL,
+    expiryDate TEXT,
+    website TEXT,
+    customerServiceNumber TEXT,
+    frontImagePath TEXT,
+    backImagePath TEXT,
+    colorTheme INTEGER,
+    notes TEXT
+);
+
+getAllInsuranceCards:
+SELECT * FROM insurance_cards ORDER BY providerName ASC;
+
+getInsuranceCardById:
+SELECT * FROM insurance_cards WHERE id = :id;
+
+insertInsuranceCard:
+INSERT OR REPLACE INTO insurance_cards (
+    id, providerName, planName, type, policyNumber, groupNumber,
+    memberId, policyHolderName, expiryDate, website, customerServiceNumber,
+    frontImagePath, backImagePath, colorTheme, notes
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateInsuranceCard:
+UPDATE insurance_cards SET
+    providerName = ?, planName = ?, type = ?, policyNumber = ?, groupNumber = ?,
+    memberId = ?, policyHolderName = ?, expiryDate = ?, website = ?, customerServiceNumber = ?,
+    frontImagePath = ?, backImagePath = ?, colorTheme = ?, notes = ?
+WHERE id = ?;
+
+deleteInsuranceCard:
+DELETE FROM insurance_cards WHERE id = :id;

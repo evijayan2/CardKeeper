@@ -24,6 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.vijay.cardkeeper.data.entity.Passport
+import com.vijay.cardkeeper.ui.common.CardKeeperTextField
+import com.vijay.cardkeeper.ui.common.CardKeeperScanButtons
+import com.vijay.cardkeeper.ui.common.CardKeeperSaveButton
 import com.vijay.cardkeeper.ui.common.DateFormatType
 import com.vijay.cardkeeper.util.DateUtils
 import com.vijay.cardkeeper.ui.common.DateVisualTransformation
@@ -99,84 +102,37 @@ fun PassportForm(
         modifier = Modifier.padding(bottom = 16.dp)
     ) {
             // Scan Buttons
-            Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-            ) {
-                Button(
-                        onClick = onScanFront,
-                        modifier = Modifier.weight(1f),
-                        colors =
-                                if (state.hasFrontImage)
-                                        ButtonDefaults.buttonColors(
-                                                containerColor =
-                                                        MaterialTheme.colorScheme.primaryContainer,
-                                                contentColor =
-                                                        MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
-                                else ButtonDefaults.buttonColors()
-                ) {
-                    Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                        Icon(Icons.Filled.PhotoCamera, "Front")
-                        Text(
-                                if (state.hasFrontImage)
-                                        "Front Captured"
-                                else "Scan Front"
-                        )
-                    }
-                }
-                Button(
-                        onClick = onScanBack,
-                        modifier = Modifier.weight(1f),
-                        colors =
-                                        if (state.hasBackImage)
-                                        ButtonDefaults.buttonColors(
-                                                containerColor =
-                                                        MaterialTheme.colorScheme.primaryContainer,
-                                                contentColor =
-                                                        MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
-                                else ButtonDefaults.buttonColors()
-                ) {
-                    Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                        Icon(Icons.Filled.PhotoCamera, "Back")
-                        Text(
-                                if (state.hasBackImage)
-                                        "Back Captured"
-                                else "Scan Back"
-                        )
-                    }
-                }
-            }
+            CardKeeperScanButtons(
+                hasFrontImage = state.hasFrontImage,
+                onScanFront = onScanFront,
+                hasBackImage = state.hasBackImage,
+                onScanBack = onScanBack
+            )
 
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.countryCode,
                     onValueChange = { state.countryCode = it },
-                    label = { Text("Country Code (e.g. USA, IND)") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Country Code (e.g. USA, IND)"
             )
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.passportNumber,
                     onValueChange = { state.passportNumber = it },
-                    label = { Text("Passport Number") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Passport Number"
             )
         
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.surname,
                     onValueChange = { state.surname = it },
-                    label = { Text("Surname") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Surname"
             )
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.givenNames,
                     onValueChange = { state.givenNames = it },
-                    label = { Text("Given Names") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Given Names"
             )
         
             val dobLabel = if (state.dateFormatType == DateFormatType.USA) "Date of Birth (MM/DD/YYYY)" else "Date of Birth (DD/MM/YYYY)"
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.rawDob,
                     onValueChange = { 
                         if (it.length <= 8 && it.all { char -> char.isDigit() }) {
@@ -184,35 +140,31 @@ fun PassportForm(
                             state.dobError = !DateUtils.isValidDate(it, state.dateFormatType) && it.length == 8
                         }
                     },
-                    label = { Text(dobLabel) },
-                    modifier = Modifier.fillMaxWidth(),
+                    label = dobLabel,
                     visualTransformation = dateVisualTransformation,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = state.dobError,
                     supportingText = { if (state.dobError) Text("Invalid Date") }
             )
         
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.nationality,
                     onValueChange = { state.nationality = it },
-                    label = { Text("Nationality") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Nationality"
             )
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.sex,
                     onValueChange = { state.sex = it },
-                    label = { Text("Sex") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Sex"
             )
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.placeOfBirth,
                     onValueChange = { state.placeOfBirth = it },
-                    label = { Text("Place of Birth") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Place of Birth"
             )
         
             val dateLabel = if (state.dateFormatType == DateFormatType.USA) "Date of Issue (MM/DD/YYYY)" else "Date of Issue (DD/MM/YYYY)"
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.rawDateOfIssue,
                     onValueChange = { 
                         if (it.length <= 8 && it.all { char -> char.isDigit() }) {
@@ -220,8 +172,7 @@ fun PassportForm(
                             state.issueError = !DateUtils.isValidDate(it, state.dateFormatType) && it.length == 8
                         }
                     },
-                    label = { Text(dateLabel) },
-                    modifier = Modifier.fillMaxWidth(),
+                    label = dateLabel,
                     visualTransformation = dateVisualTransformation,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = state.issueError,
@@ -229,7 +180,7 @@ fun PassportForm(
             )
         
             val dateExpiryLabel = if (state.dateFormatType == DateFormatType.USA) "Date of Expiry (MM/DD/YYYY)" else "Date of Expiry (DD/MM/YYYY)"
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.rawDateOfExpiry,
                     onValueChange = { 
                         if (it.length <= 8 && it.all { char -> char.isDigit() }) {
@@ -237,25 +188,22 @@ fun PassportForm(
                             state.expiryError = !DateUtils.isValidDate(it, state.dateFormatType) && it.length == 8
                         }
                     },
-                    label = { Text(dateExpiryLabel) },
-                    modifier = Modifier.fillMaxWidth(),
+                    label = dateExpiryLabel,
                     visualTransformation = dateVisualTransformation,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     isError = state.expiryError,
                     supportingText = { if (state.expiryError) Text("Invalid Date") }
             )
         
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.placeOfIssue,
                     onValueChange = { state.placeOfIssue = it },
-                    label = { Text("Place of Issue") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Place of Issue"
             )
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.authority,
                     onValueChange = { state.authority = it },
-                    label = { Text("Authority") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Authority"
             )
 
         // Expanded/India Fields if code is IND? Or always show? 
@@ -263,43 +211,36 @@ fun PassportForm(
         
             Text("Additional Details", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
 
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.fatherName,
                     onValueChange = { state.fatherName = it },
-                    label = { Text("Father's Name") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Father's Name"
             )
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.motherName,
                     onValueChange = { state.motherName = it },
-                    label = { Text("Mother's Name") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Mother's Name"
             )
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.spouseName,
                     onValueChange = { state.spouseName = it },
-                    label = { Text("Spouse's Name") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "Spouse's Name"
             )
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.address,
                     onValueChange = { state.address = it },
-                    label = { Text("Address") },
-                    modifier = Modifier.fillMaxWidth(),
+                    label = "Address",
                     minLines = 2
             )
-            OutlinedTextField(
+            CardKeeperTextField(
                     value = state.fileNumber,
                     onValueChange = { state.fileNumber = it },
-                    label = { Text("File Number") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = "File Number"
             )
 
-            Button(
-                    onClick = {
-                        onSave()
-                    },
-                    modifier = Modifier.fillMaxWidth()
-            ) { Text("Save Passport") }
+            CardKeeperSaveButton(
+                    onClick = { onSave() },
+                    text = "Save Passport"
+            )
     }
 }

@@ -166,7 +166,8 @@ fun ViewGreenCardScreen(
         val fullScreenImage by viewModel.fullScreenImage.collectAsState()
         if (fullScreenImage != null) {
             androidx.compose.ui.window.Dialog(
-                onDismissRequest = { viewModel.setFullScreenImage(null) }
+                onDismissRequest = { viewModel.setFullScreenImage(null) },
+                properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize().background(Color.Black).clickable {

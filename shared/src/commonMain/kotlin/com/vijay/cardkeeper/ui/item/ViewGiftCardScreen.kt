@@ -41,7 +41,8 @@ fun ViewGiftCardScreen(
     onCopyContent: (String, String) -> Unit, // content, label for message
     qrCodeContent: @Composable (String) -> Unit,
     barcodeContent: @Composable (String, Int?) -> Unit, // content, format
-    viewModel: ViewItemViewModel
+    viewModel: ViewItemViewModel,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     val giftCard by viewModel.selectedGiftCard.collectAsState()
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -69,7 +70,8 @@ fun ViewGiftCardScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -319,7 +321,8 @@ fun ViewGiftCardScreen(
                 val fullScreenImage by viewModel.fullScreenImage.collectAsState()
                 if (fullScreenImage != null) {
                     androidx.compose.ui.window.Dialog(
-                        onDismissRequest = { viewModel.setFullScreenImage(null) }
+                        onDismissRequest = { viewModel.setFullScreenImage(null) },
+                        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
                     ) {
                         Box(
                             modifier = Modifier.fillMaxSize().background(Color.Black).clickable {
