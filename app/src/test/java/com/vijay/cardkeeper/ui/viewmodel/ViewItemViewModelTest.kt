@@ -29,6 +29,7 @@ class ViewItemViewModelTest {
     private val aadharCardRepository: com.vijay.cardkeeper.data.repository.AadharCardRepository = mockk(relaxed = true)
     private val panCardRepository: com.vijay.cardkeeper.data.repository.PanCardRepository = mockk(relaxed = true)
     private val rewardCardRepository: com.vijay.cardkeeper.data.repository.RewardCardRepository = mockk(relaxed = true)
+    private val insuranceCardRepository: com.vijay.cardkeeper.data.repository.InsuranceCardRepository = mockk(relaxed = true)
 
     @BeforeEach
     fun setup() {
@@ -41,7 +42,8 @@ class ViewItemViewModelTest {
             greenCardRepository, 
             aadharCardRepository,
             panCardRepository,
-            rewardCardRepository
+            rewardCardRepository,
+            insuranceCardRepository
         )
     }
 

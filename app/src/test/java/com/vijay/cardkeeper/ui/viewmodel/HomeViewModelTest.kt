@@ -51,7 +51,8 @@ class HomeViewModelTest {
             aadharCardRepository = mockk(relaxed = true) { every { allAadharCards } returns flowOf(emptyList()) },
             giftCardRepository = mockk(relaxed = true) { every { getAllGiftCards() } returns flowOf(emptyList()) },
             panCardRepository = mockk(relaxed = true) { every { allPanCards } returns flowOf(emptyList()) },
-            rewardCardRepository = mockk(relaxed = true) { every { getAllRewardCards() } returns flowOf(emptyList()) }
+            rewardCardRepository = mockk(relaxed = true) { every { getAllRewardCards() } returns flowOf(emptyList()) },
+            insuranceCardRepository = mockk(relaxed = true) { every { allInsuranceCards } returns flowOf(emptyList()) }
         )
 
         // Then
@@ -82,7 +83,8 @@ class HomeViewModelTest {
             aadharCardRepository = mockk(relaxed = true) { every { allAadharCards } returns flowOf(emptyList()) },
             giftCardRepository = mockk(relaxed = true) { every { getAllGiftCards() } returns flowOf(emptyList()) },
             panCardRepository = mockk(relaxed = true) { every { allPanCards } returns flowOf(emptyList()) },
-            rewardCardRepository = mockk(relaxed = true) { every { getAllRewardCards() } returns flowOf(listOf(rewardsCard)) }
+            rewardCardRepository = mockk(relaxed = true) { every { getAllRewardCards() } returns flowOf(listOf(rewardsCard)) },
+            insuranceCardRepository = mockk(relaxed = true) { every { allInsuranceCards } returns flowOf(emptyList()) }
         )
 
         // Then
