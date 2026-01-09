@@ -562,6 +562,13 @@ fun AddItemRoute(
                                 aadharCardState.signatureValid = result.signatureValid
                                 aadharCardState.email = result.email ?: ""
                                 aadharCardState.mobile = result.mobile ?: ""
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Aadhar scanned: ${result.name}")
+                                }
+                            } else {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar("Could not extract Aadhar data. Try better lighting or flatter surface.")
+                                }
                             }
                         }
                         6 -> { // Gift Card

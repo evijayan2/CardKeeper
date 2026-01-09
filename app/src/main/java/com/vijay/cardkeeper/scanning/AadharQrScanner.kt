@@ -108,7 +108,23 @@ class AadharQrScanner(private val context: Context) {
             }
 
             // Step 1: Convert Base10 string to BigInteger, then to byte array
-            val bigInt = BigInteger(qrData)
+            // Sanitize: Aadhar Secure QR (V2) is strictly numeric.
+            // Photocopies often introduce whitespace or noise.
+            val cleanData = qrData.trim()
+            
+            val bigInt = try {
+                BigInteger(cleanData)
+            } catch (e: NumberFormatException) {
+                // Fallback: Try keeping only digits, in case of scanner noise (e.g. spaces inside)
+                val digitOnly = cleanData.filter { it.isDigit() }
+                if (digitOnly.isNotEmpty() && digitOnly != cleanData) {
+                   android.util.Log.d("AadharQrScanner", "Failed strict parse, retrying with digits only")
+                   BigInteger(digitOnly) 
+                } else {
+                    throw e
+                }
+            }
+            
             var compressedBytes = bigInt.toByteArray()
             android.util.Log.d("AadharQrScanner", "BigInt bytes length: ${compressedBytes.size}")
 
