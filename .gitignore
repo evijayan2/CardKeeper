@@ -10,3 +10,12 @@ build/
 certs/
 local.properties
 use-java.ps1
+
+# iOS
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+
+# Ruby
+vendor/
+.bundle/

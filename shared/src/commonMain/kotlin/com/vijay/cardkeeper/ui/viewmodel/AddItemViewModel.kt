@@ -10,7 +10,10 @@ import com.vijay.cardkeeper.data.entity.FinancialAccount
 import com.vijay.cardkeeper.data.entity.GreenCard
 import com.vijay.cardkeeper.data.entity.GiftCard
 import com.vijay.cardkeeper.data.entity.IdentityDocument
+import com.vijay.cardkeeper.data.entity.InsuranceCard
+import com.vijay.cardkeeper.data.entity.InsuranceCardType
 import com.vijay.cardkeeper.data.entity.PanCard
+import com.vijay.cardkeeper.data.entity.Passport
 import com.vijay.cardkeeper.data.entity.RewardCard
 import com.vijay.cardkeeper.data.repository.AadharCardRepository
 import com.vijay.cardkeeper.data.repository.FinancialRepository
@@ -190,7 +193,43 @@ class AddItemViewModel(
                         scheduleExpirationCheck()
                 }
 
-        fun savePassport(passport: com.vijay.cardkeeper.data.entity.Passport) = viewModelScope.launch {
+        fun savePassport(
+                id: Int = 0,
+                firstName: String?,
+                lastName: String?,
+                passportNumber: String,
+                nationality: String?,
+                dob: String?,
+                dateOfIssue: String?,
+                dateOfExpiry: String?,
+                placeOfIssue: String?,
+                placeOfBirth: String?,
+                sex: String?,
+                authority: String?,
+                frontImagePath: String?,
+                backImagePath: String?
+        ) = viewModelScope.launch {
+                val card = Passport(
+                        id = id,
+                        passportNumber = passportNumber,
+                        countryCode = "USA", // Default or derived
+                        surname = lastName,
+                        givenNames = firstName,
+                        nationality = nationality,
+                        dob = dob,
+                        dateOfIssue = dateOfIssue,
+                        dateOfExpiry = dateOfExpiry,
+                        placeOfIssue = placeOfIssue,
+                        placeOfBirth = placeOfBirth,
+                        sex = sex,
+                        authority = authority,
+                        frontImagePath = frontImagePath,
+                        backImagePath = backImagePath
+                )
+                 savePassport(card)
+        }
+
+        fun savePassport(passport: Passport) = viewModelScope.launch {
                         if (passport.id > 0) {
                                 passportRepository.update(passport)
                         } else {
@@ -199,18 +238,35 @@ class AddItemViewModel(
                         scheduleExpirationCheck()
                 }
 
-        fun deleteIdentityDocument(document: IdentityDocument) {
-                viewModelScope.launch { 
-                    identityRepository.deleteDocument(document)
-                    scheduleExpirationCheck()
-                }
-        }
-
-        fun deletePassport(passport: com.vijay.cardkeeper.data.entity.Passport) {
-                viewModelScope.launch { 
-                    passportRepository.delete(passport)
-                    scheduleExpirationCheck()
-                }
+        fun saveGreenCard(
+                id: Int = 0,
+                firstName: String,
+                lastName: String,
+                uscisNumber: String,
+                category: String,
+                countryOfBirth: String,
+                dob: String,
+                dateOfExpiry: String,
+                residentSince: String,
+                sex: String,
+                frontImagePath: String?,
+                backImagePath: String?
+        ) = viewModelScope.launch {
+                val card = GreenCard(
+                        id = id,
+                        givenName = firstName,
+                        surname = lastName,
+                        uscisNumber = uscisNumber,
+                        category = category,
+                        countryOfBirth = countryOfBirth,
+                        dob = dob,
+                        sex = sex,
+                        expiryDate = dateOfExpiry,
+                        residentSince = residentSince,
+                        frontImagePath = frontImagePath,
+                        backImagePath = backImagePath
+                )
+                saveGreenCard(card)
         }
 
         fun saveGreenCard(greenCard: GreenCard) = viewModelScope.launch {
@@ -222,11 +278,31 @@ class AddItemViewModel(
                         scheduleExpirationCheck()
                 }
 
-        fun deleteGreenCard(greenCard: GreenCard) {
-                viewModelScope.launch { 
-                    greenCardRepository.delete(greenCard)
-                    scheduleExpirationCheck()
-                }
+        fun saveAadharCard(
+                id: Int = 0,
+                name: String,
+                aadharNumber: String,
+                dob: String,
+                gender: String,
+                address: String,
+                vid: String?,
+                frontImagePath: String?,
+                backImagePath: String?
+        ) = viewModelScope.launch {
+                val card = AadharCard(
+                        id = id,
+                        referenceId = "", // Not available from manual entry
+                        holderName = name,
+                        dob = dob,
+                        gender = gender,
+                        address = address,
+                        uid = aadharNumber,
+                        maskedAadhaarNumber = aadharNumber.takeLast(4).let { "xxxx xxxx $it" },
+                        vid = vid,
+                        frontImagePath = frontImagePath,
+                        backImagePath = backImagePath
+                )
+                saveAadharCard(card)
         }
 
         fun saveAadharCard(aadharCard: AadharCard) = viewModelScope.launch {
@@ -238,11 +314,26 @@ class AddItemViewModel(
                         scheduleExpirationCheck()
                 }
 
-        fun deleteAadharCard(aadharCard: AadharCard) {
-                viewModelScope.launch { 
-                    aadharCardRepository.delete(aadharCard)
-                    scheduleExpirationCheck()
-                }
+        fun saveGiftCard(
+                id: Int = 0,
+                merchantName: String,
+                cardNumber: String,
+                pin: String?,
+                balance: String?,
+                expiryDate: String?,
+                frontImagePath: String?,
+                backImagePath: String?
+        ) = viewModelScope.launch {
+                val card = GiftCard(
+                        id = id,
+                        providerName = merchantName,
+                        cardNumber = cardNumber,
+                        pin = pin,
+                        frontImagePath = frontImagePath,
+                        backImagePath = backImagePath,
+                        notes = if (balance != null) "Balance: $balance" else null
+                )
+                saveGiftCard(card)
         }
 
         fun saveGiftCard(giftCard: GiftCard) = viewModelScope.launch {
@@ -254,11 +345,26 @@ class AddItemViewModel(
                         scheduleExpirationCheck()
                 }
 
-        fun deleteGiftCard(giftCard: GiftCard) {
-                viewModelScope.launch { 
-                    giftCardRepository.deleteGiftCard(giftCard)
-                    scheduleExpirationCheck()
-                }
+        fun savePanCard(
+                id: Int = 0,
+                name: String,
+                fatherName: String?,
+                panNumber: String,
+                dob: String?,
+                category: String?,
+                frontImagePath: String?,
+                backImagePath: String?
+        ) = viewModelScope.launch {
+                val card = PanCard(
+                        id = id,
+                        panNumber = panNumber,
+                        holderName = name,
+                        fatherName = fatherName,
+                        dob = dob,
+                        frontImagePath = frontImagePath,
+                        backImagePath = backImagePath
+                )
+                savePanCard(card)
         }
 
         fun savePanCard(panCard: PanCard) = viewModelScope.launch {
@@ -270,11 +376,33 @@ class AddItemViewModel(
                 scheduleExpirationCheck()
         }
 
-        fun deletePanCard(panCard: PanCard) {
-                viewModelScope.launch { 
-                    panCardRepository.delete(panCard)
-                    scheduleExpirationCheck()
-                }
+        fun saveRewardCard(
+                id: Int = 0,
+                merchantName: String,
+                cardNumber: String?,
+                pin: String?,
+                expiryDate: String?,
+                points: String?,
+                email: String?,
+                phone: String?,
+                website: String?,
+                notes: String?,
+                barcodeType: String?,
+                barcodeValue: String?,
+                frontImagePath: String?,
+                backImagePath: String?
+        ) = viewModelScope.launch {
+                val card = RewardCard(
+                        id = id,
+                        name = merchantName,
+                        type = AccountType.REWARDS_CARD,
+                        barcode = barcodeValue ?: cardNumber,
+                        linkedPhoneNumber = phone,
+                        notes = notes,
+                        frontImagePath = frontImagePath,
+                        backImagePath = backImagePath
+                )
+                saveRewardCard(card)
         }
 
         fun saveRewardCard(rewardCard: RewardCard) = viewModelScope.launch {
@@ -284,6 +412,32 @@ class AddItemViewModel(
                         rewardCardRepository.insertRewardCard(rewardCard)
                 }
                 scheduleExpirationCheck()
+        }
+
+        fun saveInsuranceCard(
+                id: Int = 0,
+                provider: String,
+                policyNumber: String,
+                groupNumber: String?,
+                holderName: String,
+                validTill: String?,
+                notes: String?,
+                frontImagePath: String?,
+                backImagePath: String?
+        ) = viewModelScope.launch {
+                val card = com.vijay.cardkeeper.data.entity.InsuranceCard(
+                        id = id,
+                        providerName = provider,
+                        type = InsuranceCardType.MEDICAL, // Default
+                        policyNumber = policyNumber,
+                        groupNumber = groupNumber,
+                        policyHolderName = holderName,
+                        expiryDate = validTill,
+                        notes = notes,
+                        frontImagePath = frontImagePath,
+                        backImagePath = backImagePath
+                )
+                saveInsuranceCard(card)
         }
 
         fun saveInsuranceCard(insuranceCard: com.vijay.cardkeeper.data.entity.InsuranceCard) = viewModelScope.launch {

@@ -90,30 +90,31 @@ Kards is optimized for modern Android devices.
 
 To build the project from the command line, use the Gradle wrapper.
 
-### macOS / Linux
+### Android
+
 ```bash
-./gradlew build
+./gradlew :app:assembleDebug
 ```
 
-### Windows
-```cmd
-gradlew.bat build
+### iOS (KMP Framework)
+
+```bash
+./gradlew :shared:assemble
 ```
+This builds the shared Kotlin framework needed for the iOS app.
 
-This command will compile the code, run lint checks, and run unit tests.
-
-## Generating an APK
+## Generating an APK (Android)
 
 To generate a debug APK:
 
 ### macOS / Linux
 ```bash
-./gradlew assembleDebug
+./gradlew :app:assembleDebug
 ```
 
 ### Windows
 ```cmd
-gradlew.bat assembleDebug
+gradlew.bat :app:assembleDebug
 ```
 
 The output APK will be located at:
@@ -122,8 +123,38 @@ The output APK will be located at:
 To generate a signed release APK, you will need to configure your signing keys in `build.gradle.kts` and run:
 
 ```bash
-./gradlew assembleRelease
+./gradlew :app:assembleRelease
 ```
+
+## Installing on Phone
+
+### Android
+
+1.  **Enable Developer Options & USB Debugging** on your phone (Settings > About Phone > Tap 'Build Number' 7 times -> System -> Developer Options -> USB Debugging).
+2.  Connect your phone via USB.
+3.  Run the following command:
+    ```bash
+    ./gradlew :app:installDebug
+    ```
+4.  The app "Kards" should appear in your app drawer.
+
+### iOS
+
+1.  **Prerequisites**: A Mac with Xcode installed.
+2.  **Build Shared Framework**:
+    ```bash
+    ./gradlew :shared:assemble
+    ```
+3.  **Open Xcode Project**:
+    - Navigate to `iosApp/` folder.
+    - Open `iosApp.xcodeproj` in Xcode.
+4.  **Connect iPhone**:
+    - Connect your iPhone to Mac.
+    - Select your phone as the target device in Xcode toolbar (top left).
+    - You may need to register your device in your Apple Developer account if using a paid account, or "Trust" the developer profile in Settings > General > VPN & Device Management if using a free account.
+5.  **Run**:
+    - Click the **Play** button (Cmd + R) in Xcode.
+    - The app "CardKeeper" should install and launch.
 
 ## Starting the Emulator
 

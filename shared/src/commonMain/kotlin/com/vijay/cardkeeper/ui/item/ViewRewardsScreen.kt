@@ -23,7 +23,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
@@ -182,7 +181,7 @@ fun ViewRewardsScreen(
                             DetailRow(
                                 label = "Notes",
                                 value = rc.notes!!,
-                                icon = Icons.Filled.Notes
+                                icon = Icons.Filled.Notes,
                             )
                         }
                     }
