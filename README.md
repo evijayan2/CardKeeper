@@ -26,6 +26,7 @@ It allows you to digitize, organize, and quickly access your **Financial Account
 
 View the full history of changes:
 
+- [v1.0.0-alpha.24](releases/v1.0.0-alpha.24.md) - Secure Backup & Restore.
 - [v1.0.0-alpha.3](releases/v1.0.0-alpha.3.md) - Rebranding to Kards, Aadhar & Green Card Support, Global Search.
 - [v1.0.0-alpha.2](releases/v1.0.0-alpha.2.md) - CI/CD Fixes.
 - [v1.0.0-alpha.1](releases/v1.0.0-alpha.1.md) - Initial Release with Financial & Identity support.
@@ -43,6 +44,7 @@ View the full history of changes:
 -   **Quick Copy**: One-tap copying for sensitive fields like Gift Card codes and PINs.
 -   **Masking & Privacy**: Sensitive fields (like Account Numbers) are masked by default in the UI to prevent shoulder-surfing.
 -   **Visual Reference**: Store high-quality front and back images of your physical cards for visual verification.
+-   **Secure Backup**: Export your encrypted data to a portable zip file and restore it on any device.
 
 ## Security Architecture
 
@@ -218,6 +220,20 @@ Search by category to see all items of a specific type:
 
 > [!TIP]
 > Search requires at least 2 characters. Results are displayed with type badges for easy identification.
+
+
+
+## Backup & Restore
+
+Manage your data securely with the built-in Export/Import tools found in **Settings > Data Management**.
+
+### Export
+Creates a standard ZIP file (`kards_backup_YYYYMMDD_HHmmss.zip`) encrypted with **AES-256-GCM**. You must set a password for each backup. This password is required for restoration.
+
+### Import
+Restores data from a Kards backup file. 
+> [!WARNING]
+> Importing data will **overwrite** all existing data on the device.
 
 ## Project Structure
 
