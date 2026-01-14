@@ -3,6 +3,10 @@ package com.vijay.cardkeeper.data.entity
 
 
 
+import kotlinx.serialization.Serializable
+
+
+@Serializable
 data class Passport(
         val id: Int = 0,
         val passportNumber: String,

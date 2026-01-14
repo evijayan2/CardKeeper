@@ -3,6 +3,9 @@ package com.vijay.cardkeeper.data.entity
 
 
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class GreenCard(
         val id: Int = 0,
         val surname: String,

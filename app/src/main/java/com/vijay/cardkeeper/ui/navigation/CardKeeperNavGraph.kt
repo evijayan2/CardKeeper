@@ -1,6 +1,13 @@
 package com.vijay.cardkeeper.ui.navigation
 
 import kotlinx.coroutines.launch
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import com.vijay.cardkeeper.CardKeeperApplication
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -158,9 +165,65 @@ fun CardKeeperNavHost(navController: NavHostController, modifier: Modifier = Mod
         }
         composable(route = CardKeeperDestinations.SETTINGS_ROUTE) {
             val settingsViewModel: com.vijay.cardkeeper.ui.viewmodel.SettingsViewModel = androidx.lifecycle.viewmodel.compose.viewModel(factory = com.vijay.cardkeeper.ui.viewmodel.AppViewModelProvider.Factory)
+            val context = LocalContext.current
+            val scope = androidx.compose.runtime.rememberCoroutineScope()
+            
+            // State to hold password temporarily during file picker interaction
+            val currentPassword = remember { mutableStateOf<String?>(null) }
+            
+            val exportLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.CreateDocument("application/zip")
+            ) { uri ->
+                uri?.let { outputUri ->
+                    currentPassword.value?.let { password ->
+                         scope.launch {
+                             Toast.makeText(context, "Exporting...", Toast.LENGTH_SHORT).show()
+                             val app = context.applicationContext as CardKeeperApplication
+                             val result = app.container.backupManager.exportData(password, outputUri)
+                             if (result.isSuccess) {
+                                 Toast.makeText(context, "Export Successful!", Toast.LENGTH_LONG).show()
+                             } else {
+                                 Toast.makeText(context, "Export Failed: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
+                             }
+                             currentPassword.value = null // Clear password
+                         }
+                    }
+                }
+            }
+
+            val importLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.OpenDocument()
+            ) { uri ->
+                uri?.let { inputUri ->
+                    currentPassword.value?.let { password ->
+                        scope.launch {
+                            Toast.makeText(context, "Importing...", Toast.LENGTH_SHORT).show()
+                            val app = context.applicationContext as CardKeeperApplication
+                            // TODO: Implement importData in Manager and call it here.
+                             val result = app.container.backupManager.importData(password, inputUri) // Assuming method exists
+                             if (result.isSuccess) {
+                                 Toast.makeText(context, "Import Successful!", Toast.LENGTH_LONG).show()
+                             } else {
+                                 Toast.makeText(context, "Import Failed: ${result.exceptionOrNull()?.message}", Toast.LENGTH_LONG).show()
+                             }
+                             currentPassword.value = null
+                        }
+                    }
+                }
+            }
+
             com.vijay.cardkeeper.ui.settings.SettingsRoute(
                 navigateBack = { navController.popBackStack() },
-                viewModel = settingsViewModel
+                viewModel = settingsViewModel,
+                onExport = { password ->
+                    currentPassword.value = password
+                    val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
+                    exportLauncher.launch("kards_backup_$timestamp.zip")
+                },
+                onImport = { password ->
+                    currentPassword.value = password
+                    importLauncher.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream"))
+                }
             )
         }
         composable(

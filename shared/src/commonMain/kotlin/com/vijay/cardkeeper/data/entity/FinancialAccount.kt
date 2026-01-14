@@ -2,6 +2,9 @@ package com.vijay.cardkeeper.data.entity
 
 
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class AccountType {
     CREDIT_CARD,
     DEBIT_CARD,
@@ -13,6 +16,7 @@ enum class AccountType {
     LIBRARY_CARD
 }
 
+@Serializable
 enum class BankAccountSubType {
     CHECKING,
     SAVINGS,
@@ -24,6 +28,7 @@ enum class BankAccountSubType {
 }
 
 
+@Serializable
 data class FinancialAccount(
         val id: Int = 0,
         val type: AccountType,

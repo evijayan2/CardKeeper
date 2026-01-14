@@ -2,11 +2,14 @@ package com.vijay.cardkeeper.data.entity
 
 
 
+import kotlinx.serialization.Serializable
+
 /**
  * Aadhar Card entity with fields from Aadhar QR code. QR code contains: RefID, Name, DOB/YOB,
  * Gender, Address, Masked Aadhaar, Photo, Timestamp, Signature
  */
 
+@Serializable
 data class AadharCard(
         val id: Int = 0,
 

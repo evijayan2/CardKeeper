@@ -1,5 +1,8 @@
 package com.vijay.cardkeeper.data.entity
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class GiftCard(
     val id: Int = 0,
     val providerName: String, // e.g., Amazon, Costco

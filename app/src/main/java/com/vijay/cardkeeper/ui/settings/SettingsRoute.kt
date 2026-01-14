@@ -15,7 +15,9 @@ import com.vijay.cardkeeper.ui.viewmodel.SettingsViewModel
 @Composable
 fun SettingsRoute(
     navigateBack: () -> Unit,
-    viewModel: SettingsViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    viewModel: SettingsViewModel = viewModel(factory = AppViewModelProvider.Factory),
+    onExport: (String) -> Unit = {},
+    onImport: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -29,6 +31,8 @@ fun SettingsRoute(
     com.vijay.cardkeeper.ui.settings.SettingsScreen(
         navigateBack = navigateBack,
         viewModel = viewModel,
+        onExport = onExport,
+        onImport = onImport,
         onNotificationToggle = { enabled ->
             if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 if (ContextCompat.checkSelfPermission(

@@ -10,3 +10,7 @@ build/
 certs/
 local.properties
 use-java.ps1
+.kotlin/
+vendor/
+.bundle/
+com.vijay.cardkeeper/

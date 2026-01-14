@@ -32,6 +32,7 @@ interface AppContainer {
     val searchRepository: SearchRepository
     val userPreferencesRepository: com.vijay.cardkeeper.data.repository.UserPreferencesRepository
     val imageMigrationManager: com.vijay.cardkeeper.util.ImageMigrationManager
+    val backupManager: com.vijay.cardkeeper.data.backup.AndroidBackupManager
 }
 
 class DefaultAppContainer(private val context: Context) : AppContainer {
@@ -123,5 +124,9 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
             panCardRepository = panCardRepository,
             rewardCardRepository = rewardCardRepository
         )
+    }
+
+    override val backupManager: com.vijay.cardkeeper.data.backup.AndroidBackupManager by lazy {
+        com.vijay.cardkeeper.data.backup.AndroidBackupManager(context, this)
     }
 }

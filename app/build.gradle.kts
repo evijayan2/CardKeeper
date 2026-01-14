@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
     id("org.jetbrains.kotlin.plugin.compose")
+    kotlin("plugin.serialization")
 }
 
 
@@ -25,14 +26,32 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            val certsDir = file("$rootDir/.github/certs")
+            val keystore = file("$certsDir/cardkeeper-release.jks")
+            val passwordFile = file("$certsDir/key_pass.txt")
+            
+            if (keystore.exists() && passwordFile.exists()) {
+                storeFile = keystore
+                val password = passwordFile.readText().trim()
+                storePassword = password
+                keyAlias = "release"
+                keyPassword = password
+            }
+        }
+    }
+
     buildTypes {
         release {
-            if (System.getenv("CI") != "true") {
-                signingConfig = signingConfigs.getByName("debug")
-            }
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        debug {
+            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -72,6 +91,9 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.0")
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.biometric:biometric:1.1.0")
     implementation("androidx.compose.material:material-icons-extended:1.7.8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1")

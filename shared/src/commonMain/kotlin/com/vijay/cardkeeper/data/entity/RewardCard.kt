@@ -1,5 +1,8 @@
 package com.vijay.cardkeeper.data.entity
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class RewardCard(
     val id: Int = 0,
     val name: String,

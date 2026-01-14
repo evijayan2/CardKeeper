@@ -2,6 +2,9 @@ package com.vijay.cardkeeper.data.entity
 
 
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class DocumentType {
     PASSPORT,
     DRIVER_LICENSE,
@@ -13,7 +16,7 @@ enum class DocumentType {
     OTHER
 }
 
-
+@Serializable
 data class IdentityDocument(
         val id: Int = 0,
         val type: DocumentType,

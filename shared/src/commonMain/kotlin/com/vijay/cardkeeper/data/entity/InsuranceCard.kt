@@ -1,11 +1,15 @@
 package com.vijay.cardkeeper.data.entity
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class InsuranceCardType {
     MEDICAL,
     DENTAL,
     EYE
 }
 
+@Serializable
 data class InsuranceCard(
     val id: Int = 0,
     val providerName: String, // e.g., Blue Cross, VSP

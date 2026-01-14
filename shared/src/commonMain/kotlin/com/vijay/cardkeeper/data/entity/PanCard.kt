@@ -8,6 +8,9 @@ package com.vijay.cardkeeper.data.entity
  * Format: ABCDE1234F (5 letters + 4 digits + 1 letter)
  */
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class PanCard(
     val id: Int = 0,
 
